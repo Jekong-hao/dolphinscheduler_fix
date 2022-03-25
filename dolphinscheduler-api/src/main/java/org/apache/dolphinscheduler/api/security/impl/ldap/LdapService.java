@@ -94,7 +94,7 @@ public class LdapService {
                 // get the users DN (distinguishedName) from the result
                 SearchResult result = results.next();
                 NamingEnumeration attrs = result.getAttributes().getAll();
-                while (attrs.hasMore()) {
+                while (!attrs.hasMore()) {
                     //Open another connection to the LDAP server with the found DN and the password
                     searchEnv.put(Context.SECURITY_PRINCIPAL, result.getNameInNamespace());
                     searchEnv.put(Context.SECURITY_CREDENTIALS, userPwd);
@@ -104,10 +104,11 @@ public class LdapService {
                         logger.warn("invalid ldap credentials or ldap search error", e);
                         return null;
                     }
-                    Attribute attr = (Attribute) attrs.next();
-                    if (attr.getID().equals(ldapEmailAttribute)) {
-                        return (String) attr.get();
-                    }
+//                    Attribute attr = (Attribute) attrs.next();
+//                    if (attr.getID().equals(ldapEmailAttribute)) {
+//                        return (String) attr.get();
+//                    }
+                    return "ok";
                 }
             }
         } catch (NamingException e) {

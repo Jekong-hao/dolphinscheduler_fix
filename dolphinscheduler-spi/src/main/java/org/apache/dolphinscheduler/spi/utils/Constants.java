@@ -76,6 +76,14 @@ public class Constants {
 
     public static final String SPRING_DATASOURCE_MAX_ACTIVE = "spring.datasource.maxActive";
 
+    public static final String SPRING_DATASOURCE_CONNECTION_TIMEOUT = "spring.datasource.connectionTimeout";
+
+    public static final String SPRING_DATASOURCE_IDLE_TIMEOUT = "spring.datasource.idleTimeout";
+
+    public static final String SPRING_DATASOURCE_VALIDATION_TIMEOUT = "spring.datasource.validationTimeout";
+
+    public static final String SPRING_DATASOURCE_LOGIN_TIMEOUT = "spring.datasource.loginTimeout";
+
     public static final String SPRING_DATASOURCE_TEST_ON_BORROW = "spring.datasource.testOnBorrow";
 
     /**
@@ -130,6 +138,7 @@ public class Constants {
     public static final String COM_MYSQL_CJ_JDBC_DRIVER = "com.mysql.cj.jdbc.Driver";
     public static final String COM_MYSQL_JDBC_DRIVER = "com.mysql.jdbc.Driver";
     public static final String ORG_APACHE_HIVE_JDBC_HIVE_DRIVER = "org.apache.hive.jdbc.HiveDriver";
+    public static final String ORG_CLOUDERA_HIVE_JDBC_HIVE_DRIVER = "org.apache.hive.jdbc.HiveDriver";
     public static final String COM_CLICKHOUSE_JDBC_DRIVER = "ru.yandex.clickhouse.ClickHouseDriver";
     public static final String COM_ORACLE_JDBC_DRIVER = "oracle.jdbc.OracleDriver";
     public static final String COM_SQLSERVER_JDBC_DRIVER = "com.microsoft.sqlserver.jdbc.SQLServerDriver";

@@ -54,6 +54,19 @@
         <version>21</version>
     </parent>
 
+    <repositories>
+        <repository>
+            <id>cloudera</id>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -63,7 +76,7 @@
         <spring.boot.version>2.5.6</spring.boot.version>
         <java.version>1.8</java.version>
         <logback.version>1.2.3</logback.version>
-        <hadoop.version>2.7.3</hadoop.version>
+        <hadoop.version>3.0.0-cdh6.2.0</hadoop.version>
         <quartz.version>2.3.0</quartz.version>
         <jackson.version>2.10.5</jackson.version>
         <mybatis-plus.version>3.2.0</mybatis-plus.version>
@@ -90,7 +103,7 @@
         <commons.collections4.version>4.1</commons.collections4.version>
         <guava.version>24.1-jre</guava.version>
         <postgresql.version>42.2.5</postgresql.version>
-        <hive.jdbc.version>2.1.0</hive.jdbc.version>
+        <hive.jdbc.version>2.1.1-cdh6.2.0</hive.jdbc.version>
         <commons.io.version>2.4</commons.io.version>
         <oshi.core.version>3.9.1</oshi.core.version>
         <clickhouse.jdbc.version>0.1.52</clickhouse.jdbc.version>

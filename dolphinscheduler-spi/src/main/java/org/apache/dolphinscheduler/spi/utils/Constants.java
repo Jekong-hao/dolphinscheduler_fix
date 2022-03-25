@@ -82,6 +82,8 @@ public class Constants {
 
     public static final String SPRING_DATASOURCE_VALIDATION_TIMEOUT = "spring.datasource.validationTimeout";
 
+    public static final String SPRING_DATASOURCE_MAX_LIFETIME = "spring.datasource.maxLifetime";
+
     public static final String SPRING_DATASOURCE_LOGIN_TIMEOUT = "spring.datasource.loginTimeout";
 
     public static final String SPRING_DATASOURCE_TEST_ON_BORROW = "spring.datasource.testOnBorrow";

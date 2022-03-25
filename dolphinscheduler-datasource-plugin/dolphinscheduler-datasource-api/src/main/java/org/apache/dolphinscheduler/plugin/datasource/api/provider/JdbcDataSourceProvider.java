@@ -56,6 +56,7 @@ public class JdbcDataSourceProvider {
         dataSource.setMaximumPoolSize(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
         dataSource.setConnectionTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_CONNECTION_TIMEOUT, 60000));
         dataSource.setValidationTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_VALIDATION_TIMEOUT, 3000));
+        dataSource.setMaxLifetime(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_LIFETIME, 600000));
         dataSource.setIdleTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_IDLE_TIMEOUT, 60000));
 
         // 由于mysql-jdbc、hive-jdbc等 是支持jdbc4的，所以去掉这行, jdbc4中有检测连接有效性的方法
@@ -87,6 +88,7 @@ public class JdbcDataSourceProvider {
         dataSource.setMaximumPoolSize(isOneSession ? 1 : PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
         dataSource.setConnectionTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_CONNECTION_TIMEOUT, 60000));
         dataSource.setValidationTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_VALIDATION_TIMEOUT, 3000));
+        dataSource.setMaxLifetime(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_LIFETIME, 600000));
         dataSource.setIdleTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_IDLE_TIMEOUT, 60000));
 
 

@@ -1091,4 +1091,9 @@ public final class Constants {
     public static final int DRY_RUN_FLAG_YES = 1;
 
     public static final String CACHE_KEY_VALUE_ALL = "'all'";
+
+    /**
+     * dependent task default timeout = 24小时
+     */
+    public static final int DEPENDENT_TASK_DEFAULT_TIMEOUT_MINUTE = 24 * 60;
 }

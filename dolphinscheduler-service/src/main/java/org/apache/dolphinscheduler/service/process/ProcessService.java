@@ -30,16 +30,7 @@ import static org.apache.dolphinscheduler.common.Constants.LOCAL_PARAMS;
 import static java.util.stream.Collectors.toSet;
 
 import org.apache.dolphinscheduler.common.Constants;
-import org.apache.dolphinscheduler.common.enums.AuthorizationType;
-import org.apache.dolphinscheduler.common.enums.CommandType;
-import org.apache.dolphinscheduler.common.enums.Direct;
-import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
-import org.apache.dolphinscheduler.common.enums.FailureStrategy;
-import org.apache.dolphinscheduler.common.enums.Flag;
-import org.apache.dolphinscheduler.common.enums.ReleaseState;
-import org.apache.dolphinscheduler.common.enums.TaskDependType;
-import org.apache.dolphinscheduler.common.enums.TimeoutFlag;
-import org.apache.dolphinscheduler.common.enums.WarningType;
+import org.apache.dolphinscheduler.common.enums.*;
 import org.apache.dolphinscheduler.common.graph.DAG;
 import org.apache.dolphinscheduler.common.model.DateInterval;
 import org.apache.dolphinscheduler.common.model.TaskNode;
@@ -2299,6 +2290,14 @@ public class ProcessService {
                 } catch (CodeGenerateException e) {
                     logger.error("Task code get error, ", e);
                     return Constants.DEFINITION_FAILURE;
+                }
+            }
+            // 依赖节点给定默认等待时间
+            if (taskDefinitionLog.getTaskType().equals(TaskType.DEPENDENT.getDesc())) {
+                if (taskDefinitionLog.getTimeoutFlag() == TimeoutFlag.CLOSE) {
+                    taskDefinitionLog.setTimeoutFlag(TimeoutFlag.OPEN);
+                    taskDefinitionLog.setTimeout(Constants.DEPENDENT_TASK_DEFAULT_TIMEOUT_MINUTE);
+                    taskDefinitionLog.setTimeoutNotifyStrategy(TaskTimeoutStrategy.FAILED);
                 }
             }
             newTaskDefinitionLogs.add(taskDefinitionLog);

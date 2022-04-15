@@ -2009,6 +2009,21 @@ public class ProcessService {
     }
 
     /**
+     * find last running schedule process instance
+     *
+     * @param definitionCode process definition code
+     * @param startTime start time
+     * @param endTime end time
+     * @return process instance
+     */
+    public ProcessInstance findLastRunningScheduleProcess(Long definitionCode, Date startTime, Date endTime) {
+        return processInstanceMapper.queryLastRunningScheduleProcess(definitionCode,
+                startTime,
+                endTime,
+                stateArray);
+    }
+
+    /**
      * query user queue by process instance id
      *
      * @param processInstanceId processInstanceId

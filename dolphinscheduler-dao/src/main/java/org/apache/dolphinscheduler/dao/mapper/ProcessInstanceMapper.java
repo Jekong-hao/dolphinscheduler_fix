@@ -207,6 +207,20 @@ public interface ProcessInstanceMapper extends BaseMapper<ProcessInstance> {
                                             @Param("states") int[] stateArray);
 
     /**
+     * query last running schedule process instance
+     *
+     * @param definitionCode definitionCode
+     * @param startTime startTime
+     * @param endTime endTime
+     * @param stateArray stateArray
+     * @return process instance
+     */
+    ProcessInstance queryLastRunningScheduleProcess(@Param("processDefinitionCode") Long definitionCode,
+                                            @Param("startTime") Date startTime,
+                                            @Param("endTime") Date endTime,
+                                            @Param("states") int[] stateArray);
+
+    /**
      * query last manual process instance
      *
      * @param definitionCode definitionCode
@@ -248,4 +262,5 @@ public interface ProcessInstanceMapper extends BaseMapper<ProcessInstance> {
 
     int updateGlobalParamsById(@Param("globalParams") String globalParams,
                                @Param("id") int id);
+
 }

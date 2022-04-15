@@ -137,7 +137,9 @@ public class DependentExecute {
         if (processInstance.getState().typeIsSuccess()) {
             return DependResult.SUCCESS;
         }
-        return DependResult.FAILED;
+//        return DependResult.FAILED;
+        // TODO 只等待SUCCESS状态
+        return DependResult.WAITING;
     }
 
     /**
@@ -163,7 +165,9 @@ public class DependentExecute {
             // cannot find task in the process instance
             // maybe because process instance is running or failed.
             if (processInstance.getState().typeIsFinished()) {
-                result = DependResult.FAILED;
+                // TODO 只等待成功状态
+//                result = DependResult.FAILED;
+                result = DependResult.WAITING;
             } else {
                 return DependResult.WAITING;
             }
@@ -185,23 +189,24 @@ public class DependentExecute {
      */
     private ProcessInstance findLastProcessInterval(Long definitionCode, DateInterval dateInterval) {
 
-        ProcessInstance runningProcess = processService.findLastRunningProcess(definitionCode, dateInterval.getStartTime(), dateInterval.getEndTime());
+        ProcessInstance runningProcess = processService.findLastRunningScheduleProcess(definitionCode, dateInterval.getStartTime(), dateInterval.getEndTime());
         if (runningProcess != null) {
             return runningProcess;
         }
 
         ProcessInstance lastSchedulerProcess = processService.findLastSchedulerProcessInterval(definitionCode, dateInterval);
 
-        ProcessInstance lastManualProcess = processService.findLastManualProcessInterval(definitionCode, dateInterval);
-
-        if (lastManualProcess == null) {
-            return lastSchedulerProcess;
-        }
-        if (lastSchedulerProcess == null) {
-            return lastManualProcess;
-        }
-
-        return (lastManualProcess.getEndTime().after(lastSchedulerProcess.getEndTime())) ? lastManualProcess : lastSchedulerProcess;
+//        ProcessInstance lastManualProcess = processService.findLastManualProcessInterval(definitionCode, dateInterval);
+//
+//        if (lastManualProcess == null) {
+//            return lastSchedulerProcess;
+//        }
+//        if (lastSchedulerProcess == null) {
+//            return lastManualProcess;
+//        }
+//
+//        return (lastManualProcess.getEndTime().after(lastSchedulerProcess.getEndTime())) ? lastManualProcess : lastSchedulerProcess;
+        return lastSchedulerProcess;
     }
 
     /**
@@ -217,7 +222,9 @@ public class DependentExecute {
         } else if (state.typeIsSuccess()) {
             return DependResult.SUCCESS;
         } else {
-            return DependResult.FAILED;
+            // TODO 只等待成功状态
+//            return DependResult.FAILED;
+            return DependResult.WAITING;
         }
     }
 

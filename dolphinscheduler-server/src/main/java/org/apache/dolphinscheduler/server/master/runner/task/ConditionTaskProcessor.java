@@ -135,6 +135,8 @@ public class ConditionTaskProcessor extends BaseTaskProcessor {
     protected boolean killTask() {
         this.taskInstance.setState(ExecutionStatus.KILL);
         this.taskInstance.setEndTime(new Date());
+        // 保存实例状态
+        this.processService.updateTaskInstance(this.taskInstance);
         return true;
     }
 

@@ -1096,4 +1096,9 @@ public final class Constants {
      * dependent task default timeout = 24小时
      */
     public static final int DEPENDENT_TASK_DEFAULT_TIMEOUT_MINUTE = 24 * 60;
+
+    /**
+     * 默认重试启动失败的工作流实例次数
+     */
+    public static final int DEFAULT_RETRY_START_PROCESS_MAX_TIMES = 3;
 }

@@ -24,18 +24,7 @@ import static org.apache.dolphinscheduler.common.Constants.CMD_PARAM_START_NODES
 import static org.apache.dolphinscheduler.common.Constants.DEFAULT_WORKER_GROUP;
 
 import org.apache.dolphinscheduler.common.Constants;
-import org.apache.dolphinscheduler.common.enums.CommandType;
-import org.apache.dolphinscheduler.common.enums.DependResult;
-import org.apache.dolphinscheduler.common.enums.Direct;
-import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
-import org.apache.dolphinscheduler.common.enums.FailureStrategy;
-import org.apache.dolphinscheduler.common.enums.Flag;
-import org.apache.dolphinscheduler.common.enums.Priority;
-import org.apache.dolphinscheduler.common.enums.StateEvent;
-import org.apache.dolphinscheduler.common.enums.StateEventType;
-import org.apache.dolphinscheduler.common.enums.TaskDependType;
-import org.apache.dolphinscheduler.common.enums.TaskTimeoutStrategy;
-import org.apache.dolphinscheduler.common.enums.TimeoutFlag;
+import org.apache.dolphinscheduler.common.enums.*;
 import org.apache.dolphinscheduler.common.graph.DAG;
 import org.apache.dolphinscheduler.common.model.TaskNode;
 import org.apache.dolphinscheduler.common.model.TaskNodeRelation;
@@ -195,12 +184,12 @@ public class WorkflowExecuteThread implements Runnable {
     private ProcessDefinition processDefinition;
     private String key;
 
-    private ConcurrentHashMap<Integer, TaskInstance> taskTimeoutCheckList;
+    private ConcurrentHashMap<Integer, TaskInstance> taskTimeoutCheckList = new ConcurrentHashMap<>();
 
     /**
      * task retry check list
      */
-    private ConcurrentHashMap<Integer, TaskInstance> taskRetryCheckList;
+    private ConcurrentHashMap<Integer, TaskInstance> taskRetryCheckList = new ConcurrentHashMap<>();
 
     /**
      * start flag, true: start nodes submit completely
@@ -228,8 +217,8 @@ public class WorkflowExecuteThread implements Runnable {
         this.masterConfig = masterConfig;
         this.nettyExecutorManager = nettyExecutorManager;
         this.processAlertManager = processAlertManager;
-        this.taskTimeoutCheckList = taskTimeoutCheckList;
-        this.taskRetryCheckList = taskRetryCheckList;
+//        this.taskTimeoutCheckList = taskTimeoutCheckList;
+//        this.taskRetryCheckList = taskRetryCheckList;
     }
 
     @Override
@@ -543,6 +532,12 @@ public class WorkflowExecuteThread implements Runnable {
             initTaskQueue();
             submitPostNode(null);
             isStart = true;
+
+            TaskStateWheelExecuteThread taskStateWheelExecuteThread = new TaskStateWheelExecuteThread(processService,
+                    taskTimeoutCheckList, taskRetryCheckList, this,
+                    60 * Constants.SLEEP_TIME_MILLIS);
+
+            taskStateWheelExecuteThread.start();
         }
     }
 
@@ -665,6 +660,7 @@ public class WorkflowExecuteThread implements Runnable {
                 activeTaskProcessorMaps.put(taskInstance.getId(), taskProcessor);
                 taskProcessor.action(TaskAction.RUN);
                 addTimeoutCheck(taskInstance);
+                // TODO dependent task 不加入 retry list，processor 内部实现轮训访问被依赖任务状态
                 addRetryCheck(taskInstance);
                 TaskDefinition taskDefinition = processService.findTaskDefinition(
                         taskInstance.getTaskCode(),

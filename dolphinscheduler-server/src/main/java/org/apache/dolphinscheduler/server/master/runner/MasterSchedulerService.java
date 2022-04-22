@@ -18,6 +18,8 @@
 package org.apache.dolphinscheduler.server.master.runner;
 
 import org.apache.dolphinscheduler.common.Constants;
+import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
+import org.apache.dolphinscheduler.common.enums.TaskType;
 import org.apache.dolphinscheduler.common.thread.Stopper;
 import org.apache.dolphinscheduler.common.thread.ThreadUtils;
 import org.apache.dolphinscheduler.common.utils.NetUtils;
@@ -36,11 +38,14 @@ import org.apache.dolphinscheduler.server.master.registry.ServerNodeManager;
 import org.apache.dolphinscheduler.service.alert.ProcessAlertManager;
 import org.apache.dolphinscheduler.service.process.ProcessService;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -111,6 +116,10 @@ public class MasterSchedulerService extends Thread {
      */
     private ConcurrentHashMap<Integer, WorkflowExecuteThread> processInstanceExecMaps;
     /**
+     * start failed process list
+     */
+    ConcurrentHashMap<Integer, ProcessInstance> failedStartProcessMap = new ConcurrentHashMap<>();
+    /**
      * process timeout check list
      */
     ConcurrentHashMap<Integer, ProcessInstance> processTimeoutCheckList = new ConcurrentHashMap<>();
@@ -125,7 +134,9 @@ public class MasterSchedulerService extends Thread {
      */
     ConcurrentHashMap<Integer, TaskInstance> taskRetryCheckList = new ConcurrentHashMap<>();
 
-    private StateWheelExecuteThread stateWheelExecuteThread;
+//    private StateWheelExecuteThread stateWheelExecuteThread;
+
+    private WorkflowStateWheelExecuteThread workflowStateWheelExecuteThread;
 
     /**
      * constructor of MasterSchedulerService
@@ -137,22 +148,33 @@ public class MasterSchedulerService extends Thread {
         NettyClientConfig clientConfig = new NettyClientConfig();
         this.nettyRemotingClient = new NettyRemotingClient(clientConfig);
 
-        stateWheelExecuteThread = new StateWheelExecuteThread(
-                masterExecService,
-                processService,
-                startProcessFailedMap,
+//        // TODO 应该每个workflow实例负责各自的调度
+//        stateWheelExecuteThread = new StateWheelExecuteThread(
+//                masterExecService,
+//                processService,
+//                startProcessFailedMap,
+//                processTimeoutCheckList,
+//                taskTimeoutCheckList,
+//                taskRetryCheckList,
+//                this.processInstanceExecMaps,
+//                masterConfig.getStateWheelInterval() * Constants.SLEEP_TIME_MILLIS,
+//                failedStartProcessMap);
+
+        workflowStateWheelExecuteThread = new WorkflowStateWheelExecuteThread(
                 processTimeoutCheckList,
-                taskTimeoutCheckList,
-                taskRetryCheckList,
-                this.processInstanceExecMaps,
-                masterConfig.getStateWheelInterval() * Constants.SLEEP_TIME_MILLIS);
+                processInstanceExecMaps,
+                failedStartProcessMap,
+                startProcessFailedMap,
+                masterConfig.getStateWheelInterval() * Constants.SLEEP_TIME_MILLIS
+        );
     }
 
     @Override
     public synchronized void start() {
         super.setName("MasterSchedulerService");
         super.start();
-        this.stateWheelExecuteThread.start();
+//        this.stateWheelExecuteThread.start();
+        this.workflowStateWheelExecuteThread.start();
     }
 
     public void close() {
@@ -184,8 +206,54 @@ public class MasterSchedulerService extends Thread {
                     continue;
                 }
                 scheduleProcess();
+                logger.info("Scheduler running process instance nums {} , ids [{}].",
+                        this.processInstanceExecMaps.size(),
+                        this.processInstanceExecMaps.keySet()
+                                .stream().map(String::valueOf).collect(Collectors.joining(",")));
+                checkFailedStartProcess();
+
+//                // 检查workflow完整性
+//                checkWorkflowCompleteness();
             } catch (Exception e) {
                 logger.error("master scheduler thread error", e);
+            }
+        }
+    }
+
+
+    /**
+     * 检查正在执行的工作的完整性
+     */
+    private void checkWorkflowCompleteness() {
+        for (WorkflowExecuteThread workflowExecuteThread : this.processInstanceExecMaps.values()) {
+            // TODO 轮训查询数据库，有性能压力
+            List<TaskInstance> taskInstancesList = this.processService.findValidTaskListByProcessId(workflowExecuteThread.getProcessInstance().getId());
+            for (TaskInstance taskInstance : taskInstancesList) {
+                if (taskInstance.getTaskType() == TaskType.DEPENDENT.getDesc() || taskInstance.taskCanRetry()) {
+                    if (!this.taskRetryCheckList.containsKey(taskInstance.getId())) {
+                        logger.error("[taskRetryCheck] process instance : {} incompleteness. {} task instance : {} disappear.",
+                                workflowExecuteThread.getProcessInstance().getId(), taskInstance.getTaskType(), taskInstance.getId());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * check start failed process and cancel retry
+     */
+    private void checkFailedStartProcess() {
+        if (!this.failedStartProcessMap.isEmpty()) {
+            for (ProcessInstance processInstance : this.failedStartProcessMap.values()) {
+                logger.info("Scheduler start process : {}, failed.", processInstance.getId());
+                processInstance.setState(ExecutionStatus.FAILURE);
+                processInstance.setEndTime(new Date());
+                // TODO 发送启动失败告警
+//                this.processAlertManager
+                this.processService.updateProcessInstance(processInstance);
+
+                // 取消重试
+                this.startProcessFailedMap.remove(processInstance.getId());
             }
         }
     }

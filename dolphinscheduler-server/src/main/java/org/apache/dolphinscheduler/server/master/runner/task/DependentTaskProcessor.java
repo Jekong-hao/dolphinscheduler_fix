@@ -31,11 +31,7 @@ import org.apache.dolphinscheduler.dao.entity.TaskDefinition;
 import org.apache.dolphinscheduler.server.utils.DependentExecute;
 import org.apache.dolphinscheduler.server.utils.LogUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -169,6 +165,8 @@ public class DependentTaskProcessor extends BaseTaskProcessor {
     protected boolean killTask() {
         this.taskInstance.setState(ExecutionStatus.KILL);
         this.taskInstance.setEndTime(new Date());
+        // 保存实例状态
+        this.processService.updateTaskInstance(this.taskInstance);
         return true;
     }
 
@@ -189,6 +187,9 @@ public class DependentTaskProcessor extends BaseTaskProcessor {
             }
             if (!dependentExecute.finish(dependentDate)) {
                 finish = false;
+            }
+            if (Calendar.getInstance().get(Calendar.MINUTE) % 10 == 0) {
+                logger.info("task instance : {} , dependent item complete [{}/{}]", this.taskInstance.getId(), dependResultMap.size(), dependentTaskList.size());
             }
         }
         return finish;

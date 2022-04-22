@@ -188,8 +188,9 @@ public class DependentTaskProcessor extends BaseTaskProcessor {
             if (!dependentExecute.finish(dependentDate)) {
                 finish = false;
             }
-            logger.info("task instance : {} , dependent item complete [{}/{}]", this.taskInstance.getId(), dependResultMap.size(), dependentTaskList.size());
-
+            if (Calendar.getInstance().get(Calendar.MINUTE) % 10 == 0) {
+                logger.info("task instance : {} , dependent item complete [{}/{}]", this.taskInstance.getId(), dependResultMap.size(), dependentTaskList.size());
+            }
         }
         return finish;
     }

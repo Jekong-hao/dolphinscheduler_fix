@@ -68,7 +68,11 @@ public class TaskAckProcessor implements NettyRequestProcessor {
     public void process(Channel channel, Command command) {
         Preconditions.checkArgument(CommandType.TASK_EXECUTE_ACK == command.getType(), String.format("invalid command type : %s", command.getType()));
         TaskExecuteAckCommand taskAckCommand = JSONUtils.parseObject(command.getBody(), TaskExecuteAckCommand.class);
-        logger.info("taskAckCommand : {}", taskAckCommand);
+//        logger.info("taskAckCommand : {}", taskAckCommand);
+        logger.info("[process instance {}] master receive task {} ack, with command {}",
+                taskAckCommand.getProcessInstanceId(),
+                taskAckCommand.getTaskInstanceId(),
+                taskAckCommand);
 
         String workerAddress = ChannelUtils.toAddress(channel).getAddress();
 

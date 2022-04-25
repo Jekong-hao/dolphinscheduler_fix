@@ -80,12 +80,15 @@ public class ShellTask extends AbstractTaskExecutor {
 
     @Override
     public void init() {
-        logger.info("shell task params {}", taskExecutionContext.getTaskParams());
+        logger.info("[process instance {}] worker shell task params {}",
+                taskExecutionContext.getProcessInstanceId(),
+                taskExecutionContext.getTaskParams());
 
         shellParameters = JSONUtils.parseObject(taskExecutionContext.getTaskParams(), ShellParameters.class);
 
         if (!shellParameters.checkParameters()) {
-            throw new RuntimeException("shell task params is not valid");
+            throw new RuntimeException(String.format("[process instance %s] worker shell task params is not valid",
+                    taskExecutionContext.getProcessInstanceId()));
         }
     }
 

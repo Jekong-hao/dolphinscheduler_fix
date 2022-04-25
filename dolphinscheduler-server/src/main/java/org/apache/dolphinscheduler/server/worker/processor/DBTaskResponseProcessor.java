@@ -47,6 +47,10 @@ public class DBTaskResponseProcessor implements NettyRequestProcessor {
         DBTaskResponseCommand taskResponseCommand = JSONUtils.parseObject(
                 command.getBody(), DBTaskResponseCommand.class);
 
+        logger.info("[process instance ?] worker received db task {}, with command {}",
+                taskResponseCommand.getTaskInstanceId(),
+                taskResponseCommand);
+
         if (taskResponseCommand == null) {
             return;
         }

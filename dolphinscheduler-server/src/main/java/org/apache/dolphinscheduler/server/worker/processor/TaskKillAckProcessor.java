@@ -45,6 +45,10 @@ public class TaskKillAckProcessor implements NettyRequestProcessor {
         TaskKillAckCommand taskKillAckCommand = JSONUtils.parseObject(
                 command.getBody(), TaskKillAckCommand.class);
 
+        logger.info("[process instance ?] worker received task {} kill ack, with command {}",
+                taskKillAckCommand.getTaskInstanceId(),
+                taskKillAckCommand);
+
         if (taskKillAckCommand == null) {
             return;
         }

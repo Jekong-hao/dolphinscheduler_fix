@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,6 +106,11 @@ public class EventExecuteService extends Thread {
         logger.info("Event service started");
         while (Stopper.isRunning()) {
             try {
+                if (!this.processInstanceExecMaps.isEmpty()) {
+                    logger.debug("Workflow event handler, processing process instance list : [{}]",
+                            this.processInstanceExecMaps.keySet().stream().map(String::valueOf).collect(Collectors.joining(",")));
+                }
+
                 eventHandler();
 
                 TimeUnit.MILLISECONDS.sleep(Constants.SLEEP_TIME_MILLIS);
@@ -124,11 +130,15 @@ public class EventExecuteService extends Thread {
                 continue;
             }
             int processInstanceId = workflowExecuteThread.getProcessInstance().getId();
-            logger.info("handle process instance : {} , events count:{}",
+            logger.info("[process instance {}] start processing events count {}",
                     processInstanceId,
                     workflowExecuteThread.eventSize());
-            logger.info("already exists handler process size:{}", this.eventHandlerMap.size());
+//            logger.info("handle process instance : {} , events count:{}",
+//                    processInstanceId,
+//                    workflowExecuteThread.eventSize());
+//            logger.info("already exists handler process size:{}", this.eventHandlerMap.size());
             eventHandlerMap.put(workflowExecuteThread.getKey(), workflowExecuteThread);
+            // TODO 额外又提交了一个线程处理
             ListenableFuture future = this.listeningExecutorService.submit(workflowExecuteThread);
             FutureCallback futureCallback = new FutureCallback() {
                 @Override
@@ -136,7 +146,7 @@ public class EventExecuteService extends Thread {
                     if (workflowExecuteThread.workFlowFinish()) {
                         processInstanceExecMaps.remove(processInstanceId);
                         notifyProcessChanged();
-                        logger.info("process instance {} finished.", processInstanceId);
+                        logger.info("[process instance {}] finished.", processInstanceId);
                     }
                     if (workflowExecuteThread.getProcessInstance().getId() != processInstanceId) {
                         processInstanceExecMaps.remove(processInstanceId);

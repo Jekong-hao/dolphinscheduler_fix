@@ -48,6 +48,10 @@ public class DBTaskAckProcessor implements NettyRequestProcessor {
         DBTaskAckCommand taskAckCommand = JSONUtils.parseObject(
                 command.getBody(), DBTaskAckCommand.class);
 
+        logger.info("[process instance ?] worker received db task {} ack, with command {}",
+                taskAckCommand.getTaskInstanceId(),
+                taskAckCommand);
+
         if (taskAckCommand == null){
             return;
         }

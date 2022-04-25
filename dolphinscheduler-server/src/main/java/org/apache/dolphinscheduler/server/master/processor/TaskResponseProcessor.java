@@ -69,7 +69,11 @@ public class TaskResponseProcessor implements NettyRequestProcessor {
         Preconditions.checkArgument(CommandType.TASK_EXECUTE_RESPONSE == command.getType(), String.format("invalid command type : %s", command.getType()));
 
         TaskExecuteResponseCommand responseCommand = JSONUtils.parseObject(command.getBody(), TaskExecuteResponseCommand.class);
-        logger.info("received command : {}", responseCommand);
+//        logger.info("received command : {}", responseCommand);
+        logger.info("[process instance {}] master received task {} response, with command {}",
+                responseCommand.getProcessInstanceId(),
+                responseCommand.getTaskInstanceId(),
+                responseCommand);
 
         // TaskResponseEvent
         TaskResponseEvent taskResponseEvent = TaskResponseEvent.newResult(ExecutionStatus.of(responseCommand.getStatus()),

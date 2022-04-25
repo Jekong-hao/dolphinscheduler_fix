@@ -137,10 +137,12 @@ public class CommonTaskProcessor extends BaseTaskProcessor {
             // task cannot be submitted because its execution state is RUNNING or DELAY.
             if (taskInstance.getState() == ExecutionStatus.RUNNING_EXECUTION
                     || taskInstance.getState() == ExecutionStatus.DELAY_EXECUTION) {
-                logger.info("submit task, but the status of the task {} is already running or delayed.", taskInstance.getName());
+                logger.info("[process instance {}] master submit task, but the status of the task {} is already running or delayed.",
+                        processInstance.getId(),
+                        taskInstance.getName());
                 return true;
             }
-            logger.info("task ready to submit: {}", taskInstance);
+            logger.info("[process instance {}] master task ready to submit: {}", processInstance.getId(), taskInstance);
 
             TaskPriority taskPriority = new TaskPriority(processInstance.getProcessInstancePriority().getCode(),
                     processInstance.getId(), taskInstance.getProcessInstancePriority().getCode(),
@@ -150,7 +152,8 @@ public class CommonTaskProcessor extends BaseTaskProcessor {
             taskPriority.setTaskExecutionContext(taskExecutionContext);
 
             taskUpdateQueue.put(taskPriority);
-            logger.info("master submit success, task id:{}, task name:{}, process id:{}",
+            logger.info("[process instance {}] master submit success, task id:{}, task name:{}, process id:{}",
+                    processInstance.getId(),
                     taskInstance.getId(), taskInstance.getName(), taskInstance.getProcessInstanceId());
             return true;
         } catch (Exception e) {

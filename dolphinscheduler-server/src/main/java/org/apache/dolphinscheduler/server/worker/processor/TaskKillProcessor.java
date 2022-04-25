@@ -105,6 +105,11 @@ public class TaskKillProcessor implements NettyRequestProcessor {
         if (taskRequest == null) {
             return;
         }
+
+        logger.info("[process instance {}] worker received task {} KILL, with command {}",
+                taskRequest.getProcessInstanceId(),
+                taskRequest.getTaskInstanceId(),
+                killCommand);
         TaskKillResponseCommand taskKillResponseCommand = buildKillTaskResponseCommand(taskRequest, result);
         ResponceCache.get().cache(taskKillResponseCommand.getTaskInstanceId(), taskKillResponseCommand.convert2Command(), Event.ACTION_STOP);
         taskCallbackService.sendResult(taskKillResponseCommand.getTaskInstanceId(), taskKillResponseCommand.convert2Command());

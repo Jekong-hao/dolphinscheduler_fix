@@ -136,6 +136,12 @@ public class TaskPriorityQueueConsumer extends Thread {
                 return true;
             } else {
                 result = dispatcher.dispatch(executionContext);
+                logger.info("[process instance {}] master dispatch task {}, send command {} to worker host {} in worker group {}",
+                        taskPriority.getProcessInstanceId(),
+                        taskPriority.getTaskId(),
+                        executionContext.getCommand(),
+                        executionContext.getHost(),
+                        executionContext.getWorkerGroup());
             }
             if (result) {
                 processService.updateHostAndSubmitTimeById(taskPriority.getTaskId(), executionContext.getHost().getAddress(), new Date());

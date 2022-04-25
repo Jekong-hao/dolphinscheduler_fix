@@ -149,6 +149,7 @@ public class TaskCallbackService {
      */
     public void sendResult(int taskInstanceId, Command command) {
         NettyRemoteChannel nettyRemoteChannel = getRemoteChannel(taskInstanceId);
+        logger.info("worker send task {} response result with command {}", taskInstanceId, command);
         if (nettyRemoteChannel != null) {
             nettyRemoteChannel.writeAndFlush(command).addListener(new ChannelFutureListener() {
 

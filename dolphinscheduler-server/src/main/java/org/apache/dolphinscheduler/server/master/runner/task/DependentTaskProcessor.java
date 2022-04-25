@@ -72,6 +72,7 @@ public class DependentTaskProcessor extends BaseTaskProcessor {
         if (this.taskInstance == null) {
             return false;
         }
+        logger.info("Submit dependent task {} SUCCESS.", taskInstance.getId());
         taskDefinition = processService.findTaskDefinition(
                 taskInstance.getTaskCode(), taskInstance.getTaskDefinitionVersion()
         );
@@ -113,7 +114,8 @@ public class DependentTaskProcessor extends BaseTaskProcessor {
                 && TaskTimeoutStrategy.WARNFAILED != taskTimeoutStrategy) {
             return true;
         }
-        logger.info("dependent task {} timeout, strategy {} ",
+        logger.info("[process instance {}] dependent task {} timeout, strategy {} ",
+                taskInstance.getProcessInstanceId(),
                 taskInstance.getId(), taskTimeoutStrategy.getDescp());
         result = DependResult.FAILED;
         endTask();
@@ -189,7 +191,8 @@ public class DependentTaskProcessor extends BaseTaskProcessor {
                 finish = false;
             }
             if (Calendar.getInstance().get(Calendar.MINUTE) % 10 == 0) {
-                logger.info("task instance : {} , dependent item complete [{}/{}]", this.taskInstance.getId(), dependResultMap.size(), dependentTaskList.size());
+                logger.info("task instance : {} , dependent item complete [{}/{}]",
+                        this.taskInstance.getId(), dependResultMap.size(), dependentTaskList.size());
             }
         }
         return finish;

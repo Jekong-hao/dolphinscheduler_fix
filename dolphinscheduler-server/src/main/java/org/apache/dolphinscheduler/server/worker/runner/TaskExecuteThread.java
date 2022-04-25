@@ -142,7 +142,9 @@ public class TaskExecuteThread implements Runnable, Delayed {
             if (taskExecutionContext.getCurrentExecutionStatus() != ExecutionStatus.RUNNING_EXECUTION) {
                 changeTaskExecutionStatusToRunning();
             }
-            logger.info("the task begins to execute. task instance id: {}", taskExecutionContext.getTaskInstanceId());
+            logger.info("[process instance {}] worker the task begins to execute. task instance id: {}",
+                    taskExecutionContext.getProcessInstanceId(),
+                    taskExecutionContext.getTaskInstanceId());
 
             int dryRun = taskExecutionContext.getDryRun();
             // copy hdfs/minio file to local
@@ -201,7 +203,9 @@ public class TaskExecuteThread implements Runnable, Delayed {
             responseCommand.setProcessId(this.task.getProcessId());
             responseCommand.setAppIds(this.task.getAppIds());
             responseCommand.setVarPool(JSONUtils.toJsonString(this.task.getParameters().getVarPool()));
-            logger.info("task instance id : {},task final status : {}", taskExecutionContext.getTaskInstanceId(), this.task.getExitStatus());
+            logger.info("[process instance {}] worker task instance id : {},task final status : {}",
+                    taskExecutionContext.getProcessInstanceId(),
+                    taskExecutionContext.getTaskInstanceId(), this.task.getExitStatus());
         } catch (Throwable e) {
 
             logger.error("task scheduler failure", e);

@@ -23,6 +23,7 @@ import static org.apache.dolphinscheduler.common.Constants.CMD_PARAM_RECOVERY_ST
 import static org.apache.dolphinscheduler.common.Constants.CMD_PARAM_START_NODES;
 import static org.apache.dolphinscheduler.common.Constants.DEFAULT_WORKER_GROUP;
 
+import com.amazonaws.services.datapipeline.model.TaskObject;
 import org.apache.dolphinscheduler.common.Constants;
 import org.apache.dolphinscheduler.common.enums.*;
 import org.apache.dolphinscheduler.common.graph.DAG;
@@ -62,17 +63,8 @@ import org.apache.dolphinscheduler.service.queue.PeerTaskInstancePriorityQueue;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
@@ -461,6 +453,7 @@ public class WorkflowExecuteThread implements Runnable {
 
             if (stateEvent.getExecutionStatus() == ExecutionStatus.STOP) {
                 this.updateProcessInstanceState(stateEvent);
+                this.updatePendingTaskInstance2Kill(processInstance);
                 return true;
             }
 
@@ -480,6 +473,17 @@ public class WorkflowExecuteThread implements Runnable {
             logger.error("process state change error:", e);
         }
         return true;
+    }
+
+
+    private void updatePendingTaskInstance2Kill(ProcessInstance processInstance) {
+        List<TaskInstance> taskInstanceList = processService.findValidTaskListByProcessId(processInstance.getId());
+        for(TaskInstance taskInstance : taskInstanceList) {
+            if (taskInstance.getState().equals(ExecutionStatus.SUBMITTED_SUCCESS)) {
+                taskInstance.setState(ExecutionStatus.KILL);
+                processService.updateTaskInstance(taskInstance);
+            }
+        }
     }
 
     private boolean processComplementData() throws Exception {
@@ -563,10 +567,19 @@ public class WorkflowExecuteThread implements Runnable {
             logger.info("[process instance {}] master workflow execute thread start.", this.getProcessInstance().getId());
 
             isStart = false;
+            // 初始化DAG
             buildFlowDag();
+
+            // 初始化内存队列
             initTaskQueue();
+
+            initTaskInstanceToDb();
+
+            // 提交启动任务到standby 队列
             submitPostNode(null);
+
             isStart = true;
+
 
             this.taskStateWheelExecuteThread = new TaskStateWheelExecuteThread(
                     processService,
@@ -575,8 +588,38 @@ public class WorkflowExecuteThread implements Runnable {
                     this,
                     60 * Constants.SLEEP_TIME_MILLIS);
 
+            // DAG 任务状态检测
             this.taskStateWheelExecuteThread.start();
         }
+    }
+
+    private void createPendingTaskInstance(String parentNodeCode, int level,
+                                           Map<String, TaskInstance> completeTaskList,
+                                           Set<String> initedPendingTaskSet) {
+        Set<String> submitTaskNodeList = DagHelper.parsePostNodes(parentNodeCode, skipTaskNodeList, dag, completeTaskList);
+        System.out.println(String.format("###### DAG level %d, parent = %s, Subsequent tasks : [%s]", level, parentNodeCode, submitTaskNodeList.stream().collect(Collectors.joining(","))));
+
+        if (submitTaskNodeList.isEmpty()) {
+            return;
+        }
+        for (String code : submitTaskNodeList) {
+            TaskInstance task = null;
+            if (!initedPendingTaskSet.contains(code)) {
+                TaskNode taskNodeObject = dag.getNode(code);
+                task = createTaskInstance(processInstance, taskNodeObject);
+                task.setSubmitTime(new Date());
+                initedPendingTaskSet.add(code);
+                processService.saveTaskInstance(task);
+            } else {
+                task = new TaskInstance();
+            }
+            completeTaskList.put(code, task);
+        }
+        level++;
+        for (String code : submitTaskNodeList) {
+            createPendingTaskInstance(code, level, completeTaskList, initedPendingTaskSet);
+        }
+
     }
 
     /**
@@ -687,6 +730,16 @@ public class WorkflowExecuteThread implements Runnable {
                 }
             }
         }
+    }
+
+    /**
+     * 初始化 Task instance 存储到数据库
+     */
+    private void initTaskInstanceToDb() {
+        // dependent 依赖，会判断最近一次task执行的状态，所以需要在工作流启动时，初始化本次工作的所有任务实例到数据库
+        Map<String, TaskInstance> tmpCompleteTaskList = new HashMap<>();
+        Set<String> initedPendingTaskSet = new HashSet<>();
+        createPendingTaskInstance(null, 0, tmpCompleteTaskList, initedPendingTaskSet);
     }
 
     /**

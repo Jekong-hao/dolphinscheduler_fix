@@ -193,6 +193,18 @@ public interface ProcessInstanceMapper extends BaseMapper<ProcessInstance> {
                                               @Param("endTime") Date endTime);
 
     /**
+     * query last scheduler process instance
+     *
+     * @param definitionCode definitionCode
+     * @param startTime startTime
+     * @param endTime endTime
+     * @return process instance
+     */
+    ProcessInstance queryLastSchedulerCompleteProcess(@Param("processDefinitionCode") Long definitionCode,
+                                              @Param("startTime") Date startTime,
+                                              @Param("endTime") Date endTime);
+
+    /**
      * query last running process instance
      *
      * @param definitionCode definitionCode

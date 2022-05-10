@@ -1975,6 +1975,30 @@ public class ProcessService {
     }
 
     /**
+     * find last scheduler complete process instance in the date interval
+     * not start process from some task
+     *
+     * @param definitionCode definitionCode
+     * @param dateInterval dateInterval
+     * @return process instance
+     */
+    public ProcessInstance findLastSchedulerCompleteProcessInterval(Long definitionCode, DateInterval dateInterval) {
+        return processInstanceMapper.queryLastSchedulerCompleteProcess(definitionCode,
+                dateInterval.getStartTime(),
+                dateInterval.getEndTime());
+    }
+
+    /**
+     * find last schedule task
+     * @param taskCode
+     * @param dateInterval
+     * @return
+     */
+    public TaskInstance findLastSchedulerTaskInterval(Long taskCode, DateInterval dateInterval) {
+        return taskInstanceMapper.findLastSchedulerTask(taskCode, dateInterval.getStartTime(), dateInterval.getEndTime());
+    }
+
+    /**
      * find last manual process instance interval
      *
      * @param definitionCode process definition code

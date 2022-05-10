@@ -75,4 +75,15 @@ public interface TaskInstanceMapper extends BaseMapper<TaskInstance> {
     );
 
     int updateHostAndSubmitTimeById(@Param("id") int id, @Param("host") String host, @Param("submitTime") Date submitTime);
+
+
+    /**
+     * find last scheduler task instance
+     * @param taskCode
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    TaskInstance findLastSchedulerTask(@Param("taskCode") Long taskCode, @Param("startTime") Date startTime,
+                                       @Param("endTime") Date endTime) ;
 }

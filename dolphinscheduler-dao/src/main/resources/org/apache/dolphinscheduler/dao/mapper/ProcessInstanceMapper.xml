@@ -189,6 +189,18 @@
         </if>
         order by end_time desc limit 1
     </select>
+    <select id="queryLastSchedulerCompleteProcess" resultType="org.apache.dolphinscheduler.dao.entity.ProcessInstance">
+        select
+        <include refid="baseSql"/>
+        from t_ds_process_instance
+        where process_definition_code=#{processDefinitionCode}
+        and json_contains_path(command_param, 'one', '$.StartNodeList') = 0
+        <if test="startTime!=null and endTime != null ">
+            and schedule_time <![CDATA[ >= ]]> #{startTime} and schedule_time <![CDATA[ <= ]]> #{endTime}
+        </if>
+        order by start_time desc limit 1
+    </select>
+
     <select id="queryLastRunningProcess" resultType="org.apache.dolphinscheduler.dao.entity.ProcessInstance">
         select
         <include refid="baseSql"/>

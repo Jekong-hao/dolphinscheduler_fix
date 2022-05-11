@@ -24,10 +24,14 @@ import org.apache.dolphinscheduler.common.utils.JSONUtils;
 import org.apache.dolphinscheduler.dao.AlertDao;
 import org.apache.dolphinscheduler.dao.entity.*;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.apache.dolphinscheduler.dao.mapper.UserMapper;
+import org.apache.dolphinscheduler.service.process.ProcessService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +54,16 @@ public class ProcessAlertManager {
     @Autowired
     private AlertDao alertDao;
 
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private ProcessService processService;
+
+
+    private static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+
     /**
      * command type convert chinese
      *
@@ -67,13 +81,13 @@ public class ProcessAlertManager {
             case START_FAILURE_TASK_PROCESS:
                 return "start failure task process";
             case START_PROCESS:
-                return "start process";
+                return "【手动调度】";
             case REPEAT_RUNNING:
                 return "repeat running";
             case SCHEDULER:
-                return "scheduler";
+                return "【定时调度】";
             case COMPLEMENT_DATA:
-                return "complement data";
+                return "【补数调度】";
             case PAUSE:
                 return "pause";
             case STOP:
@@ -94,56 +108,86 @@ public class ProcessAlertManager {
                                             List<TaskInstance> taskInstances,
                                             ProjectUser projectUser) {
 
-        String res = "";
-        if (processInstance.getState().typeIsSuccess()) {
-            List<MyProcessAlertContent> successTaskList = new ArrayList<>(1);
-            MyProcessAlertContent processAlertContent = MyProcessAlertContent.newBuilder()
-//                    .projectId(projectUser.getProjectId())
-                    .projectName(projectUser.getProjectName())
-                    .owner(projectUser.getUserName())
-//                    .processId(processInstance.getId())
-//                    .processDefinitionCode(processInstance.getProcessDefinitionCode())
-                    .processName(processInstance.getName())
-                    .processType(processInstance.getCommandType())
-                    .processState(processInstance.getState())
-//                    .recovery(processInstance.getRecovery())
-                    .runTimes(processInstance.getRunTimes())
-                    .processStartTime(processInstance.getStartTime())
-                    .processEndTime(processInstance.getEndTime())
-//                    .processHost(processInstance.getHost())
-                    .build();
-            successTaskList.add(processAlertContent);
-            res =  JSONUtils.formatJson(JSONUtils.toJsonString(successTaskList));
-        } else if (processInstance.getState().typeIsFailure()) {
+//        String res = "";
+//        if (processInstance.getState().typeIsSuccess()) {
+//            List<MyProcessAlertContent> successTaskList = new ArrayList<>(1);
+//            MyProcessAlertContent processAlertContent = MyProcessAlertContent.newBuilder()
+////                    .projectId(projectUser.getProjectId())
+//                    .projectName(projectUser.getProjectName())
+//                    .owner(projectUser.getUserName())
+////                    .processId(processInstance.getId())
+////                    .processDefinitionCode(processInstance.getProcessDefinitionCode())
+//                    .processName(processInstance.getName())
+//                    .processType(processInstance.getCommandType())
+//                    .processState(processInstance.getState())
+////                    .recovery(processInstance.getRecovery())
+//                    .runTimes(processInstance.getRunTimes())
+//                    .processStartTime(processInstance.getStartTime())
+//                    .processEndTime(processInstance.getEndTime())
+////                    .processHost(processInstance.getHost())
+//                    .build();
+//            successTaskList.add(processAlertContent);
+//            res =  JSONUtils.formatJson(JSONUtils.toJsonString(successTaskList));
+//        } else if (processInstance.getState().typeIsFailure()) {
+//
+//            List<MyProcessAlertContent> failedTaskList = new ArrayList<>();
+//            for (TaskInstance task : taskInstances) {
+//                if (task.getState().typeIsSuccess()) {
+//                    continue;
+//                }
+//                MyProcessAlertContent processAlertContent = MyProcessAlertContent.newBuilder()
+////                        .projectId(projectUser.getProjectId())
+//                        .projectName(projectUser.getProjectName())
+//                        .owner(projectUser.getUserName())
+////                        .processId(processInstance.getId())
+////                        .processDefinitionCode(processInstance.getProcessDefinitionCode())
+//                        .processName(processInstance.getName())
+////                        .taskCode(task.getTaskCode())
+//                        .taskName(task.getName())
+//                        .taskType(task.getTaskType())
+//                        .taskState(task.getState())
+//                        .taskStartTime(task.getStartTime())
+//                        .taskEndTime(task.getEndTime())
+////                        .taskHost(task.getHost())
+////                        .logPath(task.getLogPath())
+//                        .build();
+//                  failedTaskList.add(processAlertContent);
+//            }
+//            res = JSONUtils.formatJson(JSONUtils.toJsonString(failedTaskList));
+//
+//        }
+//
+//        return res;
 
-            List<MyProcessAlertContent> failedTaskList = new ArrayList<>();
-            for (TaskInstance task : taskInstances) {
-                if (task.getState().typeIsSuccess()) {
-                    continue;
-                }
-                MyProcessAlertContent processAlertContent = MyProcessAlertContent.newBuilder()
-//                        .projectId(projectUser.getProjectId())
-                        .projectName(projectUser.getProjectName())
-                        .owner(projectUser.getUserName())
-//                        .processId(processInstance.getId())
-//                        .processDefinitionCode(processInstance.getProcessDefinitionCode())
-                        .processName(processInstance.getName())
-//                        .taskCode(task.getTaskCode())
-                        .taskName(task.getName())
-                        .taskType(task.getTaskType())
-                        .taskState(task.getState())
-                        .taskStartTime(task.getStartTime())
-                        .taskEndTime(task.getEndTime())
-//                        .taskHost(task.getHost())
-//                        .logPath(task.getLogPath())
-                        .build();
-                  failedTaskList.add(processAlertContent);
-            }
-            res = JSONUtils.formatJson(JSONUtils.toJsonString(failedTaskList));
 
-        }
+        User user = userMapper.queryByProcessDefinitionCode(processInstance.getProcessDefinitionCode());
+        ProcessDefinition processDefinition = processService.findProcessDefinition(processInstance.getProcessDefinitionCode(), processInstance.getProcessDefinitionVersion());
+        StringBuffer sb = new StringBuffer();
+        sb.append(String.format("项目： %s \n", projectUser.getProjectName()));
+        sb.append(String.format("工作流： %s， 所有者： %s \n", processDefinition.getName(), user.getUserName()));
+        sb.append(String.format("工作流实例： %s \n", processInstance.getName()));
+        sb.append(String.format("工作流实例状态： %s \n", processInstance.getState().getDescp()));
+        sb.append(String.format("调度日期： %s \n", processInstance.getScheduleTime()==null?"":df.format(processInstance.getScheduleTime())));
+        sb.append(String.format("开始时间： %s \n", df.format(processInstance.getStartTime())));
+        sb.append(String.format("结束时间： %s \n", df.format(processInstance.getEndTime())));
+        sb.append(String.format("失败任务列表: [%s] \n", taskInstances.stream().filter(t -> t.getState().typeIsFailure()).map(t -> t.getName()).collect(Collectors.joining("; "))));
+//        sb.append(String.format("查询详情: %s", "htttpp"));
 
-        return res;
+        return sb.toString();
+
+        /**
+         * 【手动调度】失败
+         * 项目：xxx
+         * 工作流：xxxx
+         * 工作流实例： xxxx
+         * 调度日期： xxxx
+         * 开始时间： xxx
+         * 结束时间： xxx
+         * 失败任务列表： [xxxx,xxx]
+         * 查询详情：http://xxxxx
+         */
+
+
     }
 
     /**
@@ -211,7 +255,7 @@ public class ProcessAlertManager {
         Alert alert = new Alert();
 
         String cmdName = getCommandCnName(processInstance.getCommandType());
-        String success = processInstance.getState().typeIsSuccess() ? "success" : "failed";
+        String success = processInstance.getState().typeIsSuccess() ? "成功" : "失败";
         alert.setTitle(cmdName + " " + success);
         String content = getContentProcessInstance(processInstance, taskInstances,projectUser);
         alert.setContent(content);

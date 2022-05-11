@@ -170,4 +170,7 @@ public interface UserMapper extends BaseMapper<User> {
      * @return user list
      */
     List<User> queryAuthedUserListByProjectId(@Param("projectId") int projectId);
+
+
+    User queryByProcessDefinitionCode(@Param("code") Long processDefinitionCode);
 }

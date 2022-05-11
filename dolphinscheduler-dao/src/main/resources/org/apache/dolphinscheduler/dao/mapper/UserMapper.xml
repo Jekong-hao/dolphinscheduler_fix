@@ -140,5 +140,6 @@
         from t_ds_user u
         left join t_ds_process_definition p on u.id = p.user_id
         where p.code = #{code}
+        limit 1
     </select>
 </mapper>

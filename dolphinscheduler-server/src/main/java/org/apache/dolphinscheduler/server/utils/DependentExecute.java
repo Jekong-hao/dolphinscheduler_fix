@@ -107,17 +107,51 @@ public class DependentExecute {
 
         DependResult result = DependResult.FAILED;
         for (DateInterval dateInterval : dateIntervals) {
-            ProcessInstance processInstance = findLastProcessInterval(dependentItem.getDefinitionCode(),
-                    dateInterval);
-            if (processInstance == null) {
-                return DependResult.WAITING;
-            }
-            // need to check workflow for updates, so get all task and check the task state
+            // 依赖所有任务
             if (dependentItem.getDepTaskCode() == Constants.DEPENDENT_ALL_TASK_CODE) {
-                result = dependResultByProcessInstance(processInstance);
-            } else {
-                result = getDependTaskResult(dependentItem.getDepTaskCode(), processInstance);
+                ProcessInstance processInstance = this.processService.findLastSchedulerCompleteProcessInterval(dependentItem.getDefinitionCode(), dateInterval);
+                if (processInstance == null) {
+                    result =  DependResult.WAITING;
+                } else {
+                    result = dependResultByProcessInstance(processInstance);
+                }
             }
+            // 依赖某个任务
+            else {
+                TaskInstance taskInstance = this.processService.findLastSchedulerTaskInterval(dependentItem.getDepTaskCode(), dateInterval);
+
+                if (null == taskInstance) {
+                    result = DependResult.WAITING;
+                } else {
+                    if (taskInstance.getState().typeIsSuccess()) {
+                        result = DependResult.SUCCESS;
+                    } else {
+                        //TODO 最后调起任务的工作流失败了。如果前面有成功的 task是否需要返回依赖成功
+//                        ProcessInstance processInstance = this.processService.findProcessInstanceById(taskInstance.getProcessInstanceId());
+//                        // TODO 最后调起任务的工作流失败了。如果前面有成功的 task是否需要返回依赖成功
+//                        if (processInstance.getState().typeIsFinished()) {
+//                            result = DependResult.WAITING;
+//                        } else {
+//
+//                        }
+                        result = DependResult.WAITING;
+                    }
+                }
+
+            }
+
+
+//            ProcessInstance processInstance = findLastProcessInterval(dependentItem.getDefinitionCode(),
+//                    dateInterval);
+//            if (processInstance == null) {
+//                return DependResult.WAITING;
+//            }
+//            // need to check workflow for updates, so get all task and check the task state
+//            if (dependentItem.getDepTaskCode() == Constants.DEPENDENT_ALL_TASK_CODE) {
+//                result = dependResultByProcessInstance(processInstance);
+//            } else {
+//                result = getDependTaskResult(dependentItem.getDepTaskCode(), processInstance);
+//            }
             if (result != DependResult.SUCCESS) {
                 break;
             }

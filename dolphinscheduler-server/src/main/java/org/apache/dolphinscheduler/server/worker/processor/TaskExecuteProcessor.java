@@ -116,7 +116,7 @@ public class TaskExecuteProcessor implements NettyRequestProcessor {
         TaskExecuteRequestCommand taskRequestCommand = JSONUtils.parseObject(
                 command.getBody(), TaskExecuteRequestCommand.class);
 
-        logger.info("received command : {}", taskRequestCommand);
+        logger.debug("received command : {}", taskRequestCommand);
 
         if (taskRequestCommand == null) {
             logger.error("task execute request command is null");
@@ -131,6 +131,11 @@ public class TaskExecuteProcessor implements NettyRequestProcessor {
             return;
         }
 
+        logger.info("[process instance {}] worker received task {} EXECUTE, with command {}",
+                taskExecutionContext.getProcessInstanceId(),
+                taskExecutionContext.getTaskInstanceId(),
+                taskRequestCommand);
+
         setTaskCache(taskExecutionContext);
         // todo custom logger
 
@@ -139,7 +144,9 @@ public class TaskExecuteProcessor implements NettyRequestProcessor {
 
         // local execute path
         String execLocalPath = getExecLocalPath(taskExecutionContext);
-        logger.info("task instance local execute path : {}", execLocalPath);
+        logger.info("[process instance {}] worker task instance local execute path : {}",
+                taskExecutionContext.getProcessInstanceId(),
+                execLocalPath);
         taskExecutionContext.setExecutePath(execLocalPath);
 
         try {
@@ -148,7 +155,9 @@ public class TaskExecuteProcessor implements NettyRequestProcessor {
                 OSUtils.createUserIfAbsent(taskExecutionContext.getTenantCode());
             }
         } catch (Throwable ex) {
-            logger.error("create execLocalPath: {}", execLocalPath, ex);
+            logger.error("[process instance {}] worker create execLocalPath: {}",
+                    taskExecutionContext.getProcessInstanceId(),
+                    execLocalPath, ex);
             TaskExecutionContextCacheManager.removeByTaskInstanceId(taskExecutionContext.getTaskInstanceId());
         }
 
@@ -158,7 +167,9 @@ public class TaskExecuteProcessor implements NettyRequestProcessor {
         // delay task process
         long remainTime = DateUtils.getRemainTime(taskExecutionContext.getFirstSubmitTime(), taskExecutionContext.getDelayTime() * 60L);
         if (remainTime > 0) {
-            logger.info("delay the execution of task instance {}, delay time: {} s", taskExecutionContext.getTaskInstanceId(), remainTime);
+            logger.info("[process instance {}] worker delay the execution of task instance {}, delay time: {} s",
+                    taskExecutionContext.getProcessInstanceId(),
+                    taskExecutionContext.getTaskInstanceId(), remainTime);
             taskExecutionContext.setCurrentExecutionStatus(ExecutionStatus.DELAY_EXECUTION);
             taskExecutionContext.setStartTime(null);
         } else {
@@ -170,7 +181,9 @@ public class TaskExecuteProcessor implements NettyRequestProcessor {
 
         // submit task to manager
         if (!workerManager.offer(new TaskExecuteThread(taskExecutionContext, taskCallbackService, alertClientService, taskPluginManager))) {
-            logger.info("submit task to manager error, queue is full, queue size is {}", workerManager.getDelayQueueSize());
+            logger.info("[process instance {}] worker submit task to manager error, queue is full, queue size is {}",
+                    taskExecutionContext.getProcessInstanceId(),
+                    workerManager.getDelayQueueSize());
         }
     }
 

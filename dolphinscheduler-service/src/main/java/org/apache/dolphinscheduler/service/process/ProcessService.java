@@ -1068,12 +1068,14 @@ public class ProcessService {
     @Transactional(rollbackFor = Exception.class)
     public TaskInstance submitTask(TaskInstance taskInstance) {
         ProcessInstance processInstance = this.findProcessInstanceDetailById(taskInstance.getProcessInstanceId());
-        logger.info("start submit task : {}, instance id:{}, state: {}",
-                taskInstance.getName(), taskInstance.getProcessInstanceId(), processInstance.getState());
+        logger.info("[process instance {}] master start submit task : {}, instance id:{}, state: {}",
+                processInstance.getId(),
+                taskInstance.getName(), taskInstance.getId(), taskInstance.getState());
         //submit to db
         TaskInstance task = submitTaskInstanceToDB(taskInstance, processInstance);
         if (task == null) {
-            logger.error("end submit task to db error, task name:{}, process id:{} state: {} ",
+            logger.error("[process instance {}] master end submit task to db error, task name:{}, process id:{} state: {} ",
+                    processInstance.getId(),
                     taskInstance.getName(), taskInstance.getProcessInstance(), processInstance.getState());
             return task;
         }
@@ -1081,7 +1083,8 @@ public class ProcessService {
             createSubWorkProcess(processInstance, task);
         }
 
-        logger.info("end submit task to db successfully:{} {} state:{} complete, instance id:{} state: {}  ",
+        logger.info("[process instance {}] master end submit task to db successfully:{} {} state:{} complete, instance id:{} state: {}  ",
+                processInstance.getId(),
                 taskInstance.getId(), taskInstance.getName(), task.getState(), processInstance.getId(), processInstance.getState());
         return task;
     }
@@ -1969,6 +1972,30 @@ public class ProcessService {
         return processInstanceMapper.queryLastSchedulerProcess(definitionCode,
                 dateInterval.getStartTime(),
                 dateInterval.getEndTime());
+    }
+
+    /**
+     * find last scheduler complete process instance in the date interval
+     * not start process from some task
+     *
+     * @param definitionCode definitionCode
+     * @param dateInterval dateInterval
+     * @return process instance
+     */
+    public ProcessInstance findLastSchedulerCompleteProcessInterval(Long definitionCode, DateInterval dateInterval) {
+        return processInstanceMapper.queryLastSchedulerCompleteProcess(definitionCode,
+                dateInterval.getStartTime(),
+                dateInterval.getEndTime());
+    }
+
+    /**
+     * find last schedule task
+     * @param taskCode
+     * @param dateInterval
+     * @return
+     */
+    public TaskInstance findLastSchedulerTaskInterval(Long taskCode, DateInterval dateInterval) {
+        return taskInstanceMapper.findLastSchedulerTask(taskCode, dateInterval.getStartTime(), dateInterval.getEndTime());
     }
 
     /**

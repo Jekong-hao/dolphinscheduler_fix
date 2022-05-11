@@ -206,7 +206,7 @@ public class MasterSchedulerService extends Thread {
                     continue;
                 }
                 scheduleProcess();
-                logger.info("Scheduler running process instance nums {} , ids [{}].",
+                logger.debug("Scheduler running process instance nums {} , ids [{}].",
                         this.processInstanceExecMaps.size(),
                         this.processInstanceExecMaps.keySet()
                                 .stream().map(String::valueOf).collect(Collectors.joining(",")));
@@ -272,6 +272,12 @@ public class MasterSchedulerService extends Thread {
                 ProcessInstance processInstance = processService.handleCommand(logger, getLocalAddress(), command);
 
                 if (processInstance != null) {
+                    logger.info("[process instance {}] master start at {} for schedule_time {}. with command type {}",
+                            processInstance.getId(),
+                            processInstance.getStartTime(),
+                            processInstance.getScheduleTime(),
+                            command.getCommandType());
+
                     WorkflowExecuteThread workflowExecuteThread = new WorkflowExecuteThread(
                             processInstance
                             , taskResponseService
@@ -286,9 +292,13 @@ public class MasterSchedulerService extends Thread {
                     if (processInstance.getTimeout() > 0) {
                         this.processTimeoutCheckList.put(processInstance.getId(), processInstance);
                     }
-                    logger.info("handle command end, command {} process {} start...",
+                    logger.info("[process instance {}] master handle command end, command {} process {} start...",
+                            processInstance.getId(),
                             command.getId(), processInstance.getId());
                     masterExecService.execute(workflowExecuteThread);
+                } else {
+                    logger.error("master cannot init process instance from command : id : {} type : {}",
+                            command.getId(), command.getCommandType());
                 }
             } catch (Exception e) {
                 logger.error("scan command error ", e);

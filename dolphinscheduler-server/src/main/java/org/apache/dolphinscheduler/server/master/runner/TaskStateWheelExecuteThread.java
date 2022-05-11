@@ -49,13 +49,16 @@ public class TaskStateWheelExecuteThread extends Thread {
 
     @Override
     public void run() {
-        logger.info("task state wheel thread start");
+        logger.info("[process instance {}] master task state wheel thread start.",
+                this.workflowExecuteThread.getProcessInstance().getId());
         while (Stopper.isRunning()) {
             try {
                 checkTask4Timeout();
                 checkTask4Retry();
             } catch (Exception e) {
-                logger.error("taask state wheel thread check error:", e);
+                logger.error("[process instance {}] master task state wheel thread check error: {}",
+                        this.workflowExecuteThread.getProcessInstance().getId(),
+                        e);
             }
             ThreadUtil.sleepAtLeastIgnoreInterrupts(stateCheckIntervalSecs);
         }

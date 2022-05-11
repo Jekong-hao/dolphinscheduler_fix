@@ -60,6 +60,10 @@ public class StateEventProcessor implements NettyRequestProcessor {
         Preconditions.checkArgument(CommandType.STATE_EVENT_REQUEST == command.getType(), String.format("invalid command type: %s", command.getType()));
 
         StateEventChangeCommand stateEventChangeCommand = JSONUtils.parseObject(command.getBody(), StateEventChangeCommand.class);
+        logger.info("[process instance {}] master received state event task {}, with command {}",
+                stateEventChangeCommand.getSourceProcessInstanceId(),
+                stateEventChangeCommand.getDestTaskInstanceId(),
+                stateEventChangeCommand);
         StateEvent stateEvent = new StateEvent();
         stateEvent.setKey(stateEventChangeCommand.getKey());
         if (stateEventChangeCommand.getSourceProcessInstanceId() != stateEventChangeCommand.getDestProcessInstanceId()) {

@@ -131,6 +131,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
      * @param command command
      */
     private void processReceived(final Channel channel, final Command command) {
+        logger.info("channel {} receive netty command : {}", channel, command.toString());
         ResponseFuture future = ResponseFuture.getFuture(command.getOpaque());
         if (future != null) {
             future.setResponseCommand(command);
@@ -150,6 +151,7 @@ public class NettyClientHandler extends ChannelInboundHandlerAdapter {
         if (pair != null) {
             Runnable run = () -> {
                 try {
+                    logger.debug("processor {} begin to process command {}", pair.getLeft().toString(), command.toString());
                     pair.getLeft().process(channel, command);
                 } catch (Exception e) {
                     logger.error(String.format("process command %s exception", command), e);

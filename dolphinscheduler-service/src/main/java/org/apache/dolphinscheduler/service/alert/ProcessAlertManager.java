@@ -22,13 +22,7 @@ import org.apache.dolphinscheduler.common.enums.Flag;
 import org.apache.dolphinscheduler.common.enums.WarningType;
 import org.apache.dolphinscheduler.common.utils.JSONUtils;
 import org.apache.dolphinscheduler.dao.AlertDao;
-import org.apache.dolphinscheduler.dao.entity.Alert;
-import org.apache.dolphinscheduler.dao.entity.ProcessAlertContent;
-import org.apache.dolphinscheduler.dao.entity.ProcessDefinition;
-import org.apache.dolphinscheduler.dao.entity.ProcessInstance;
-import org.apache.dolphinscheduler.dao.entity.ProjectUser;
-import org.apache.dolphinscheduler.dao.entity.TaskDefinition;
-import org.apache.dolphinscheduler.dao.entity.TaskInstance;
+import org.apache.dolphinscheduler.dao.entity.*;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -102,50 +96,51 @@ public class ProcessAlertManager {
 
         String res = "";
         if (processInstance.getState().typeIsSuccess()) {
-            List<ProcessAlertContent> successTaskList = new ArrayList<>(1);
-            ProcessAlertContent processAlertContent = ProcessAlertContent.newBuilder()
-                    .projectId(projectUser.getProjectId())
+            List<MyProcessAlertContent> successTaskList = new ArrayList<>(1);
+            MyProcessAlertContent processAlertContent = MyProcessAlertContent.newBuilder()
+//                    .projectId(projectUser.getProjectId())
                     .projectName(projectUser.getProjectName())
                     .owner(projectUser.getUserName())
-                    .processId(processInstance.getId())
-                    .processDefinitionCode(processInstance.getProcessDefinitionCode())
+//                    .processId(processInstance.getId())
+//                    .processDefinitionCode(processInstance.getProcessDefinitionCode())
                     .processName(processInstance.getName())
                     .processType(processInstance.getCommandType())
                     .processState(processInstance.getState())
-                    .recovery(processInstance.getRecovery())
+//                    .recovery(processInstance.getRecovery())
                     .runTimes(processInstance.getRunTimes())
                     .processStartTime(processInstance.getStartTime())
                     .processEndTime(processInstance.getEndTime())
-                    .processHost(processInstance.getHost())
+//                    .processHost(processInstance.getHost())
                     .build();
             successTaskList.add(processAlertContent);
-            res = JSONUtils.toJsonString(successTaskList);
+            res =  JSONUtils.formatJson(JSONUtils.toJsonString(successTaskList));
         } else if (processInstance.getState().typeIsFailure()) {
 
-            List<ProcessAlertContent> failedTaskList = new ArrayList<>();
+            List<MyProcessAlertContent> failedTaskList = new ArrayList<>();
             for (TaskInstance task : taskInstances) {
                 if (task.getState().typeIsSuccess()) {
                     continue;
                 }
-                ProcessAlertContent processAlertContent = ProcessAlertContent.newBuilder()
-                        .projectId(projectUser.getProjectId())
+                MyProcessAlertContent processAlertContent = MyProcessAlertContent.newBuilder()
+//                        .projectId(projectUser.getProjectId())
                         .projectName(projectUser.getProjectName())
                         .owner(projectUser.getUserName())
-                        .processId(processInstance.getId())
-                        .processDefinitionCode(processInstance.getProcessDefinitionCode())
+//                        .processId(processInstance.getId())
+//                        .processDefinitionCode(processInstance.getProcessDefinitionCode())
                         .processName(processInstance.getName())
-                        .taskCode(task.getTaskCode())
+//                        .taskCode(task.getTaskCode())
                         .taskName(task.getName())
                         .taskType(task.getTaskType())
                         .taskState(task.getState())
                         .taskStartTime(task.getStartTime())
                         .taskEndTime(task.getEndTime())
-                        .taskHost(task.getHost())
-                        .logPath(task.getLogPath())
+//                        .taskHost(task.getHost())
+//                        .logPath(task.getLogPath())
                         .build();
-                failedTaskList.add(processAlertContent);
+                  failedTaskList.add(processAlertContent);
             }
-            res = JSONUtils.toJsonString(failedTaskList);
+            res = JSONUtils.formatJson(JSONUtils.toJsonString(failedTaskList));
+
         }
 
         return res;
@@ -160,10 +155,10 @@ public class ProcessAlertManager {
      */
     private String getWorkerToleranceContent(ProcessInstance processInstance, List<TaskInstance> toleranceTaskList) {
 
-        List<ProcessAlertContent> toleranceTaskInstanceList = new ArrayList<>();
+        List<MyProcessAlertContent> toleranceTaskInstanceList = new ArrayList<>();
 
         for (TaskInstance taskInstance : toleranceTaskList) {
-            ProcessAlertContent processAlertContent = ProcessAlertContent.newBuilder()
+            MyProcessAlertContent processAlertContent = MyProcessAlertContent.newBuilder()
                     .processId(processInstance.getId())
                     .processDefinitionCode(processInstance.getProcessDefinitionCode())
                     .processName(processInstance.getName())
@@ -174,7 +169,7 @@ public class ProcessAlertManager {
                     .build();
             toleranceTaskInstanceList.add(processAlertContent);
         }
-        return JSONUtils.toJsonString(toleranceTaskInstanceList);
+        return  JSONUtils.formatJson(JSONUtils.toJsonString(toleranceTaskInstanceList));
     }
 
     /**

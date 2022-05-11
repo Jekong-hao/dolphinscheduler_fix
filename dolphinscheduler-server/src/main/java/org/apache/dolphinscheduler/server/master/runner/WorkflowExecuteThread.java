@@ -355,19 +355,31 @@ public class WorkflowExecuteThread implements Runnable {
                 stateEvent.getType().toString());
 
         TaskInstance task = processService.findTaskInstanceById(stateEvent.getTaskInstanceId());
-        if (task.getState().typeIsFinished()) {
-            taskFinished(task);
-        } else if (activeTaskProcessorMaps.containsKey(stateEvent.getTaskInstanceId())) {
-            ITaskProcessor iTaskProcessor = activeTaskProcessorMaps.get(stateEvent.getTaskInstanceId());
-            iTaskProcessor.action(TaskAction.RUN);
-
-            if (iTaskProcessor.taskState().typeIsFinished()) {
-                task = processService.findTaskInstanceById(stateEvent.getTaskInstanceId());
+        if (null == task) {
+            logger.error("[process instance {}] Cannot found task instance from db, for event [{}]",
+                    this.getProcessInstance().getId(),
+                    stateEvent);
+        } else {
+            // 如果当前任务状态已经完成
+            if (task.getState().typeIsFinished()) {
                 taskFinished(task);
             }
-        } else {
-            logger.error("state handler error: {}", stateEvent.toString());
+            // 启动执行任务
+            else if (activeTaskProcessorMaps.containsKey(stateEvent.getTaskInstanceId())) {
+                ITaskProcessor iTaskProcessor = activeTaskProcessorMaps.get(stateEvent.getTaskInstanceId());
+                iTaskProcessor.action(TaskAction.RUN);
+
+                if (iTaskProcessor.taskState().typeIsFinished()) {
+                    task = processService.findTaskInstanceById(stateEvent.getTaskInstanceId());
+                    taskFinished(task);
+                }
+            } else {
+                logger.error("[process instance {}] state handler error: {}",
+                        this.getProcessInstance().getId(),
+                        stateEvent.toString());
+            }
         }
+
         return true;
     }
 
@@ -377,10 +389,11 @@ public class WorkflowExecuteThread implements Runnable {
                 task.getId(),
                 task.getState());
 
-        taskTimeoutCheckList.remove(task.getId());
-        taskRetryCheckList.remove(task.getId());
-
+        // 当前任务是否可重试
         if (task.taskCanRetry() && processInstance.getState() != ExecutionStatus.READY_STOP) {
+
+            // 加入 standby list, 由 retry check 发起调度
+            addTaskToStandByList(task);
 
             if (!task.retryTaskIntervalOverTime()) {
                 logger.info("[process instance {}] failure task will be submitted, task instance id: {} state:{} retry times:{} / {}, interval:{}",
@@ -396,9 +409,6 @@ public class WorkflowExecuteThread implements Runnable {
                         task.getTaskCode(),
                         task.getName(),
                         task.getState());
-                // 加入 standby list
-                addTaskToStandByList(task);
-//
                 this.addTimeoutCheck(task);
                 this.addRetryCheck(task);
             } else {
@@ -406,29 +416,31 @@ public class WorkflowExecuteThread implements Runnable {
                 taskTimeoutCheckList.remove(task.getId());
                 taskRetryCheckList.remove(task.getId());
             }
-            return;
         }
-        ProcessInstance processInstance = processService.findProcessInstanceById(this.processInstance.getId());
-        completeTaskList.put(Long.toString(task.getTaskCode()), task);
-        activeTaskProcessorMaps.remove(task.getId());
-//        taskTimeoutCheckList.remove(task.getId());
-//        taskRetryCheckList.remove(task.getId());
-        if (task.getState().typeIsSuccess()) {
-            processInstance.setVarPool(task.getVarPool());
-            processService.saveProcessInstance(processInstance);
-            submitPostNode(Long.toString(task.getTaskCode()));
-        } else if (task.getState().typeIsFailure()) {
-            if (task.isConditionsTask()
-                    || DagHelper.haveConditionsAfterNode(Long.toString(task.getTaskCode()), dag)) {
+        // 触发下游任务执行
+        else {
+            ProcessInstance processInstance = processService.findProcessInstanceById(this.processInstance.getId());
+            completeTaskList.put(Long.toString(task.getTaskCode()), task);
+            activeTaskProcessorMaps.remove(task.getId());
+            taskTimeoutCheckList.remove(task.getId());
+            taskRetryCheckList.remove(task.getId());
+            if (task.getState().typeIsSuccess()) {
+                processInstance.setVarPool(task.getVarPool());
+                processService.saveProcessInstance(processInstance);
                 submitPostNode(Long.toString(task.getTaskCode()));
-            } else {
-                errorTaskList.put(Long.toString(task.getTaskCode()), task);
-                if (processInstance.getFailureStrategy() == FailureStrategy.END) {
-                    killAllTasks();
+            } else if (task.getState().typeIsFailure()) {
+                if (task.isConditionsTask()
+                        || DagHelper.haveConditionsAfterNode(Long.toString(task.getTaskCode()), dag)) {
+                    submitPostNode(Long.toString(task.getTaskCode()));
+                } else {
+                    errorTaskList.put(Long.toString(task.getTaskCode()), task);
+                    if (processInstance.getFailureStrategy() == FailureStrategy.END) {
+                        killAllTasks();
+                    }
                 }
             }
+            this.updateProcessInstanceState();
         }
-        this.updateProcessInstanceState();
     }
 
     private boolean checkStateEvent(StateEvent stateEvent) {
@@ -579,7 +591,6 @@ public class WorkflowExecuteThread implements Runnable {
             submitPostNode(null);
 
             isStart = true;
-
 
             this.taskStateWheelExecuteThread = new TaskStateWheelExecuteThread(
                     processService,

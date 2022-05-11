@@ -418,6 +418,7 @@ public class MasterRegistryClient {
 
         Date serverStartupTime = getServerStartupTime(NodeType.MASTER, masterHost);
         List<Server> workerServers = registryClient.getServerList(NodeType.WORKER);
+        List<Server> masterServers = registryClient.getServerList(NodeType.MASTER);
 
         long startTime = System.currentTimeMillis();
         List<ProcessInstance> needFailoverProcessInstanceList = processService.queryNeedFailoverProcessInstances(masterHost);
@@ -437,6 +438,10 @@ public class MasterRegistryClient {
                     continue;
                 }
                 if (!checkTaskInstanceNeedFailover(workerServers, taskInstance)) {
+                    continue;
+                }
+                // 有部分任务是在master调度执行的，如depend task
+                if (!checkTaskInstanceNeedFailover(masterServers, taskInstance)) {
                     continue;
                 }
                 logger.info("failover task instance id: {}, process instance id: {}", taskInstance.getId(), taskInstance.getProcessInstanceId());

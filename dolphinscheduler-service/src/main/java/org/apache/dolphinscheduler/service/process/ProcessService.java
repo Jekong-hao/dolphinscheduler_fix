@@ -1871,7 +1871,7 @@ public class ProcessService {
 
         // 发送alert消息
         String title = "工作流容错恢复调度";
-        this.processAlertManager.sendAlertProcessMessage(processInstance, title, null);
+        this.processAlertManager.sendAlertProcessMessage(processInstance, title);
     }
 
     /**

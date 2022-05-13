@@ -513,7 +513,7 @@ public class MasterRegistryClient {
 
         // 发送alert消息
         String title = "任务容错恢复调度：" + taskInstance.getName();
-        this.processAlertManager.sendAlertProcessMessage(processInstance, title, null);
+        this.processAlertManager.sendAlertProcessMessage(processInstance, title);
     }
 
     /**

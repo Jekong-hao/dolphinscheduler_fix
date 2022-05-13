@@ -132,7 +132,7 @@ public class WorkflowStateWheelExecuteThread extends Thread {
                 }
 
                 String title = "工作流启动失败";
-                this.processAlertManager.sendAlertProcessMessage(processInstance, title, null);
+                this.processAlertManager.sendAlertProcessMessage(processInstance, title);
             } else {
                 this.startProcessFailedRetryCountMaps.put(workflowExecuteThread.getProcessInstance().getId(), tryTimes);
                 logger.info("Retry[{}/{}] to execute process instance {}", tryTimes, Constants.DEFAULT_RETRY_START_PROCESS_MAX_TIMES,

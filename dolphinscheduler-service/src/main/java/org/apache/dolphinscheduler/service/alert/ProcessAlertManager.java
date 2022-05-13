@@ -272,6 +272,15 @@ public class ProcessAlertManager {
      * 发送指定消息
      * @param processInstance
      * @param title
+     */
+    public void sendAlertProcessMessage(ProcessInstance processInstance, String title) {
+        sendAlertProcessMessage(processInstance, title, null);
+    }
+
+    /**
+     * 发送指定消息
+     * @param processInstance
+     * @param title
      * @param errorMessage
      */
     public void sendAlertProcessMessage(ProcessInstance processInstance, String title, String errorMessage) {

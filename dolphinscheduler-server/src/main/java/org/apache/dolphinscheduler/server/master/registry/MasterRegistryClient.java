@@ -39,6 +39,7 @@ import org.apache.dolphinscheduler.server.master.config.MasterConfig;
 import org.apache.dolphinscheduler.server.master.runner.WorkflowExecuteThread;
 import org.apache.dolphinscheduler.server.registry.HeartBeatTask;
 import org.apache.dolphinscheduler.server.utils.ProcessUtils;
+import org.apache.dolphinscheduler.service.alert.ProcessAlertManager;
 import org.apache.dolphinscheduler.service.process.ProcessService;
 import org.apache.dolphinscheduler.service.queue.entity.TaskExecutionContext;
 import org.apache.dolphinscheduler.service.registry.RegistryClient;
@@ -46,15 +47,12 @@ import org.apache.dolphinscheduler.service.registry.RegistryClient;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,6 +88,9 @@ public class MasterRegistryClient {
      */
     @Autowired
     private MasterConfig masterConfig;
+
+    @Autowired
+    private ProcessAlertManager processAlertManager;
 
     /**
      * heartbeat executor
@@ -419,6 +420,9 @@ public class MasterRegistryClient {
         Date serverStartupTime = getServerStartupTime(NodeType.MASTER, masterHost);
         List<Server> workerServers = registryClient.getServerList(NodeType.WORKER);
         List<Server> masterServers = registryClient.getServerList(NodeType.MASTER);
+        List<Server> thisMasterServer = masterServers.stream()
+                .filter(s -> masterHost.equals(s.getHost() + Constants.COLON + s.getPort()))
+                .collect(Collectors.toList());
 
         long startTime = System.currentTimeMillis();
         List<ProcessInstance> needFailoverProcessInstanceList = processService.queryNeedFailoverProcessInstances(masterHost);
@@ -440,8 +444,9 @@ public class MasterRegistryClient {
                 if (!checkTaskInstanceNeedFailover(workerServers, taskInstance)) {
                     continue;
                 }
+                // TODO 如果是在master调度执行的，应该是在当前实例执行
                 // 有部分任务是在master调度执行的，如depend task
-                if (!checkTaskInstanceNeedFailover(masterServers, taskInstance)) {
+                if (!checkTaskInstanceNeedFailover(thisMasterServer, taskInstance)) {
                     continue;
                 }
                 logger.info("failover task instance id: {}, process instance id: {}", taskInstance.getId(), taskInstance.getProcessInstanceId());
@@ -505,6 +510,10 @@ public class MasterRegistryClient {
         stateEvent.setProcessInstanceId(processInstance.getId());
         stateEvent.setExecutionStatus(taskInstance.getState());
         workflowExecuteThreadNotify.addStateEvent(stateEvent);
+
+        // 发送alert消息
+        String title = "任务容错恢复调度：" + taskInstance.getName();
+        this.processAlertManager.sendAlertProcessMessage(processInstance, title, null);
     }
 
     /**

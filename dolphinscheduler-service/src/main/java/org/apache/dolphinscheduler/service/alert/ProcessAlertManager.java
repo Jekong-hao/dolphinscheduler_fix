@@ -17,6 +17,7 @@
 
 package org.apache.dolphinscheduler.service.alert;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.dolphinscheduler.common.enums.CommandType;
 import org.apache.dolphinscheduler.common.enums.Flag;
 import org.apache.dolphinscheduler.common.enums.WarningType;
@@ -62,6 +63,8 @@ public class ProcessAlertManager {
 
 
     private static SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    private static final String DEFAULT_NEW_LINE_CHAR = "\n";
 
 
     /**
@@ -260,6 +263,43 @@ public class ProcessAlertManager {
         String content = getContentProcessInstance(processInstance, taskInstances,projectUser);
         alert.setContent(content);
         alert.setAlertGroupId(processInstance.getWarningGroupId());
+        alert.setCreateTime(new Date());
+        alertDao.addAlert(alert);
+        logger.info("add alert to db , alert: {}", alert);
+    }
+
+    /**
+     * 发送指定消息
+     * @param processInstance
+     * @param title
+     * @param errorMessage
+     */
+    public void sendAlertProcessMessage(ProcessInstance processInstance, String title, String errorMessage) {
+        Alert alert = new Alert();
+        alert.setTitle(title);
+
+        int alertGroupId = 1;
+        StringBuffer content = new StringBuffer();
+        if (null == processInstance) {
+            content.append("UNEXPECT : 工作流实例为空。").append(DEFAULT_NEW_LINE_CHAR);
+        } else {
+            User user = userMapper.queryByProcessDefinitionCode(processInstance.getProcessDefinitionCode());
+            content.append("工作流实例：").append(processInstance.getName()).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("所有者：").append(user.getUserName()).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("调度执行命令：").append(getCommandCnName(processInstance.getCommandType())).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("工作流状态：").append(processInstance.getState().getDescp()).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("调度日期：").append(processInstance.getScheduleTime()==null?"":df.format(processInstance.getScheduleTime())).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("开始时间：").append(processInstance.getStartTime()==null?"":df.format(processInstance.getStartTime())).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("结束日期：").append(processInstance.getEndTime()==null?"":df.format(processInstance.getEndTime())).append(DEFAULT_NEW_LINE_CHAR);
+            alertGroupId = (processInstance.getWarningGroupId() == null || processInstance.getWarningGroupId() == 0) ? 1 : processInstance.getWarningGroupId();
+        }
+
+        if (StringUtils.isNotEmpty(errorMessage)) {
+            content.append("ERROR MESSAGE : ").append(errorMessage).append(DEFAULT_NEW_LINE_CHAR);
+        }
+
+        alert.setContent(content.toString());
+        alert.setAlertGroupId(alertGroupId);
         alert.setCreateTime(new Date());
         alertDao.addAlert(alert);
         logger.info("add alert to db , alert: {}", alert);

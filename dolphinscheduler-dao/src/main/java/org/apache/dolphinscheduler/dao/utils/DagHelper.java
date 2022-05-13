@@ -38,6 +38,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -305,6 +306,7 @@ public class DagHelper {
         } else {
             startVertexes = dag.getSubsequentNodes(preNodeCode);
         }
+
         for (String subsequent : startVertexes) {
             TaskNode taskNode = dag.getNode(subsequent);
             if (taskNode == null) {
@@ -318,12 +320,16 @@ public class DagHelper {
             if (!DagHelper.allDependsForbiddenOrEnd(taskNode, dag, skipTaskNodeList, completeTaskList)) {
                 continue;
             }
-            if (taskNode.isForbidden() || completeTaskList.containsKey(subsequent)) {
+            if ((taskNode.isForbidden() || completeTaskList.containsKey(subsequent))
+                    && !subsequent.equals(preNodeCode)) {
                 postNodeList.addAll(parsePostNodes(subsequent, skipTaskNodeList, dag, completeTaskList));
                 continue;
             }
             postNodeList.add(subsequent);
         }
+        System.out.println(String.format("Pre Node : %s, Start Vertexes : %s, Post Node : %s",
+                preNodeCode, startVertexes.stream().collect(Collectors.joining(";")),
+                postNodeList.stream().collect(Collectors.joining(";"))));
         return postNodeList;
     }
 
@@ -364,10 +370,10 @@ public class DagHelper {
         ConditionsParameters conditionsParameters =
                 JSONUtils.parseObject(taskNode.getConditionResult(), ConditionsParameters.class);
         List<String> skipNodeList = new ArrayList<>();
-        if (taskInstance.getState().typeIsSuccess()) {
+        if (null != taskInstance.getState() && taskInstance.getState().typeIsSuccess()) {
             conditionTaskList = conditionsParameters.getSuccessNode();
             skipNodeList = conditionsParameters.getFailedNode();
-        } else if (taskInstance.getState().typeIsFailure()) {
+        } else if (null != taskInstance.getState() && taskInstance.getState().typeIsFailure()) {
             conditionTaskList = conditionsParameters.getFailedNode();
             skipNodeList = conditionsParameters.getSuccessNode();
         } else {

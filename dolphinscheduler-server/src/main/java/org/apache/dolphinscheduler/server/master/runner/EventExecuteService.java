@@ -133,12 +133,7 @@ public class EventExecuteService extends Thread {
             logger.info("[process instance {}] start processing events count {}",
                     processInstanceId,
                     workflowExecuteThread.eventSize());
-//            logger.info("handle process instance : {} , events count:{}",
-//                    processInstanceId,
-//                    workflowExecuteThread.eventSize());
-//            logger.info("already exists handler process size:{}", this.eventHandlerMap.size());
             eventHandlerMap.put(workflowExecuteThread.getKey(), workflowExecuteThread);
-            // TODO 额外又提交了一个线程处理
             ListenableFuture future = this.listeningExecutorService.submit(workflowExecuteThread);
             FutureCallback futureCallback = new FutureCallback() {
                 @Override

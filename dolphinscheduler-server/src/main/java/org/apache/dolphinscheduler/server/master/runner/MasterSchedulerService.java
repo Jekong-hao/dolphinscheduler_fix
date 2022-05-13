@@ -19,6 +19,8 @@ package org.apache.dolphinscheduler.server.master.runner;
 
 import org.apache.dolphinscheduler.common.Constants;
 import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
+import org.apache.dolphinscheduler.common.enums.StateEvent;
+import org.apache.dolphinscheduler.common.enums.StateEventType;
 import org.apache.dolphinscheduler.common.enums.TaskType;
 import org.apache.dolphinscheduler.common.thread.Stopper;
 import org.apache.dolphinscheduler.common.thread.ThreadUtils;
@@ -116,10 +118,6 @@ public class MasterSchedulerService extends Thread {
      */
     private ConcurrentHashMap<Integer, WorkflowExecuteThread> processInstanceExecMaps;
     /**
-     * start failed process list
-     */
-    ConcurrentHashMap<Integer, ProcessInstance> failedStartProcessMap = new ConcurrentHashMap<>();
-    /**
      * process timeout check list
      */
     ConcurrentHashMap<Integer, ProcessInstance> processTimeoutCheckList = new ConcurrentHashMap<>();
@@ -149,21 +147,13 @@ public class MasterSchedulerService extends Thread {
         this.nettyRemotingClient = new NettyRemotingClient(clientConfig);
 
 //        // TODO 应该每个workflow实例负责各自的调度
-//        stateWheelExecuteThread = new StateWheelExecuteThread(
-//                masterExecService,
-//                processService,
-//                startProcessFailedMap,
-//                processTimeoutCheckList,
-//                taskTimeoutCheckList,
-//                taskRetryCheckList,
-//                this.processInstanceExecMaps,
-//                masterConfig.getStateWheelInterval() * Constants.SLEEP_TIME_MILLIS,
-//                failedStartProcessMap);
 
         workflowStateWheelExecuteThread = new WorkflowStateWheelExecuteThread(
+                masterExecService,
+                processAlertManager,
+                processService,
                 processTimeoutCheckList,
                 processInstanceExecMaps,
-                failedStartProcessMap,
                 startProcessFailedMap,
                 masterConfig.getStateWheelInterval() * Constants.SLEEP_TIME_MILLIS
         );
@@ -210,7 +200,7 @@ public class MasterSchedulerService extends Thread {
                         this.processInstanceExecMaps.size(),
                         this.processInstanceExecMaps.keySet()
                                 .stream().map(String::valueOf).collect(Collectors.joining(",")));
-                checkFailedStartProcess();
+//                checkFailedStartProcess();
 
 //                // 检查workflow完整性
 //                checkWorkflowCompleteness();
@@ -239,24 +229,21 @@ public class MasterSchedulerService extends Thread {
         }
     }
 
-    /**
-     * check start failed process and cancel retry
-     */
-    private void checkFailedStartProcess() {
-        if (!this.failedStartProcessMap.isEmpty()) {
-            for (ProcessInstance processInstance : this.failedStartProcessMap.values()) {
-                logger.info("Scheduler start process : {}, failed.", processInstance.getId());
-                processInstance.setState(ExecutionStatus.FAILURE);
-                processInstance.setEndTime(new Date());
-                // TODO 发送启动失败告警
-//                this.processAlertManager
-                this.processService.updateProcessInstance(processInstance);
-
-                // 取消重试
-                this.startProcessFailedMap.remove(processInstance.getId());
-            }
-        }
-    }
+//    /**
+//     * check start failed process and cancel retry
+//     * @deprecated
+//     */
+//    private void checkFailedStartProcess() {
+//        if (!this.failedStartProcessMap.isEmpty()) {
+//            for (ProcessInstance processInstance : this.failedStartProcessMap.values()) {
+//                logger.info("Scheduler start process : {}, failed.", processInstance.getId());
+//
+////                // 取消重试
+////                this.startProcessFailedMap.remove(processInstance.getId());
+////                this.failedStartProcessMap.remove(processInstance.getId());
+//            }
+//        }
+//    }
 
     /**
      * 1. get command by slot
@@ -266,8 +253,14 @@ public class MasterSchedulerService extends Thread {
 
         // make sure to scan and delete command  table in one transaction
         Command command = findOneCommand();
+
         if (command != null) {
-            logger.info("find one command: id: {}, type: {}", command.getId(), command.getCommandType());
+            logger.info("find one command: id: {}, type: {}, for process [code : {}, version : {} process instance id : {}]",
+                    command.getId(),
+                    command.getCommandType(),
+                    command.getProcessDefinitionCode(),
+                    command.getProcessDefinitionVersion(),
+                    command.getProcessInstanceId());
             try {
                 ProcessInstance processInstance = processService.handleCommand(logger, getLocalAddress(), command);
 

@@ -90,6 +90,7 @@ import org.apache.dolphinscheduler.dao.mapper.UdfFuncMapper;
 import org.apache.dolphinscheduler.dao.mapper.UserMapper;
 import org.apache.dolphinscheduler.dao.utils.DagHelper;
 import org.apache.dolphinscheduler.remote.utils.Host;
+import org.apache.dolphinscheduler.service.alert.ProcessAlertManager;
 import org.apache.dolphinscheduler.service.exceptions.ServiceException;
 import org.apache.dolphinscheduler.service.log.LogClientService;
 import org.apache.dolphinscheduler.service.quartz.cron.CronUtils;
@@ -194,6 +195,9 @@ public class ProcessService {
 
     @Autowired
     private EnvironmentMapper environmentMapper;
+
+    @Autowired
+    private ProcessAlertManager processAlertManager;
 
     /**
      * handle Command (construct ProcessInstance from Command) , wrapped in transaction
@@ -1864,6 +1868,10 @@ public class ProcessService {
         cmd.setExecutorId(processInstance.getExecutorId());
         cmd.setCommandType(CommandType.RECOVER_TOLERANCE_FAULT_PROCESS);
         createCommand(cmd);
+
+        // 发送alert消息
+        String title = "工作流容错恢复调度";
+        this.processAlertManager.sendAlertProcessMessage(processInstance, title, null);
     }
 
     /**
@@ -2610,6 +2618,20 @@ public class ProcessService {
         int delete = this.commandMapper.deleteById(commandId);
         if (delete != 1) {
             throw new ServiceException("delete command fail, id:" + commandId);
+        }
+    }
+
+    /**
+     * 更新pending任务到kill状态
+     * @param processInstance
+     */
+    public void updatePendingTaskInstance2Kill(ProcessInstance processInstance) {
+        List<TaskInstance> taskInstanceList = this.findValidTaskListByProcessId(processInstance.getId());
+        for(TaskInstance taskInstance : taskInstanceList) {
+            if (taskInstance.getState().equals(ExecutionStatus.SUBMITTED_SUCCESS)) {
+                taskInstance.setState(ExecutionStatus.KILL);
+                this.updateTaskInstance(taskInstance);
+            }
         }
     }
 }

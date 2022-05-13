@@ -2,15 +2,19 @@ package org.apache.dolphinscheduler.server.master.runner;
 
 import com.google.common.collect.Maps;
 import org.apache.dolphinscheduler.common.Constants;
+import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
 import org.apache.dolphinscheduler.common.enums.StateEvent;
 import org.apache.dolphinscheduler.common.enums.StateEventType;
 import org.apache.dolphinscheduler.common.thread.Stopper;
 import org.apache.dolphinscheduler.common.utils.DateUtils;
 import org.apache.dolphinscheduler.dao.entity.ProcessInstance;
+import org.apache.dolphinscheduler.service.alert.ProcessAlertManager;
+import org.apache.dolphinscheduler.service.process.ProcessService;
 import org.apache.hadoop.util.ThreadUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -28,7 +32,6 @@ public class WorkflowStateWheelExecuteThread extends Thread {
 
     private ConcurrentHashMap<Integer, ProcessInstance> processInstanceTimeoutCheckList;
     private ConcurrentHashMap<Integer, WorkflowExecuteThread> processInstanceExecMaps;
-    private ConcurrentHashMap<Integer, ProcessInstance> failedStartProcessMap;
 
     private Map<Integer, Integer> startProcessFailedRetryCountMaps = Maps.newHashMap();
 
@@ -44,14 +47,21 @@ public class WorkflowStateWheelExecuteThread extends Thread {
      */
     private MasterExecService masterExecService;
 
-    public WorkflowStateWheelExecuteThread(ConcurrentHashMap<Integer, ProcessInstance> processInstanceTimeoutCheckList,
+    private ProcessAlertManager processAlertManager;
+    private ProcessService processService;
+
+    public WorkflowStateWheelExecuteThread(MasterExecService masterExecService,
+                                           ProcessAlertManager processAlertManager,
+                                           ProcessService processService,
+                                           ConcurrentHashMap<Integer, ProcessInstance> processInstanceTimeoutCheckList,
                                            ConcurrentHashMap<Integer, WorkflowExecuteThread> processInstanceExecMaps,
-                                           ConcurrentHashMap<Integer, ProcessInstance> failedStartProcessMap,
                                            ConcurrentHashMap<Integer, WorkflowExecuteThread> startProcessFailedMap,
                                            int stateCheckIntervalSecs) {
+        this.masterExecService = masterExecService;
+        this.processAlertManager = processAlertManager;
+        this.processService = processService;
         this.processInstanceTimeoutCheckList = processInstanceTimeoutCheckList;
         this.processInstanceExecMaps = processInstanceExecMaps;
-        this.failedStartProcessMap = failedStartProcessMap;
         this.startProcessFailedMap = startProcessFailedMap;
         this.stateCheckIntervalSecs = stateCheckIntervalSecs;
 
@@ -92,27 +102,43 @@ public class WorkflowStateWheelExecuteThread extends Thread {
             return;
         }
         for (WorkflowExecuteThread workflowExecuteThread : this.startProcessFailedMap.values()) {
+            this.startProcessFailedMap.remove(workflowExecuteThread.getProcessInstance().getId());
+
             if (!this.startProcessFailedRetryCountMaps.containsKey(workflowExecuteThread.getProcessInstance().getId())) {
                 this.startProcessFailedRetryCountMaps.put(workflowExecuteThread.getProcessInstance().getId(), 0);
             }
             int tryTimes = this.startProcessFailedRetryCountMaps.get(workflowExecuteThread.getProcessInstance().getId()) + 1;
+            // 超过最大重试次数
             if (tryTimes > Constants.DEFAULT_RETRY_START_PROCESS_MAX_TIMES) {
-//                // TODO 重试失败后剔除
-//                // TODO 重试失败告警
-//                ProcessInstance processInstance = workflowExecuteThread.getProcessInstance();
-//                processInstance.setState(ExecutionStatus.FAILURE);
-//                processInstance.setEndTime(new Date());
-//
-//                this.startProcessFailedMap.remove(processInstance.getId());
-                if (this.failedStartProcessMap.containsKey(workflowExecuteThread.getProcessInstance().getId())) {
-                    this.failedStartProcessMap.put(workflowExecuteThread.getProcessInstance().getId(), workflowExecuteThread.getProcessInstance());
-//                    this.startProcessFailedMap.remove(workflowExecuteThread.getProcessInstance().getId());
+
+                this.startProcessFailedRetryCountMaps.remove(workflowExecuteThread.getProcessInstance().getId());
+
+                ProcessInstance processInstance = workflowExecuteThread.getProcessInstance();
+                if (null != workflowExecuteThread && workflowExecuteThread.isStart()) {
+                    processInstance.setState(ExecutionStatus.READY_STOP);
+                    processInstance.setEndTime(new Date());
+                    this.processService.updateProcessInstance(processInstance);
+
+                    StateEvent stateEvent = new StateEvent();
+                    stateEvent.setType(StateEventType.PROCESS_STATE_CHANGE);
+                    stateEvent.setProcessInstanceId(processInstance.getId());
+                    stateEvent.setExecutionStatus(ExecutionStatus.READY_STOP);
+                    workflowExecuteThread.addStateEvent(stateEvent);
+                } else {
+                    processInstance.setState(ExecutionStatus.FAILURE);
+                    processInstance.setEndTime(new Date());
+                    this.processService.updateProcessInstance(processInstance);
+                    this.processService.updatePendingTaskInstance2Kill(processInstance);
                 }
+
+                String title = "工作流启动失败";
+                this.processAlertManager.sendAlertProcessMessage(processInstance, title, null);
             } else {
                 this.startProcessFailedRetryCountMaps.put(workflowExecuteThread.getProcessInstance().getId(), tryTimes);
                 logger.info("Retry[{}/{}] to execute process instance {}", tryTimes, Constants.DEFAULT_RETRY_START_PROCESS_MAX_TIMES,
                         workflowExecuteThread.getProcessInstance().getId());
                 masterExecService.execute(workflowExecuteThread);
+//                this.failedStartProcessMap.put(workflowExecuteThread.getProcessInstance().getId(), workflowExecuteThread.getProcessInstance());
             }
 
         }

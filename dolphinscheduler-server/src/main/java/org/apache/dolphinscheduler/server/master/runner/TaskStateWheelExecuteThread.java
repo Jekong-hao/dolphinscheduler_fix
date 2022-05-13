@@ -55,10 +55,18 @@ public class TaskStateWheelExecuteThread extends Thread {
             try {
                 checkTask4Timeout();
                 checkTask4Retry();
+
             } catch (Exception e) {
                 logger.error("[process instance {}] master task state wheel thread check error: {}",
                         this.workflowExecuteThread.getProcessInstance().getId(),
                         e);
+            } finally {
+                if (this.workflowExecuteThread.getProcessInstance().getState().typeIsFinished()) {
+                    logger.info("[process instance {}] process finished with state {}. task state wheel thread stop.",
+                            this.workflowExecuteThread.getProcessInstance().getId(),
+                            this.workflowExecuteThread.getProcessInstance().getState().getDescp());
+                    break;
+                }
             }
             ThreadUtil.sleepAtLeastIgnoreInterrupts(stateCheckIntervalSecs);
         }

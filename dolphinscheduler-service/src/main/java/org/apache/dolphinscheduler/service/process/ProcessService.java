@@ -1072,24 +1072,28 @@ public class ProcessService {
     @Transactional(rollbackFor = Exception.class)
     public TaskInstance submitTask(TaskInstance taskInstance) {
         ProcessInstance processInstance = this.findProcessInstanceDetailById(taskInstance.getProcessInstanceId());
-        logger.info("[process instance {}] master start submit task : {}, instance id:{}, state: {}",
+        logger.info("[process instance {}] master start submit task : {}, instance id:{}, state: {}, process state :{}",
                 processInstance.getId(),
-                taskInstance.getName(), taskInstance.getId(), taskInstance.getState());
+                taskInstance.getName(), taskInstance.getId(), taskInstance.getState(),
+                processInstance.getState().getDescp());
         //submit to db
         TaskInstance task = submitTaskInstanceToDB(taskInstance, processInstance);
         if (task == null) {
-            logger.error("[process instance {}] master end submit task to db error, task name:{}, process id:{} state: {} ",
+            logger.error("[process instance {}] master end submit task to db error, task name:{}, process state: {} ",
                     processInstance.getId(),
-                    taskInstance.getName(), taskInstance.getProcessInstance(), processInstance.getState());
+                    taskInstance.getName(), processInstance.getState());
             return task;
         }
         if (!task.getState().typeIsFinished()) {
             createSubWorkProcess(processInstance, task);
         }
 
-        logger.info("[process instance {}] master end submit task to db successfully:{} {} state:{} complete, instance id:{} state: {}  ",
+        logger.info("[process instance {}] master end submit task to db successfully. task instance id :{} name :{} task state :{} process state :{} ",
                 processInstance.getId(),
-                taskInstance.getId(), taskInstance.getName(), task.getState(), processInstance.getId(), processInstance.getState());
+                taskInstance.getId(),
+                taskInstance.getName(),
+                task.getState(),
+                processInstance.getState());
         return task;
     }
 

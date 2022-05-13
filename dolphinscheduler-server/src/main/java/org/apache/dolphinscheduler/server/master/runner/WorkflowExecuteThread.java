@@ -1097,7 +1097,9 @@ public class WorkflowExecuteThread implements Runnable {
                 }
             }
         }
-        logger.info("taskCode: {} completeDependTaskList: {}", taskCode, Arrays.toString(completeTaskList.keySet().toArray()));
+        logger.info("[process instance {}] taskCode: {} completeDependTaskList: {}",
+                this.getProcessInstance().getId(),
+                taskCode, Arrays.toString(completeTaskList.keySet().toArray()));
         return DependResult.SUCCESS;
     }
 

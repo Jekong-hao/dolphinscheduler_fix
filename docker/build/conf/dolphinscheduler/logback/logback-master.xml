@@ -19,11 +19,12 @@
 <!-- Logback configuration. See http://logback.qos.ch/manual/index.html -->
 <configuration scan="true" scanPeriod="120 seconds"> <!--debug="true" -->
 
+    <property name="LOGGER_PATTERN" value="%green(%date{yyyy-MM-dd HH:mm:ss.SSS}) %highlight([%.5level]) [%15.15thread] %cyan([%35.35logger:%-4line]) - %msg%n"></property>
     <property name="log.base" value="logs"/>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
-                [%level] %date{yyyy-MM-dd HH:mm:ss.SSS} %logger{96}:[%line] - %msg%n
+                ${LOGGER_PATTERN}
             </pattern>
             <charset>UTF-8</charset>
         </encoder>
@@ -45,7 +46,7 @@
                 <file>${log.base}/${taskAppId}.log</file>
                 <encoder>
                     <pattern>
-                        [%level] %date{yyyy-MM-dd HH:mm:ss.SSS} [%thread] - %messsage%n
+                        ${LOGGER_PATTERN}
                     </pattern>
                     <charset>UTF-8</charset>
                 </encoder>
@@ -66,7 +67,7 @@
         </rollingPolicy>
         <encoder>
             <pattern>
-                [%level] %date{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %logger{96}:[%line] - %msg%n
+                ${LOGGER_PATTERN}
             </pattern>
             <charset>UTF-8</charset>
         </encoder>

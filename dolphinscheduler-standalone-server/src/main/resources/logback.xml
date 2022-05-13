@@ -20,7 +20,6 @@
 <configuration scan="true" scanPeriod="120 seconds"> <!--debug="true" -->
 
     <property name="LOGGER_PATTERN" value="%green(%date{yyyy-MM-dd HH:mm:ss.SSS}) %highlight([%.5level]) [%15.15thread] %cyan([%35.35logger:%-4line]) - %msg%n"></property>
-    <property name="log.base" value="logs"/>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>
@@ -30,34 +29,8 @@
         </encoder>
     </appender>
 
-    <!-- api server logback config start -->
-    <appender name="APILOGFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${log.base}/dolphinscheduler-api.log</file>
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>INFO</level>
-        </filter>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${log.base}/dolphinscheduler-api.%d{yyyy-MM-dd_HH}.%i.log</fileNamePattern>
-            <maxHistory>168</maxHistory>
-            <maxFileSize>64MB</maxFileSize>
-        </rollingPolicy>
-        <encoder>
-            <pattern>
-                ${LOGGER_PATTERN}
-            </pattern>
-            <charset>UTF-8</charset>
-        </encoder>
-    </appender>
-    <!-- api server logback config end -->
-
-    <logger name="org.apache.zookeeper" level="WARN"/>
-    <logger name="org.apache.hbase" level="WARN"/>
-    <logger name="org.apache.hadoop" level="WARN"/>
-
-
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
-        <appender-ref ref="APILOGFILE"/>
     </root>
 
 </configuration>

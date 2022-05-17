@@ -111,72 +111,10 @@ public class ProcessAlertManager {
                                             List<TaskInstance> taskInstances,
                                             ProjectUser projectUser) {
 
-//        String res = "";
-//        if (processInstance.getState().typeIsSuccess()) {
-//            List<MyProcessAlertContent> successTaskList = new ArrayList<>(1);
-//            MyProcessAlertContent processAlertContent = MyProcessAlertContent.newBuilder()
-////                    .projectId(projectUser.getProjectId())
-//                    .projectName(projectUser.getProjectName())
-//                    .owner(projectUser.getUserName())
-////                    .processId(processInstance.getId())
-////                    .processDefinitionCode(processInstance.getProcessDefinitionCode())
-//                    .processName(processInstance.getName())
-//                    .processType(processInstance.getCommandType())
-//                    .processState(processInstance.getState())
-////                    .recovery(processInstance.getRecovery())
-//                    .runTimes(processInstance.getRunTimes())
-//                    .processStartTime(processInstance.getStartTime())
-//                    .processEndTime(processInstance.getEndTime())
-////                    .processHost(processInstance.getHost())
-//                    .build();
-//            successTaskList.add(processAlertContent);
-//            res =  JSONUtils.formatJson(JSONUtils.toJsonString(successTaskList));
-//        } else if (processInstance.getState().typeIsFailure()) {
-//
-//            List<MyProcessAlertContent> failedTaskList = new ArrayList<>();
-//            for (TaskInstance task : taskInstances) {
-//                if (task.getState().typeIsSuccess()) {
-//                    continue;
-//                }
-//                MyProcessAlertContent processAlertContent = MyProcessAlertContent.newBuilder()
-////                        .projectId(projectUser.getProjectId())
-//                        .projectName(projectUser.getProjectName())
-//                        .owner(projectUser.getUserName())
-////                        .processId(processInstance.getId())
-////                        .processDefinitionCode(processInstance.getProcessDefinitionCode())
-//                        .processName(processInstance.getName())
-////                        .taskCode(task.getTaskCode())
-//                        .taskName(task.getName())
-//                        .taskType(task.getTaskType())
-//                        .taskState(task.getState())
-//                        .taskStartTime(task.getStartTime())
-//                        .taskEndTime(task.getEndTime())
-////                        .taskHost(task.getHost())
-////                        .logPath(task.getLogPath())
-//                        .build();
-//                  failedTaskList.add(processAlertContent);
-//            }
-//            res = JSONUtils.formatJson(JSONUtils.toJsonString(failedTaskList));
-//
-//        }
-//
-//        return res;
+        StringBuffer content = processInstanceAlertContent(processInstance, projectUser);
+        content.append("失败任务列表: [").append(taskInstances.stream().filter(t -> t.getState().typeIsFailure()).map(t -> t.getName()).collect(Collectors.joining("; "))).append("]").append(DEFAULT_NEW_LINE_CHAR);
 
-
-        User user = userMapper.queryByProcessDefinitionCode(processInstance.getProcessDefinitionCode());
-        ProcessDefinition processDefinition = processService.findProcessDefinition(processInstance.getProcessDefinitionCode(), processInstance.getProcessDefinitionVersion());
-        StringBuffer sb = new StringBuffer();
-        sb.append(String.format("项目： %s \n", projectUser.getProjectName()));
-        sb.append(String.format("工作流： %s， 所有者： %s \n", processDefinition.getName(), user.getUserName()));
-        sb.append(String.format("工作流实例： %s \n", processInstance.getName()));
-        sb.append(String.format("工作流实例状态： %s \n", processInstance.getState().getDescp()));
-        sb.append(String.format("调度日期： %s \n", processInstance.getScheduleTime()==null?"":df.format(processInstance.getScheduleTime())));
-        sb.append(String.format("开始时间： %s \n", df.format(processInstance.getStartTime())));
-        sb.append(String.format("结束时间： %s \n", df.format(processInstance.getEndTime())));
-        sb.append(String.format("失败任务列表: [%s] \n", taskInstances.stream().filter(t -> t.getState().typeIsFailure()).map(t -> t.getName()).collect(Collectors.joining("; "))));
-//        sb.append(String.format("查询详情: %s", "htttpp"));
-
-        return sb.toString();
+        return content.toString();
 
         /**
          * 【手动调度】失败
@@ -255,17 +193,14 @@ public class ProcessAlertManager {
         if (!isNeedToSendWarning(processInstance)) {
             return;
         }
-        Alert alert = new Alert();
 
+        int alertGroupId = processInstance.getWarningGroupId();
         String cmdName = getCommandCnName(processInstance.getCommandType());
         String success = processInstance.getState().typeIsSuccess() ? "成功" : "失败";
-        alert.setTitle(cmdName + " " + success);
+        String title = cmdName + " " + success;
         String content = getContentProcessInstance(processInstance, taskInstances,projectUser);
-        alert.setContent(content);
-        alert.setAlertGroupId(processInstance.getWarningGroupId());
-        alert.setCreateTime(new Date());
-        alertDao.addAlert(alert);
-        logger.info("add alert to db , alert: {}", alert);
+
+        saveMessage2DB(title, content, alertGroupId);
     }
 
     /**
@@ -284,34 +219,14 @@ public class ProcessAlertManager {
      * @param errorMessage
      */
     public void sendAlertProcessMessage(ProcessInstance processInstance, String title, String errorMessage) {
-        Alert alert = new Alert();
-        alert.setTitle(title);
-
-        int alertGroupId = 1;
-        StringBuffer content = new StringBuffer();
-        if (null == processInstance) {
-            content.append("UNEXPECT : 工作流实例为空。").append(DEFAULT_NEW_LINE_CHAR);
-        } else {
-            User user = userMapper.queryByProcessDefinitionCode(processInstance.getProcessDefinitionCode());
-            content.append("工作流实例：").append(processInstance.getName()).append(DEFAULT_NEW_LINE_CHAR)
-                    .append("所有者：").append(user.getUserName()).append(DEFAULT_NEW_LINE_CHAR)
-                    .append("调度执行命令：").append(getCommandCnName(processInstance.getCommandType())).append(DEFAULT_NEW_LINE_CHAR)
-                    .append("工作流状态：").append(processInstance.getState().getDescp()).append(DEFAULT_NEW_LINE_CHAR)
-                    .append("调度日期：").append(processInstance.getScheduleTime()==null?"":df.format(processInstance.getScheduleTime())).append(DEFAULT_NEW_LINE_CHAR)
-                    .append("开始时间：").append(processInstance.getStartTime()==null?"":df.format(processInstance.getStartTime())).append(DEFAULT_NEW_LINE_CHAR)
-                    .append("结束日期：").append(processInstance.getEndTime()==null?"":df.format(processInstance.getEndTime())).append(DEFAULT_NEW_LINE_CHAR);
-            alertGroupId = (processInstance.getWarningGroupId() == null || processInstance.getWarningGroupId() == 0) ? 1 : processInstance.getWarningGroupId();
-        }
+        int alertGroupId = (processInstance.getWarningGroupId() == null || processInstance.getWarningGroupId() == 0) ? 1 : processInstance.getWarningGroupId();
+        StringBuffer content = processInstanceAlertContent(processInstance);
 
         if (StringUtils.isNotEmpty(errorMessage)) {
             content.append("ERROR MESSAGE : ").append(errorMessage).append(DEFAULT_NEW_LINE_CHAR);
         }
 
-        alert.setContent(content.toString());
-        alert.setAlertGroupId(alertGroupId);
-        alert.setCreateTime(new Date());
-        alertDao.addAlert(alert);
-        logger.info("add alert to db , alert: {}", alert);
+        saveMessage2DB(title, content.toString(), alertGroupId);
     }
 
     /**
@@ -354,10 +269,59 @@ public class ProcessAlertManager {
      * @param processDefinition process definition
      */
     public void sendProcessTimeoutAlert(ProcessInstance processInstance, ProcessDefinition processDefinition) {
-        alertDao.sendProcessTimeoutAlert(processInstance, processDefinition);
+//        alertDao.sendProcessTimeoutAlert(processInstance, processDefinition);
+
+        String title = "工作流超时告警";
+        StringBuffer content = processInstanceAlertContent(processInstance);
+        saveMessage2DB(title, content.toString(), processInstance.getWarningGroupId());
     }
 
     public void sendTaskTimeoutAlert(ProcessInstance processInstance, TaskInstance taskInstance, TaskDefinition taskDefinition) {
-        alertDao.sendTaskTimeoutAlert(processInstance, taskInstance, taskDefinition);
+        String title = "任务超时告警";
+        StringBuffer content = processInstanceAlertContent(processInstance);
+        content.append("超时任务：").append(taskDefinition.getName()).append(DEFAULT_NEW_LINE_CHAR);
+
+//        alertDao.sendTaskTimeoutAlert(processInstance, taskInstance, taskDefinition);
+        saveMessage2DB(title, content.toString(), processInstance.getWarningGroupId());
+    }
+
+    private StringBuffer processInstanceAlertContent(ProcessInstance processInstance){
+        ProjectUser projectUser = processService.queryProjectWithUserByProcessInstanceId(processInstance.getId());
+        return processInstanceAlertContent(processInstance, projectUser);
+    }
+
+    private StringBuffer processInstanceAlertContent(ProcessInstance processInstance, ProjectUser projectUser) {
+        StringBuffer content = new StringBuffer();
+        if (null == processInstance) {
+            content.append("UNEXCEPT：工作流实例为空!");
+        } else {
+            User user = userMapper.queryByProcessDefinitionCode(processInstance.getProcessDefinitionCode());
+            ProcessDefinition processDefinition = processService.findProcessDefinition(processInstance.getProcessDefinitionCode(), processInstance.getProcessDefinitionVersion());
+
+            if (null != projectUser) {
+                content.append("项目：").append(projectUser.getProjectName()).append(DEFAULT_NEW_LINE_CHAR);
+            }
+            content.append("工作流：").append(processDefinition.getName()).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("所有者：").append(user.getUserName()).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("工作流实例：").append(processInstance.getName()).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("调度执行命令：").append(getCommandCnName(processInstance.getCommandType())).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("运行状态：").append(processInstance.getState().getDescp()).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("调度日期：").append(processInstance.getScheduleTime()==null?"":df.format(processInstance.getScheduleTime())).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("开始时间：").append(processInstance.getStartTime()==null?"":df.format(processInstance.getStartTime())).append(DEFAULT_NEW_LINE_CHAR)
+                    .append("结束时间：").append(processInstance.getEndTime()==null?"":df.format(processInstance.getEndTime())).append(DEFAULT_NEW_LINE_CHAR);
+
+        }
+        return content;
+
+    }
+
+    private void saveMessage2DB(String title, String content, int alertGroupId) {
+        Alert alert = new Alert();
+        alert.setTitle(title);
+        alert.setContent(content);
+        alert.setAlertGroupId(alertGroupId);
+        alert.setCreateTime(new Date());
+        alertDao.addAlert(alert);
+        logger.info("add alert to db , alert: {}", alert);
     }
 }

@@ -21,16 +21,16 @@ import org.apache.dolphinscheduler.plugin.datasource.api.plugin.DataSourceClient
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.CommonUtils;
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.DatasourceUtil;
 import org.apache.dolphinscheduler.plugin.task.api.AbstractTaskExecutor;
+import org.apache.dolphinscheduler.plugin.task.api.ShellCommandExecutor;
 import org.apache.dolphinscheduler.plugin.task.api.TaskException;
+import org.apache.dolphinscheduler.plugin.task.api.TaskResponse;
+import org.apache.dolphinscheduler.plugin.task.shell.ShellParameters;
 import org.apache.dolphinscheduler.plugin.task.util.MapUtils;
+import org.apache.dolphinscheduler.plugin.task.util.OSUtils;
 import org.apache.dolphinscheduler.spi.datasource.BaseConnectionParam;
 import org.apache.dolphinscheduler.spi.enums.DbType;
 import org.apache.dolphinscheduler.spi.enums.TaskTimeoutStrategy;
-import org.apache.dolphinscheduler.spi.task.AbstractParameters;
-import org.apache.dolphinscheduler.spi.task.Direct;
-import org.apache.dolphinscheduler.spi.task.Property;
-import org.apache.dolphinscheduler.spi.task.TaskAlertInfo;
-import org.apache.dolphinscheduler.spi.task.TaskConstants;
+import org.apache.dolphinscheduler.spi.task.*;
 import org.apache.dolphinscheduler.spi.task.paramparser.ParamUtils;
 import org.apache.dolphinscheduler.spi.task.paramparser.ParameterUtils;
 import org.apache.dolphinscheduler.spi.task.request.SQLTaskExecutionContext;
@@ -41,6 +41,13 @@ import org.apache.dolphinscheduler.spi.utils.StringUtils;
 
 import org.apache.commons.collections.CollectionUtils;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -59,10 +66,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.hive.jdbc.HivePreparedStatement;
+import org.apache.hive.jdbc.HiveStatement;
 import org.slf4j.Logger;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import static org.apache.dolphinscheduler.spi.task.TaskConstants.RWXR_XR_X;
 
 public class SqlTask extends AbstractTaskExecutor {
 
@@ -72,9 +83,19 @@ public class SqlTask extends AbstractTaskExecutor {
     private TaskRequest taskExecutionContext;
 
     /**
+     * shell command executor
+     */
+    private ShellCommandExecutor shellCommandExecutor;
+
+    /**
      * sql parameters
      */
     private SqlParameters sqlParameters;
+
+    /**
+     * shell parameters
+     */
+    private ShellParameters shellParameters;
 
     /**
      * base datasource
@@ -100,7 +121,10 @@ public class SqlTask extends AbstractTaskExecutor {
         super(taskRequest);
         this.taskExecutionContext = taskRequest;
         this.sqlParameters = JSONUtils.parseObject(taskExecutionContext.getTaskParams(), SqlParameters.class);
-
+        this.shellParameters = JSONUtils.parseObject(taskExecutionContext.getTaskParams(), ShellParameters.class);
+        this.shellCommandExecutor = new ShellCommandExecutor(this::logHandle,
+            taskExecutionContext,
+            logger);
         assert sqlParameters != null;
         if (!sqlParameters.checkParameters()) {
             throw new RuntimeException("sql task params is not valid");
@@ -152,7 +176,6 @@ public class SqlTask extends AbstractTaskExecutor {
 
             // execute sql task
             executeFuncAndSql(mainSqlBinds, preStatementSqlBinds, postStatementSqlBinds, createFuncs);
-
             setExitStatusCode(TaskConstants.EXIT_CODE_SUCCESS);
 
         } catch (Exception e) {
@@ -177,6 +200,7 @@ public class SqlTask extends AbstractTaskExecutor {
         Connection connection = null;
         PreparedStatement stmt = null;
         ResultSet resultSet = null;
+        String dbType = sqlParameters.getType();
         try {
 
             // create connection
@@ -188,22 +212,48 @@ public class SqlTask extends AbstractTaskExecutor {
 
             // pre sql
             preSql(connection, preStatementsBinds);
+            // bind sql
             stmt = prepareStatementAndBind(connection, mainSqlBinds);
-
             String result = null;
             // decide whether to executeQuery or executeUpdate based on sqlType
             if (sqlParameters.getSqlType() == SqlType.QUERY.ordinal()) {
                 // query statements need to be convert to JsonArray and inserted into Alert to send
+//                if (DbType.HIVE.getDescp().equalsIgnoreCase(dbType)) {
+//                    Thread logThread = new Thread(new LogTask((HivePreparedStatement) stmt));
+//                    logThread.setDaemon(true);
+//                    logThread.start();
+//                    resultSet = stmt.executeQuery();
+//                    logThread.interrupt();
+//                } else {
+//                    resultSet = stmt.executeQuery();
+//                }
                 resultSet = stmt.executeQuery();
                 result = resultProcess(resultSet);
 
             } else if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()) {
-                // non query statement
-                String updateResult = String.valueOf(stmt.executeUpdate());
-                result = setNonQuerySqlReturn(updateResult, sqlParameters.getLocalParams());
+                // 使用shell执行HSQL
+                String updateResult = "";
+                if(DbType.HIVE.getDescp().equalsIgnoreCase(dbType)) {
+                    // 获取sh命令
+                    String rawScript = String.format("beeline -n %s -p %s -u \"%s;%s\" -e \"%s\"",
+                        baseConnectionParam.getUser(),
+                        baseConnectionParam.getPassword(),
+                        baseConnectionParam.getJdbcUrl(),
+                        baseConnectionParam.getOther(),
+                        mainSqlBinds.getReplaceSql());
+                    logger.info(mainSqlBinds.getReplaceSql());
+                    String command = buildCommand(rawScript);
+                    TaskResponse commandExecuteResult = shellCommandExecutor.run(command);
+                    setExitStatusCode(commandExecuteResult.getExitStatusCode());
+                    shellParameters.dealOutParam(shellCommandExecutor.getVarPool());
+                } else {
+                    stmt = prepareStatementAndBind(connection, mainSqlBinds);
+                    updateResult = String.valueOf(stmt.executeUpdate());
+                    result = setNonQuerySqlReturn(updateResult, sqlParameters.getLocalParams());
+                }
             }
-            //deal out params
             sqlParameters.dealOutParam(result);
+            //deal out params
             postSql(connection, postStatementsBinds);
         } catch (Exception e) {
             logger.error("execute sql error: {}", e.getMessage());
@@ -402,7 +452,38 @@ public class SqlTask extends AbstractTaskExecutor {
         } catch (Exception exception) {
             throw new TaskException("SQL task prepareStatementAndBind error", exception);
         }
+    }
 
+    /**
+     * preparedStatement bind
+     *
+     * @param connection connection
+     * @param sql sql
+     * @param params params
+     * @return PreparedStatement
+     * @throws Exception Exception
+     */
+    private PreparedStatement prepareStatementAndBind(Connection connection, String sql, Map<Integer, Property> params) {
+        // is the timeout set
+        // TODO
+        boolean timeoutFlag = taskExecutionContext.getTaskTimeoutStrategy() == TaskTimeoutStrategy.FAILED
+            || taskExecutionContext.getTaskTimeoutStrategy() == TaskTimeoutStrategy.WARNFAILED;
+        try {
+            PreparedStatement stmt = connection.prepareStatement(sql);
+            if (timeoutFlag) {
+                stmt.setQueryTimeout(taskExecutionContext.getTaskTimeout());
+            }
+            if (params != null) {
+                for (Map.Entry<Integer, Property> entry : params.entrySet()) {
+                    Property prop = entry.getValue();
+                    ParameterUtils.setInParameter(entry.getKey(), stmt, prop.getType(), prop.getValue());
+                }
+            }
+            logger.info("prepare statement replace sql : {} ", stmt);
+            return stmt;
+        } catch (Exception exception) {
+            throw new TaskException("SQL task prepareStatementAndBind error", exception);
+        }
     }
 
     /**
@@ -536,6 +617,72 @@ public class SqlTask extends AbstractTaskExecutor {
             resourceFullName = entry.getKey().getResourceName();
             resourceFullName = resourceFullName.startsWith("/") ? resourceFullName : String.format("/%s", resourceFullName);
             sqls.add(String.format("add jar %s%s%s", prefixPath, uploadPath, resourceFullName));
+        }
+    }
+
+    /**
+     * create command
+     *
+     * @return file name
+     * @throws Exception exception
+     */
+    private String buildCommand(String rawScript) throws Exception {
+        // generate scripts
+        String fileName = String.format("%s/%s_node.%s",
+            taskExecutionContext.getExecutePath(),
+            taskExecutionContext.getTaskAppId(), OSUtils.isWindows() ? "bat" : "sh");
+
+        Path path = new File(fileName).toPath();
+
+        if (Files.exists(path)) {
+            return fileName;
+        }
+
+        // dos2unix
+        String script = rawScript.replaceAll("\\r\\n", "\n");
+
+        logger.info("raw script : {}", script);
+        logger.info("task execute path : {}", taskExecutionContext.getExecutePath());
+
+        Set<PosixFilePermission> perms = PosixFilePermissions.fromString(RWXR_XR_X);
+        FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+
+        if (OSUtils.isWindows()) {
+            Files.createFile(path);
+        } else {
+            Files.createFile(path, attr);
+        }
+
+        Files.write(path, script.getBytes(), StandardOpenOption.APPEND);
+
+        return fileName;
+    }
+
+    /**
+     * create logTask
+     */
+    public static class LogTask implements Runnable {
+        private HiveStatement stmt;
+        public LogTask(HiveStatement stmt) {
+            this.stmt = stmt;
+        }
+
+        public void run() {
+            try {
+                // 需要看看是否有false的情况
+                while (stmt.hasMoreLogs()) {
+                    try {
+                        for (String line : stmt.getQueryLog(false, 1000)) {
+                            System.out.println(line);
+                        }
+                        //Thread.sleep(500);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

@@ -133,6 +133,7 @@ public class ShellTask extends AbstractTaskExecutor {
             return fileName;
         }
 
+        // dos2unix
         String script = shellParameters.getRawScript().replaceAll("\\r\\n", "\n");
         script = parseScript(script);
         shellParameters.setRawScript(script);

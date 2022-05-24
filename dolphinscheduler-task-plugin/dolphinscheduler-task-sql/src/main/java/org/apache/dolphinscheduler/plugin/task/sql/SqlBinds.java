@@ -19,6 +19,8 @@ package org.apache.dolphinscheduler.plugin.task.sql;
 
 import org.apache.dolphinscheduler.spi.task.Property;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,6 +37,18 @@ public class SqlBinds {
 
     public String getSql() {
         return sql;
+    }
+
+    public List<String> getSqlList() {
+        // TODO ";"切割有风险
+        return Arrays.asList(getSql().split(";"));
+    }
+
+    public String getReplaceSql() {
+        return sql.replaceAll("\\\\", "\\\\\\\\")
+            .replaceAll("\\$","\\\\\\$")
+            .replaceAll("`", "\\\\`")
+            .replaceAll("\"", "\\\\\"");
     }
 
     public Map<Integer, Property> getParamsMap() {

@@ -113,6 +113,11 @@ public class SqlTask extends AbstractTaskExecutor {
     private static final int QUERY_LIMIT = 10000;
 
     /**
+     *  sign status
+     */
+    protected volatile int statusCode = 0;
+
+    /**
      * Abstract Yarn Task
      *
      * @param taskRequest taskRequest
@@ -176,8 +181,9 @@ public class SqlTask extends AbstractTaskExecutor {
 
             // execute sql task
             executeFuncAndSql(mainSqlBinds, preStatementSqlBinds, postStatementSqlBinds, createFuncs);
-            setExitStatusCode(TaskConstants.EXIT_CODE_SUCCESS);
-
+            if (statusCode ==  TaskConstants.EXIT_CODE_SUCCESS) {
+                setExitStatusCode(TaskConstants.EXIT_CODE_SUCCESS);
+            }
         } catch (Exception e) {
             setExitStatusCode(TaskConstants.EXIT_CODE_FAILURE);
             logger.error("sql task error: {}", e.toString());
@@ -218,32 +224,24 @@ public class SqlTask extends AbstractTaskExecutor {
             // decide whether to executeQuery or executeUpdate based on sqlType
             if (sqlParameters.getSqlType() == SqlType.QUERY.ordinal()) {
                 // query statements need to be convert to JsonArray and inserted into Alert to send
-//                if (DbType.HIVE.getDescp().equalsIgnoreCase(dbType)) {
-//                    Thread logThread = new Thread(new LogTask((HivePreparedStatement) stmt));
-//                    logThread.setDaemon(true);
-//                    logThread.start();
-//                    resultSet = stmt.executeQuery();
-//                    logThread.interrupt();
-//                } else {
-//                    resultSet = stmt.executeQuery();
-//                }
                 resultSet = stmt.executeQuery();
                 result = resultProcess(resultSet);
-
             } else if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()) {
                 // 使用shell执行HSQL
                 String updateResult = "";
                 if(DbType.HIVE.getDescp().equalsIgnoreCase(dbType)) {
                     // 获取sh命令
-                    String rawScript = String.format("beeline -n %s -p %s -u \"%s;%s\" -e \"%s\"",
+                    String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
                         baseConnectionParam.getUser(),
                         baseConnectionParam.getPassword(),
                         baseConnectionParam.getJdbcUrl(),
                         baseConnectionParam.getOther(),
-                        mainSqlBinds.getReplaceSql());
-                    logger.info(mainSqlBinds.getReplaceSql());
+                        getSqlFile(mainSqlBinds.getSql())
+                    );
+                    // logger.info("execute sql: {}", mainSqlBinds.getReplaceSql());
                     String command = buildCommand(rawScript);
                     TaskResponse commandExecuteResult = shellCommandExecutor.run(command);
+                    statusCode = commandExecuteResult.getExitStatusCode();
                     setExitStatusCode(commandExecuteResult.getExitStatusCode());
                     shellParameters.dealOutParam(shellCommandExecutor.getVarPool());
                 } else {
@@ -659,31 +657,40 @@ public class SqlTask extends AbstractTaskExecutor {
     }
 
     /**
-     * create logTask
+     * create sqlFile
+     *
+     * @return file name
+     * @throws Exception exception
      */
-    public static class LogTask implements Runnable {
-        private HiveStatement stmt;
-        public LogTask(HiveStatement stmt) {
-            this.stmt = stmt;
+    private String getSqlFile(String sql) throws Exception {
+        // generate scripts
+        String fileName = String.format("%s/%s_sql.%s",
+            taskExecutionContext.getExecutePath(),
+            taskExecutionContext.getTaskAppId(), "sql");
+
+        Path path = new File(fileName).toPath();
+
+        if (Files.exists(path)) {
+            return fileName;
         }
 
-        public void run() {
-            try {
-                // 需要看看是否有false的情况
-                while (stmt.hasMoreLogs()) {
-                    try {
-                        for (String line : stmt.getQueryLog(false, 1000)) {
-                            System.out.println(line);
-                        }
-                        //Thread.sleep(500);
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        // dos2unix
+        String script = sql.replaceAll("\\r\\n", "\n");
+
+        logger.info("sql script : {}", script);
+        logger.info("sql execute path : {}", taskExecutionContext.getExecutePath());
+
+        Set<PosixFilePermission> perms = PosixFilePermissions.fromString(RWXR_XR_X);
+        FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+
+        if (OSUtils.isWindows()) {
+            Files.createFile(path);
+        } else {
+            Files.createFile(path, attr);
         }
+
+        Files.write(path, script.getBytes(), StandardOpenOption.APPEND);
+
+        return fileName;
     }
-
 }

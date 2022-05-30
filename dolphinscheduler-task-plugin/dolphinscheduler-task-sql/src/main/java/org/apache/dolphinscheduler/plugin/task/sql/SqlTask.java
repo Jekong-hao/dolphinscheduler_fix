@@ -93,11 +93,6 @@ public class SqlTask extends AbstractTaskExecutor {
     private SqlParameters sqlParameters;
 
     /**
-     * shell parameters
-     */
-    private ShellParameters shellParameters;
-
-    /**
      * base datasource
      */
     private BaseConnectionParam baseConnectionParam;
@@ -126,7 +121,6 @@ public class SqlTask extends AbstractTaskExecutor {
         super(taskRequest);
         this.taskExecutionContext = taskRequest;
         this.sqlParameters = JSONUtils.parseObject(taskExecutionContext.getTaskParams(), SqlParameters.class);
-        this.shellParameters = JSONUtils.parseObject(taskExecutionContext.getTaskParams(), ShellParameters.class);
         this.shellCommandExecutor = new ShellCommandExecutor(this::logHandle,
             taskExecutionContext,
             logger);
@@ -243,7 +237,6 @@ public class SqlTask extends AbstractTaskExecutor {
                     TaskResponse commandExecuteResult = shellCommandExecutor.run(command);
                     statusCode = commandExecuteResult.getExitStatusCode();
                     setExitStatusCode(commandExecuteResult.getExitStatusCode());
-                    shellParameters.dealOutParam(shellCommandExecutor.getVarPool());
                 } else {
                     stmt = prepareStatementAndBind(connection, mainSqlBinds);
                     updateResult = String.valueOf(stmt.executeUpdate());
@@ -463,7 +456,6 @@ public class SqlTask extends AbstractTaskExecutor {
      */
     private PreparedStatement prepareStatementAndBind(Connection connection, String sql, Map<Integer, Property> params) {
         // is the timeout set
-        // TODO
         boolean timeoutFlag = taskExecutionContext.getTaskTimeoutStrategy() == TaskTimeoutStrategy.FAILED
             || taskExecutionContext.getTaskTimeoutStrategy() == TaskTimeoutStrategy.WARNFAILED;
         try {
@@ -632,10 +624,6 @@ public class SqlTask extends AbstractTaskExecutor {
 
         Path path = new File(fileName).toPath();
 
-        if (Files.exists(path)) {
-            return fileName;
-        }
-
         // dos2unix
         String script = rawScript.replaceAll("\\r\\n", "\n");
 
@@ -644,6 +632,9 @@ public class SqlTask extends AbstractTaskExecutor {
 
         Set<PosixFilePermission> perms = PosixFilePermissions.fromString(RWXR_XR_X);
         FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+
+        // 如果存在path，先删除再创建
+        Files.deleteIfExists(path);
 
         if (OSUtils.isWindows()) {
             Files.createFile(path);
@@ -670,10 +661,6 @@ public class SqlTask extends AbstractTaskExecutor {
 
         Path path = new File(fileName).toPath();
 
-        if (Files.exists(path)) {
-            return fileName;
-        }
-
         // dos2unix
         String script = sql.replaceAll("\\r\\n", "\n");
 
@@ -682,6 +669,9 @@ public class SqlTask extends AbstractTaskExecutor {
 
         Set<PosixFilePermission> perms = PosixFilePermissions.fromString(RWXR_XR_X);
         FileAttribute<Set<PosixFilePermission>> attr = PosixFilePermissions.asFileAttribute(perms);
+
+        // 如果存在path，先删除再创建
+        Files.deleteIfExists(path);
 
         if (OSUtils.isWindows()) {
             Files.createFile(path);

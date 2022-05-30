@@ -202,49 +202,94 @@ public class SqlTask extends AbstractTaskExecutor {
         String dbType = sqlParameters.getType();
         try {
 
-            // create connection
-            connection = DataSourceClientProvider.getInstance().getConnection(DbType.valueOf(sqlParameters.getType()), baseConnectionParam);
-            // create temp function
-            if (CollectionUtils.isNotEmpty(createFuncs)) {
-                createTempFunction(connection, createFuncs);
-            }
 
-            // pre sql
-            preSql(connection, preStatementsBinds);
-            // bind sql
-            stmt = prepareStatementAndBind(connection, mainSqlBinds);
-            String result = null;
-            // decide whether to executeQuery or executeUpdate based on sqlType
-            if (sqlParameters.getSqlType() == SqlType.QUERY.ordinal()) {
-                // query statements need to be convert to JsonArray and inserted into Alert to send
-                resultSet = stmt.executeQuery();
-                result = resultProcess(resultSet);
-            } else if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()) {
-                // 使用shell执行HSQL
-                String updateResult = "";
-                if(DbType.HIVE.getDescp().equalsIgnoreCase(dbType)) {
-                    // 获取sh命令
-                    String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
-                        baseConnectionParam.getUser(),
-                        baseConnectionParam.getPassword(),
-                        baseConnectionParam.getJdbcUrl(),
-                        baseConnectionParam.getOther(),
-                        getSqlFile(mainSqlBinds.getSql())
-                    );
-                    // logger.info("execute sql: {}", mainSqlBinds.getReplaceSql());
-                    String command = buildCommand(rawScript);
-                    TaskResponse commandExecuteResult = shellCommandExecutor.run(command);
-                    statusCode = commandExecuteResult.getExitStatusCode();
-                    setExitStatusCode(commandExecuteResult.getExitStatusCode());
-                } else {
+            // 如果是hive 或者 spark的非查询，使用shell来执行脚本
+            if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()
+                    && (DbType.HIVE.getDescp().equalsIgnoreCase(dbType) || DbType.SPARK.getDescp().equalsIgnoreCase(dbType))) {
+
+                // UDF
+                // pre sql
+                // sql
+                // post sql
+                // 以上放到文件 sql
+                // shell exec sql
+                // setNonQuerySqlReturn ?? 是否需要输出日志
+
+            } else {
+
+                // create connection
+                connection = DataSourceClientProvider.getInstance().getConnection(DbType.valueOf(sqlParameters.getType()), baseConnectionParam);
+                // create temp function
+                if (CollectionUtils.isNotEmpty(createFuncs)) {
+                    createTempFunction(connection, createFuncs);
+                }
+
+                // pre sql
+                preSql(connection, preStatementsBinds);
+
+                // bind sql
+                stmt = prepareStatementAndBind(connection, mainSqlBinds);
+                String result = null;
+                // decide whether to executeQuery or executeUpdate based on sqlType
+                if (sqlParameters.getSqlType() == SqlType.QUERY.ordinal()) {
+                    // query statements need to be convert to JsonArray and inserted into Alert to send
+                    resultSet = stmt.executeQuery();
+                    result = resultProcess(resultSet);
+                } else if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()) {
                     stmt = prepareStatementAndBind(connection, mainSqlBinds);
-                    updateResult = String.valueOf(stmt.executeUpdate());
+                    String updateResult = String.valueOf(stmt.executeUpdate());
                     result = setNonQuerySqlReturn(updateResult, sqlParameters.getLocalParams());
                 }
+                // deal out params
+                sqlParameters.dealOutParam(result);
+
+                // post sql
+                postSql(connection, postStatementsBinds);
             }
-            sqlParameters.dealOutParam(result);
-            //deal out params
-            postSql(connection, postStatementsBinds);
+
+//            // create connection
+//            connection = DataSourceClientProvider.getInstance().getConnection(DbType.valueOf(sqlParameters.getType()), baseConnectionParam);
+//            // create temp function
+//            if (CollectionUtils.isNotEmpty(createFuncs)) {
+//                createTempFunction(connection, createFuncs);
+//            }
+//
+//            // pre sql
+//            preSql(connection, preStatementsBinds);
+//            // bind sql
+//            stmt = prepareStatementAndBind(connection, mainSqlBinds);
+//            String result = null;
+//            // decide whether to executeQuery or executeUpdate based on sqlType
+//            if (sqlParameters.getSqlType() == SqlType.QUERY.ordinal()) {
+//                // query statements need to be convert to JsonArray and inserted into Alert to send
+//                resultSet = stmt.executeQuery();
+//                result = resultProcess(resultSet);
+//            } else if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()) {
+//                // 使用shell执行HSQL
+//                String updateResult = "";
+//                if(DbType.HIVE.getDescp().equalsIgnoreCase(dbType)) {
+//                    // 获取sh命令
+//                    String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
+//                        baseConnectionParam.getUser(),
+//                        baseConnectionParam.getPassword(),
+//                        baseConnectionParam.getJdbcUrl(),
+//                        baseConnectionParam.getOther(),
+//                        getSqlFile(mainSqlBinds.getSql())
+//                    );
+//                    // logger.info("execute sql: {}", mainSqlBinds.getReplaceSql());
+//                    String command = buildCommand(rawScript);
+//                    TaskResponse commandExecuteResult = shellCommandExecutor.run(command);
+//                    statusCode = commandExecuteResult.getExitStatusCode();
+//                    setExitStatusCode(commandExecuteResult.getExitStatusCode());
+//                } else {
+//                    stmt = prepareStatementAndBind(connection, mainSqlBinds);
+//                    updateResult = String.valueOf(stmt.executeUpdate());
+//                    result = setNonQuerySqlReturn(updateResult, sqlParameters.getLocalParams());
+//                }
+//            }
+//            sqlParameters.dealOutParam(result);
+//            //deal out params
+//            postSql(connection, postStatementsBinds);
         } catch (Exception e) {
             logger.error("execute sql error: {}", e.getMessage());
             throw e;

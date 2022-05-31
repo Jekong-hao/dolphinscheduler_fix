@@ -34,6 +34,7 @@ import static org.apache.dolphinscheduler.api.enums.Status.RELEASE_PROCESS_DEFIN
 import static org.apache.dolphinscheduler.api.enums.Status.SWITCH_PROCESS_DEFINITION_VERSION_ERROR;
 import static org.apache.dolphinscheduler.api.enums.Status.UPDATE_PROCESS_DEFINITION_ERROR;
 import static org.apache.dolphinscheduler.api.enums.Status.VERIFY_PROCESS_DEFINITION_NAME_UNIQUE_ERROR;
+import static org.apache.dolphinscheduler.api.enums.Status.GRAY_TEST_PROCESS_DEFINITION_SET_ERROR;
 
 import org.apache.dolphinscheduler.api.aspect.AccessLogAnnotation;
 import org.apache.dolphinscheduler.api.enums.Status;
@@ -41,6 +42,7 @@ import org.apache.dolphinscheduler.api.exceptions.ApiException;
 import org.apache.dolphinscheduler.api.service.ProcessDefinitionService;
 import org.apache.dolphinscheduler.api.utils.Result;
 import org.apache.dolphinscheduler.common.Constants;
+import org.apache.dolphinscheduler.common.enums.GrayFlag;
 import org.apache.dolphinscheduler.common.enums.ReleaseState;
 import org.apache.dolphinscheduler.common.utils.ParameterUtils;
 import org.apache.dolphinscheduler.dao.entity.ProcessDefinition;
@@ -371,6 +373,33 @@ public class ProcessDefinitionController extends BaseController {
                                            @PathVariable(value = "code", required = true) long code,
                                            @RequestParam(value = "releaseState", required = true) ReleaseState releaseState) {
         Map<String, Object> result = processDefinitionService.releaseProcessDefinition(loginUser, projectCode, code, releaseState);
+        return returnDataList(result);
+    }
+
+    /**
+     * gray test process definition
+     *
+     * @param loginUser login user
+     * @param projectCode project code
+     * @param code process definition code
+     * @param grayFlag gray flag
+     * @return  gray test result code
+     */
+    @ApiOperation(value = "gray", notes = "GRAY_TEST_PROCESS_DEFINITION_NOTES")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "name", value = "PROCESS_DEFINITION_NAME", required = true, type = "String"),
+            @ApiImplicitParam(name = "code", value = "PROCESS_DEFINITION_CODE", required = true, dataType = "Long", example = "123456789"),
+            @ApiImplicitParam(name = "grayFlag", value = "PROCESS_DEFINITION_RELEASE", required = true, dataType = "GrayFlag"),
+    })
+    @PostMapping(value = "/{code}/gray")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiException(GRAY_TEST_PROCESS_DEFINITION_SET_ERROR)
+    @AccessLogAnnotation(ignoreRequestArgs = "loginUser")
+    public Result grayTestProcessDefinition(@ApiIgnore @RequestAttribute(value = Constants.SESSION_USER) User loginUser,
+                                           @ApiParam(name = "projectCode", value = "PROJECT_CODE", required = true) @PathVariable long projectCode,
+                                           @PathVariable(value = "code", required = true) long code,
+                                           @RequestParam(value = "grayFlag", required = true) GrayFlag grayFlag) {
+        Map<String, Object> result = processDefinitionService.grayTestProcessDefinition(loginUser, projectCode, code, grayFlag);
         return returnDataList(result);
     }
 

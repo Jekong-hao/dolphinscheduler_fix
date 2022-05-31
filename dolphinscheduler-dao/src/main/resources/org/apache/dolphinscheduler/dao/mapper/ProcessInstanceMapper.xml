@@ -25,6 +25,46 @@
         update_time, is_sub_process, executor_id, history_cmd,
         process_instance_priority, worker_group,environment_code, timeout, tenant_id, var_pool, dry_run, restart_time
     </sql>
+
+    <insert id="insertAndReturnId" parameterType="org.apache.dolphinscheduler.dao.entity.ProcessInstance" useGeneratedKeys="true" keyProperty="id">
+        insert into t_ds_process_instance(name, process_definition_version, process_definition_code, state, recovery, start_time, end_time, run_times,host,
+                                          command_type, command_param, task_depend_type, max_try_times, failure_strategy, warning_type,
+                                          warning_group_id, schedule_time, command_start_time, global_params,
+                                          is_sub_process, executor_id, history_cmd,
+                                          process_instance_priority, worker_group,environment_code, timeout, tenant_id, var_pool, dry_run, restart_time)
+        values (
+            #{processInstance.name},
+            #{processInstance.processDefinitionVersion},
+            #{processInstance.processDefinitionCode},
+            #{processInstance.state},
+            #{processInstance.recovery},
+            #{processInstance.startTime},
+            #{processInstance.endTime},
+            #{processInstance.runTimes},
+            #{processInstance.host},
+            #{processInstance.commandType},
+            #{processInstance.commandParam},
+            #{processInstance.taskDependType},
+            #{processInstance.maxTryTimes},
+            #{processInstance.failureStrategy},
+            #{processInstance.warningType},
+            #{processInstance.warningGroupId},
+            #{processInstance.scheduleTime},
+            #{processInstance.commandStartTime},
+            #{processInstance.globalParams},
+            #{processInstance.isSubProcess},
+            #{processInstance.executorId},
+            #{processInstance.historyCmd},
+            #{processInstance.processInstancePriority},
+            #{processInstance.workerGroup},
+            #{processInstance.environmentCode},
+            #{processInstance.timeout},
+            #{processInstance.tenantId},
+            #{processInstance.varPool},
+            #{processInstance.dryRun},
+            #{processInstance.restartTime}
+        )
+    </insert>
     <select id="queryDetailById" resultType="org.apache.dolphinscheduler.dao.entity.ProcessInstance">
         select
         <include refid="baseSql"/>

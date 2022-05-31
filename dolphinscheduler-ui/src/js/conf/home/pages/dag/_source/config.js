@@ -85,6 +85,25 @@ const publishStatus = [
 ]
 
 /**
+ * gray test status
+ * @id Front end definition id
+ * @desc tooltip
+ * @code Backend definition identifier
+ */
+const grayFlag = [
+  {
+    id: 0,
+    desc: `${i18n.$t('onGray')}`,
+    code: 'GRAY'
+  },
+  {
+    id: 1,
+    desc: `${i18n.$t('offGray')}`,
+    code: 'NO_GRAY'
+  }
+]
+
+/**
  * Operation type
  * @desc tooltip
  * @code identifier
@@ -322,6 +341,7 @@ const tasksType = {
 export {
   toolOper,
   publishStatus,
+  grayFlag,
   runningType,
   tasksState,
   tasksType

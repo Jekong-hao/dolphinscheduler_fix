@@ -36,6 +36,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 public interface ProcessInstanceMapper extends BaseMapper<ProcessInstance> {
 
     /**
+     * 插入数据,返回自增id
+     * @param processInstance
+     * @return
+     */
+    int insertAndReturnId(@Param("processInstance") ProcessInstance processInstance);
+
+    /**
      * query process instance detail info by id
      *
      * @param processId processId

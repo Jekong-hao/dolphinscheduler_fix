@@ -32,6 +32,7 @@ import org.apache.dolphinscheduler.common.model.Server;
 import org.apache.dolphinscheduler.common.utils.DateUtils;
 import org.apache.dolphinscheduler.common.utils.JSONUtils;
 import org.apache.dolphinscheduler.dao.entity.*;
+import org.apache.dolphinscheduler.dao.mapper.GrayRelationMapper;
 import org.apache.dolphinscheduler.dao.mapper.ProcessDefinitionMapper;
 import org.apache.dolphinscheduler.dao.mapper.ProcessInstanceMapper;
 import org.apache.dolphinscheduler.dao.mapper.ProjectMapper;
@@ -56,6 +57,8 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
 
     private static final Logger logger = LoggerFactory.getLogger(ExecutorServiceImpl.class);
 
+    private static final ElementType PROCESSDEFINITION = ElementType.PROCESSDEFINITION;
+
     @Autowired
     private ProjectMapper projectMapper;
 
@@ -64,6 +67,9 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
 
     @Autowired
     private ProcessDefinitionMapper processDefinitionMapper;
+
+    @Autowired
+    private GrayRelationMapper grayRelationMapper;
 
     @Autowired
     private MonitorService monitorService;
@@ -124,6 +130,14 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
 
         // check process define release state
         ProcessDefinition processDefinition = processDefinitionMapper.queryByCode(processDefinitionCode);
+        // 查询灰度关系
+        final GrayRelation grayRelationProcessDefinition = grayRelationMapper.queryByTypeAndIdAndCode(PROCESSDEFINITION, processDefinition.getId(), processDefinition.getCode());
+        if (grayRelationProcessDefinition != null && grayRelationProcessDefinition.getGrayFlag() == GrayFlag.GRAY) {
+            processDefinition.setGrayFlag(GrayFlag.GRAY);
+        } else {
+            processDefinition.setGrayFlag(GrayFlag.NO_GRAY);
+        }
+
         result = checkProcessDefinitionValid(projectCode, processDefinition, processDefinitionCode);
         if (result.get(Constants.STATUS) != Status.SUCCESS) {
             return result;
@@ -144,7 +158,7 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
         /**
          * create command
          */
-        int create = this.createCommand(commandType, processDefinition.getCode(),
+        int create = this.createCommand(commandType, processDefinition.getCode(), processDefinition.getGrayFlag(),
                 taskDependType, failureStrategy, startNodeList, cronTime, warningType, loginUser.getId(),
                 warningGroupId, runMode, processInstancePriority, workerGroup, environmentCode, startParams, expectedParallelismNumber, dryRun);
 
@@ -481,7 +495,7 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
      * @param environmentCode environmentCode
      * @return command id
      */
-    private int createCommand(CommandType commandType, long processDefineCode,
+    private int createCommand(CommandType commandType, long processDefineCode, GrayFlag grayFlag,
                               TaskDependType nodeDep, FailureStrategy failureStrategy,
                               String startNodeList, String schedule, WarningType warningType,
                               int executorId, int warningGroupId,
@@ -500,6 +514,7 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
             command.setCommandType(commandType);
         }
         command.setProcessDefinitionCode(processDefineCode);
+        command.setGrayFlag(grayFlag);
         if (nodeDep != null) {
             command.setTaskDependType(nodeDep);
         }

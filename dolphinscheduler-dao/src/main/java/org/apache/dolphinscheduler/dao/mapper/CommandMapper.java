@@ -51,4 +51,12 @@ public interface CommandMapper extends BaseMapper<Command> {
      */
     List<Command> queryCommandPage(@Param("limit") int limit, @Param("offset") int offset);
 
+    /**
+     * 插入数据,返回自增id
+     *
+     * @param command
+     * @return
+     */
+    int insertAndReturnId(@Param("command") Command command);
+
 }

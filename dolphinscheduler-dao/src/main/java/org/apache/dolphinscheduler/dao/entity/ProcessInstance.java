@@ -17,13 +17,7 @@
 
 package org.apache.dolphinscheduler.dao.entity;
 
-import org.apache.dolphinscheduler.common.enums.CommandType;
-import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
-import org.apache.dolphinscheduler.common.enums.FailureStrategy;
-import org.apache.dolphinscheduler.common.enums.Flag;
-import org.apache.dolphinscheduler.common.enums.Priority;
-import org.apache.dolphinscheduler.common.enums.TaskDependType;
-import org.apache.dolphinscheduler.common.enums.WarningType;
+import org.apache.dolphinscheduler.common.enums.*;
 import org.apache.dolphinscheduler.common.utils.DateUtils;
 
 import java.util.Date;
@@ -62,6 +56,12 @@ public class ProcessInstance {
      * process state
      */
     private ExecutionStatus state;
+
+    /**
+     * gray test flag
+     */
+    @TableField(exist = false)
+    private GrayFlag grayFlag;
     /**
      * recovery flag for failover
      */
@@ -300,6 +300,14 @@ public class ProcessInstance {
 
     public void setState(ExecutionStatus state) {
         this.state = state;
+    }
+
+    public void setGrayFlag(GrayFlag grayFlag) {
+        this.grayFlag = grayFlag;
+    }
+
+    public GrayFlag getGrayFlag() {
+        return grayFlag;
     }
 
     public Flag getRecovery() {
@@ -629,6 +637,7 @@ public class ProcessInstance {
         return "ProcessInstance{"
             + "id=" + id
             + ", state=" + state
+            + ", grayFlag" + grayFlag
             + ", recovery=" + recovery
             + ", startTime=" + startTime
             + ", endTime=" + endTime

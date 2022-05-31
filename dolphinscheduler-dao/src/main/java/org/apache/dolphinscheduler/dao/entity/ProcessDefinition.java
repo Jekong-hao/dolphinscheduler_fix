@@ -18,6 +18,7 @@
 package org.apache.dolphinscheduler.dao.entity;
 
 import org.apache.dolphinscheduler.common.enums.Flag;
+import org.apache.dolphinscheduler.common.enums.GrayFlag;
 import org.apache.dolphinscheduler.common.enums.ReleaseState;
 import org.apache.dolphinscheduler.common.process.Property;
 import org.apache.dolphinscheduler.common.utils.JSONUtils;
@@ -67,6 +68,12 @@ public class ProcessDefinition {
      * release state : online/offline
      */
     private ReleaseState releaseState;
+
+    /**
+     * gray flag : gray/no_gray
+     */
+    @TableField(exist = false)
+    private GrayFlag grayFlag;
 
     /**
      * project code
@@ -231,6 +238,14 @@ public class ProcessDefinition {
 
     public ReleaseState getReleaseState() {
         return releaseState;
+    }
+
+    public void setGrayFlag(GrayFlag grayFlag) {
+        this.grayFlag = grayFlag;
+    }
+
+    public GrayFlag getGrayFlag() {
+        return grayFlag;
     }
 
     public void setReleaseState(ReleaseState releaseState) {
@@ -413,6 +428,7 @@ public class ProcessDefinition {
             && tenantId == that.tenantId
             && Objects.equals(name, that.name)
             && releaseState == that.releaseState
+            && grayFlag == that.grayFlag
             && Objects.equals(description, that.description)
             && Objects.equals(globalParams, that.globalParams)
             && flag == that.flag
@@ -427,6 +443,7 @@ public class ProcessDefinition {
             + ", name='" + name + '\''
             + ", version=" + version
             + ", releaseState=" + releaseState
+            + ", grayTestState=" + grayFlag
             + ", projectCode=" + projectCode
             + ", description='" + description + '\''
             + ", globalParams='" + globalParams + '\''

@@ -18,6 +18,7 @@
 package org.apache.dolphinscheduler.api.service;
 
 import org.apache.dolphinscheduler.api.utils.Result;
+import org.apache.dolphinscheduler.common.enums.GrayFlag;
 import org.apache.dolphinscheduler.common.enums.ReleaseState;
 import org.apache.dolphinscheduler.dao.entity.TaskDefinitionLog;
 import org.apache.dolphinscheduler.dao.entity.User;
@@ -215,6 +216,20 @@ public interface ProcessDefinitionService {
                                                  long projectCode,
                                                  long code,
                                                  ReleaseState releaseState);
+
+    /**
+     * gray test process definition: onGray / offGray
+     *
+     * @param loginUser login user
+     * @param projectCode project code
+     * @param code process definition code
+     * @param grayFlag gray flag
+     * @return gray test result code
+     */
+    Map<String, Object> grayTestProcessDefinition(User loginUser,
+                                                 long projectCode,
+                                                 long code,
+                                                 GrayFlag grayFlag);
 
     /**
      * batch export process definition by codes

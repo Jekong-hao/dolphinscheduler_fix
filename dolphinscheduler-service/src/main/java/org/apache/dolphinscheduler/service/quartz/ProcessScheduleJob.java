@@ -102,6 +102,7 @@ public class ProcessScheduleJob implements Job {
         command.setWarningType(schedule.getWarningType());
         command.setProcessInstancePriority(schedule.getProcessInstancePriority());
         command.setProcessDefinitionVersion(processDefinition.getVersion());
+        command.setGrayFlag(processDefinition.getGrayFlag());
 
         getProcessService().createCommand(command);
     }

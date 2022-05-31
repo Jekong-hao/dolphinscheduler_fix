@@ -52,6 +52,11 @@
                 <span>{{scope.row.updateTime | formatDate}}</span>
               </template>
             </el-table-column>
+            <el-table-column :label="$t('Gray Flag')">
+              <template slot-scope="scope">
+                <span>{{_rtGrayFlag(scope.row.grayFlag)}}</span>
+              </template>
+            </el-table-column>
             <el-table-column :label="$t('Operation')" width="120">
               <template slot-scope="scope">
                 <el-tooltip :content="$t('Edit')" placement="top">
@@ -111,7 +116,7 @@
   import mSpin from '@/module/components/spin/spin'
   import mTiming from '../../pages/list/_source/timing'
   import mNoData from '@/module/components/noData/noData'
-  import { publishStatus } from '@/conf/home/pages/dag/_source/config'
+  import { publishStatus, grayFlag } from '@/conf/home/pages/dag/_source/config'
 
   export default {
     name: 'list',
@@ -157,6 +162,12 @@
        */
       _rtReleaseState (code) {
         return _.filter(publishStatus, v => v.code === code)[0].desc
+      },
+      /**
+       * return state
+       */
+      _rtGrayFlag (code) {
+        return _.filter(grayFlag, v => v.code === code)[0].desc
       },
       /**
        * page

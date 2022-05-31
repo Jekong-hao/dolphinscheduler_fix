@@ -34,12 +34,7 @@ import org.apache.dolphinscheduler.api.utils.FileUtils;
 import org.apache.dolphinscheduler.api.utils.PageInfo;
 import org.apache.dolphinscheduler.api.utils.Result;
 import org.apache.dolphinscheduler.common.Constants;
-import org.apache.dolphinscheduler.common.enums.FailureStrategy;
-import org.apache.dolphinscheduler.common.enums.Priority;
-import org.apache.dolphinscheduler.common.enums.ReleaseState;
-import org.apache.dolphinscheduler.common.enums.TaskType;
-import org.apache.dolphinscheduler.common.enums.UserType;
-import org.apache.dolphinscheduler.common.enums.WarningType;
+import org.apache.dolphinscheduler.common.enums.*;
 import org.apache.dolphinscheduler.common.graph.DAG;
 import org.apache.dolphinscheduler.common.model.TaskNode;
 import org.apache.dolphinscheduler.common.model.TaskNodeRelation;
@@ -48,30 +43,8 @@ import org.apache.dolphinscheduler.common.utils.CodeGenerateUtils;
 import org.apache.dolphinscheduler.common.utils.CodeGenerateUtils.CodeGenerateException;
 import org.apache.dolphinscheduler.common.utils.DateUtils;
 import org.apache.dolphinscheduler.common.utils.JSONUtils;
-import org.apache.dolphinscheduler.dao.entity.DagData;
-import org.apache.dolphinscheduler.dao.entity.ProcessDefinition;
-import org.apache.dolphinscheduler.dao.entity.ProcessDefinitionLog;
-import org.apache.dolphinscheduler.dao.entity.ProcessInstance;
-import org.apache.dolphinscheduler.dao.entity.ProcessTaskRelation;
-import org.apache.dolphinscheduler.dao.entity.ProcessTaskRelationLog;
-import org.apache.dolphinscheduler.dao.entity.Project;
-import org.apache.dolphinscheduler.dao.entity.Schedule;
-import org.apache.dolphinscheduler.dao.entity.TaskDefinition;
-import org.apache.dolphinscheduler.dao.entity.TaskDefinitionLog;
-import org.apache.dolphinscheduler.dao.entity.TaskInstance;
-import org.apache.dolphinscheduler.dao.entity.Tenant;
-import org.apache.dolphinscheduler.dao.entity.User;
-import org.apache.dolphinscheduler.dao.mapper.ProcessDefinitionLogMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProcessDefinitionMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProcessTaskRelationLogMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProcessTaskRelationMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProjectMapper;
-import org.apache.dolphinscheduler.dao.mapper.ScheduleMapper;
-import org.apache.dolphinscheduler.dao.mapper.TaskDefinitionLogMapper;
-import org.apache.dolphinscheduler.dao.mapper.TaskDefinitionMapper;
-import org.apache.dolphinscheduler.dao.mapper.TaskInstanceMapper;
-import org.apache.dolphinscheduler.dao.mapper.TenantMapper;
-import org.apache.dolphinscheduler.dao.mapper.UserMapper;
+import org.apache.dolphinscheduler.dao.entity.*;
+import org.apache.dolphinscheduler.dao.mapper.*;
 import org.apache.dolphinscheduler.service.process.ProcessService;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -122,8 +95,15 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
 
     private static final String RELEASESTATE = "releaseState";
 
+    private static final String GRAYFLAG = "grayFlag";
+
+    private static final ElementType PROCESSDEFINITION = ElementType.PROCESSDEFINITION;
+
     @Autowired
     private ProjectMapper projectMapper;
+
+    @Autowired
+    private GrayRelationMapper grayRelationMapper;
 
     @Autowired
     private ProjectService projectService;
@@ -420,6 +400,12 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
             ProcessDefinitionLog processDefinitionLog = processDefinitionLogMapper.queryByDefinitionCodeAndVersion(pd.getCode(), pd.getVersion());
             User user = userMapper.selectById(processDefinitionLog.getOperator());
             pd.setModifyBy(user.getUserName());
+            GrayRelation grayRelationProcessDefinition = grayRelationMapper.queryByTypeAndIdAndCode(PROCESSDEFINITION, pd.getId(), pd.getCode());
+            if(grayRelationProcessDefinition != null && grayRelationProcessDefinition.getGrayFlag() == GrayFlag.GRAY) {
+                pd.setGrayFlag(GrayFlag.GRAY);
+            } else {
+                pd.setGrayFlag(GrayFlag.NO_GRAY);
+            }
         }
         processDefinitionIPage.setRecords(records);
         PageInfo<ProcessDefinition> pageInfo = new PageInfo<>(pageNo, pageSize);
@@ -808,6 +794,73 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
             default:
                 putMsg(result, Status.REQUEST_PARAMS_NOT_VALID_ERROR, RELEASESTATE);
                 return result;
+        }
+
+        putMsg(result, Status.SUCCESS);
+        return result;
+    }
+
+
+    /**
+     * gray test process definition: gray / no_gray
+     *
+     * @param loginUser login user
+     * @param projectCode project code
+     * @param code process definition code
+     * @param grayFlag release state
+     * @return gray test result code
+     */
+    @Override
+    @Transactional(rollbackFor = RuntimeException.class)
+    public Map<String, Object> grayTestProcessDefinition(User loginUser, long projectCode, long code, GrayFlag grayFlag) {
+        Project project = projectMapper.queryByCode(projectCode);
+        //check user access for project
+        Map<String, Object> result = projectService.checkProjectAndAuth(loginUser, project, projectCode);
+        if (result.get(Constants.STATUS) != Status.SUCCESS) {
+            return result;
+        }
+
+        // check state
+        if (null == grayFlag) {
+            putMsg(result, Status.REQUEST_PARAMS_NOT_VALID_ERROR, GRAYFLAG);
+            return result;
+        }
+
+        ProcessDefinition processDefinition = processDefinitionMapper.queryByCode(code);
+        if (processDefinition == null || projectCode != processDefinition.getProjectCode()) {
+            putMsg(result, Status.PROCESS_DEFINE_NOT_EXIST, code);
+            return result;
+        }
+        Schedule schedule = scheduleMapper.queryByProcessDefinitionCode(code);
+
+        GrayRelation grayRelationProcessDefinition =
+                grayRelationMapper.queryByTypeAndIdAndCode(PROCESSDEFINITION, processDefinition.getId(), processDefinition.getCode());
+
+        switch (grayFlag) {
+            case GRAY:
+                List<ProcessTaskRelation> relationList = processService.findRelationByCode(code, processDefinition.getVersion());
+                if (CollectionUtils.isEmpty(relationList)) {
+                    putMsg(result, Status.PROCESS_DAG_IS_EMPTY);
+                    return result;
+                }
+                if (grayRelationProcessDefinition != null ) {
+                    putMsg(result, Status.GRAY_RELATION_SHOULD_NOT_EXIST, grayRelationProcessDefinition.getId());
+                    return result;
+                }
+                grayRelationProcessDefinition = new GrayRelation(PROCESSDEFINITION, processDefinition.getId(), processDefinition.getCode());
+                grayRelationProcessDefinition.setGrayFlag(GrayFlag.GRAY);
+                grayRelationMapper.insert(grayRelationProcessDefinition);
+                break;
+            case NO_GRAY:
+                if(grayRelationProcessDefinition == null) {
+                    putMsg(result, Status.GRAY_RELATION_SHOULD_EXIST);
+                    return result;
+                }
+                final int delete = grayRelationMapper.deleteById(grayRelationProcessDefinition.getId());
+                if (delete != 1) {
+                    throw new ServiceException("delete grayRelation fail, id:" + grayRelationProcessDefinition.getId());
+                }
+                break;
         }
 
         putMsg(result, Status.SUCCESS);

@@ -962,6 +962,8 @@ public class WorkflowExecuteThread implements Runnable {
             }
             // delay execution time
             taskInstance.setDelayTime(taskNode.getDelayTime());
+            // 设置灰度测试标记
+            taskInstance.setGrayFlag(processInstance.getGrayFlag());
         }
 
         return taskInstance;

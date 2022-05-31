@@ -70,6 +70,13 @@
             <span>{{scope.row.host | filterNull}}</span>
           </template>
         </el-table-column>
+        <el-table-column :label="$t('Gray Flag')">
+          <template slot-scope="scope">
+            <span v-if="scope.row.grayFlag === 'GRAY'" class="time_offline">{{$t('onGray')}}</span>
+            <span v-if="scope.row.grayFlag === 'NO_GRAY'" class="time_online">{{$t('offGray')}}</span>
+            <span v-if="!scope.row.grayFlag">-</span>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('Operation')" width="80" fixed="right">
           <template slot-scope="scope">
             <div>

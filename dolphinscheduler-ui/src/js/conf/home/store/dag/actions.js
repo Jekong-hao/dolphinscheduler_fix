@@ -66,6 +66,21 @@ export default {
       })
     })
   },
+  /**
+   * Update process definition gray test status
+   */
+  editGrayState ({ state }, payload) {
+    return new Promise((resolve, reject) => {
+      io.post(`projects/${state.projectCode}/process-definition/${payload.code}/gray`, {
+        name: payload.name,
+        grayFlag: payload.grayFlag
+      }, res => {
+        resolve(res)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
 
   /**
    * get process definition versions pagination info

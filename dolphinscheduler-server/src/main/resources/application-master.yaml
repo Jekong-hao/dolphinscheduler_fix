@@ -42,3 +42,8 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
+# gray/prod
+job:
+  gray-flag: prod
+

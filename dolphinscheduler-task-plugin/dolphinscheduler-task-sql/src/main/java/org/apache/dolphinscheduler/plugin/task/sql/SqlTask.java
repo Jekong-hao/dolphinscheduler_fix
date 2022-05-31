@@ -112,6 +112,11 @@ public class SqlTask extends AbstractTaskExecutor {
     protected volatile int statusCode = 0;
 
     /**
+     *  default new line char
+     */
+    private static final String DEFAULT_NEW_LINE_CHAR = "\n";
+
+    /**
      * Abstract Yarn Task
      *
      * @param taskRequest taskRequest
@@ -206,17 +211,50 @@ public class SqlTask extends AbstractTaskExecutor {
             // 如果是hive 或者 spark的非查询，使用shell来执行脚本
             if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()
                     && (DbType.HIVE.getDescp().equalsIgnoreCase(dbType) || DbType.SPARK.getDescp().equalsIgnoreCase(dbType))) {
-
+                StringBuffer sqlScript = new StringBuffer();
                 // UDF
+                if (CollectionUtils.isNotEmpty(createFuncs)) {
+                    for (String createFunc : createFuncs) {
+                        logger.info("hive create function sql: {}", createFunc);
+                        sqlScript.append(createFunc).append(DEFAULT_NEW_LINE_CHAR);
+                    }
+                }
+
                 // pre sql
+                for (SqlBinds sqlBind : preStatementsBinds) {
+                    sqlScript.append(sqlBind.getSql()).append(DEFAULT_NEW_LINE_CHAR);
+                    logger.info("pre execute sql: {}", sqlBind.getSql());
+                }
+
                 // sql
+                sqlScript.append(mainSqlBinds.getSql()).append(DEFAULT_NEW_LINE_CHAR);
+                logger.info("main execute sql: {}", mainSqlBinds.getSql());
+
                 // post sql
+                for (SqlBinds sqlBind : postStatementsBinds) {
+                    sqlScript.append(sqlBind.getSql());
+                    logger.info("post execute sql: {}", sqlBind.getSql());
+                }
+
                 // 以上放到文件 sql
+                String sqlFile = getSqlFile(sqlScript.toString());
+
                 // shell exec sql
-                // setNonQuerySqlReturn ?? 是否需要输出日志
+                // 获取sh命令
+                String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
+                    baseConnectionParam.getUser(),
+                    baseConnectionParam.getPassword(),
+                    baseConnectionParam.getJdbcUrl(),
+                    baseConnectionParam.getOther(),
+                    sqlFile
+                );
+                String command = buildCommand(rawScript);
+                TaskResponse commandExecuteResult = shellCommandExecutor.run(command);
+                statusCode = commandExecuteResult.getExitStatusCode();
+                // 设置执行状态
+                setExitStatusCode(commandExecuteResult.getExitStatusCode());
 
             } else {
-
                 // create connection
                 connection = DataSourceClientProvider.getInstance().getConnection(DbType.valueOf(sqlParameters.getType()), baseConnectionParam);
                 // create temp function
@@ -247,49 +285,6 @@ public class SqlTask extends AbstractTaskExecutor {
                 postSql(connection, postStatementsBinds);
             }
 
-//            // create connection
-//            connection = DataSourceClientProvider.getInstance().getConnection(DbType.valueOf(sqlParameters.getType()), baseConnectionParam);
-//            // create temp function
-//            if (CollectionUtils.isNotEmpty(createFuncs)) {
-//                createTempFunction(connection, createFuncs);
-//            }
-//
-//            // pre sql
-//            preSql(connection, preStatementsBinds);
-//            // bind sql
-//            stmt = prepareStatementAndBind(connection, mainSqlBinds);
-//            String result = null;
-//            // decide whether to executeQuery or executeUpdate based on sqlType
-//            if (sqlParameters.getSqlType() == SqlType.QUERY.ordinal()) {
-//                // query statements need to be convert to JsonArray and inserted into Alert to send
-//                resultSet = stmt.executeQuery();
-//                result = resultProcess(resultSet);
-//            } else if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()) {
-//                // 使用shell执行HSQL
-//                String updateResult = "";
-//                if(DbType.HIVE.getDescp().equalsIgnoreCase(dbType)) {
-//                    // 获取sh命令
-//                    String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
-//                        baseConnectionParam.getUser(),
-//                        baseConnectionParam.getPassword(),
-//                        baseConnectionParam.getJdbcUrl(),
-//                        baseConnectionParam.getOther(),
-//                        getSqlFile(mainSqlBinds.getSql())
-//                    );
-//                    // logger.info("execute sql: {}", mainSqlBinds.getReplaceSql());
-//                    String command = buildCommand(rawScript);
-//                    TaskResponse commandExecuteResult = shellCommandExecutor.run(command);
-//                    statusCode = commandExecuteResult.getExitStatusCode();
-//                    setExitStatusCode(commandExecuteResult.getExitStatusCode());
-//                } else {
-//                    stmt = prepareStatementAndBind(connection, mainSqlBinds);
-//                    updateResult = String.valueOf(stmt.executeUpdate());
-//                    result = setNonQuerySqlReturn(updateResult, sqlParameters.getLocalParams());
-//                }
-//            }
-//            sqlParameters.dealOutParam(result);
-//            //deal out params
-//            postSql(connection, postStatementsBinds);
         } catch (Exception e) {
             logger.error("execute sql error: {}", e.getMessage());
             throw e;

@@ -242,6 +242,7 @@ public class ProcessService {
 //            result = commandMapper.insert(command);
             result = commandMapper.insertAndReturnId(command);
 
+            // 此处有用,用于标记command的灰度性质
             if (command.getGrayFlag() == GrayFlag.GRAY) {
                 final GrayRelation grayRelationCommand = new GrayRelation(COMMAND, command.getId(), null);
                 grayRelationCommand.setGrayFlag(GrayFlag.GRAY);
@@ -260,10 +261,10 @@ public class ProcessService {
         final Map<Integer, GrayFlag> idAndGrayFlag =
                 grayRelationMapper.selectList(new QueryWrapper<GrayRelation>().eq("element_type", COMMAND))
                 .stream().collect(Collectors.toMap(GrayRelation::getElementId, GrayRelation::getGrayFlag));
-        if ("gray".equals(grayFlag)) {
+        if (Constants.DOLPHINSCHEDULER_SERVER_GRAY_FLAG_GRAY.equals(grayFlag)) {  // gray
             commands =
                     commands.stream().filter(item -> idAndGrayFlag.containsKey(item.getId())).collect(Collectors.toList());
-        } else if ("prod".equals(grayFlag)) {
+        } else if (Constants.DOLPHINSCHEDULER_SERVER_GRAY_FLAG_PROD.equals(grayFlag)) {  // prod
             commands =
                     commands.stream().filter(item -> !idAndGrayFlag.containsKey(item.getId())).collect(Collectors.toList());
         } else {

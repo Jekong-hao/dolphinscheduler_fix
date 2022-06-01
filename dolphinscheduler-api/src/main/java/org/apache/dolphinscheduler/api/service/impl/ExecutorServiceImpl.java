@@ -130,7 +130,7 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
 
         // check process define release state
         ProcessDefinition processDefinition = processDefinitionMapper.queryByCode(processDefinitionCode);
-        // 查询灰度关系
+        // 查询灰度关系,此处有用,查询工作流定义的灰度标记,最终写到command里面
         final GrayRelation grayRelationProcessDefinition = grayRelationMapper.queryByTypeAndIdAndCode(PROCESSDEFINITION, processDefinition.getId(), processDefinition.getCode());
         if (grayRelationProcessDefinition != null && grayRelationProcessDefinition.getGrayFlag() == GrayFlag.GRAY) {
             processDefinition.setGrayFlag(GrayFlag.GRAY);

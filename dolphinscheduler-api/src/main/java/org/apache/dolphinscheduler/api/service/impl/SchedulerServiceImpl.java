@@ -400,6 +400,7 @@ public class SchedulerServiceImpl extends BaseServiceImpl implements SchedulerSe
         IPage<Schedule> scheduleIPage = scheduleMapper.queryByProcessDefineCodePaging(page, processDefineCode,
             searchVal);
         List<Schedule> records = scheduleIPage.getRecords();
+        // 此代码有用,用于查询调度的灰度标志,用于页面展示
         for (Schedule schedule : records) {
             GrayRelation grayRelationProcessDefinition = grayRelationMapper.queryByTypeAndIdAndCode(PROCESSDEFINITION, null, schedule.getProcessDefinitionCode());
             if (grayRelationProcessDefinition != null && grayRelationProcessDefinition.getGrayFlag() == GrayFlag.GRAY) {

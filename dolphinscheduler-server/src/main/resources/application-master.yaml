@@ -43,7 +43,8 @@ management:
     tags:
       application: ${spring.application.name}
 
-# gray/prod
-job:
-  gray-flag: prod
+dolphinscheduler:
+  server:
+    # gray/prod
+    gray-flag: prod
 

@@ -282,6 +282,7 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
             if (null != executor) {
                 processInstance.setExecutorName(executor.getUserName());
             }
+            // 代码有用,用于查询工作流实例的灰度性质,用于页面展示
             GrayRelationInstanceLog grayRelationProcessInstanceLog = grayRelationInstanceLogMapper.queryInstanceLogByTypeAndIdAndCode(PROCESSINSTANCE, processInstance.getId(), null);
             if (grayRelationProcessInstanceLog != null && grayRelationProcessInstanceLog.getGrayFlag() == GrayFlag.GRAY) {
                 processInstance.setGrayFlag(GrayFlag.GRAY);

@@ -400,6 +400,7 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
             ProcessDefinitionLog processDefinitionLog = processDefinitionLogMapper.queryByDefinitionCodeAndVersion(pd.getCode(), pd.getVersion());
             User user = userMapper.selectById(processDefinitionLog.getOperator());
             pd.setModifyBy(user.getUserName());
+            // 有用,用于查询灰度关系,在页面展示
             GrayRelation grayRelationProcessDefinition = grayRelationMapper.queryByTypeAndIdAndCode(PROCESSDEFINITION, pd.getId(), pd.getCode());
             if(grayRelationProcessDefinition != null && grayRelationProcessDefinition.getGrayFlag() == GrayFlag.GRAY) {
                 pd.setGrayFlag(GrayFlag.GRAY);
@@ -807,7 +808,7 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
      * @param loginUser login user
      * @param projectCode project code
      * @param code process definition code
-     * @param grayFlag release state
+     * @param grayFlag gray flag
      * @return gray test result code
      */
     @Override
@@ -831,7 +832,6 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
             putMsg(result, Status.PROCESS_DEFINE_NOT_EXIST, code);
             return result;
         }
-        Schedule schedule = scheduleMapper.queryByProcessDefinitionCode(code);
 
         GrayRelation grayRelationProcessDefinition =
                 grayRelationMapper.queryByTypeAndIdAndCode(PROCESSDEFINITION, processDefinition.getId(), processDefinition.getCode());

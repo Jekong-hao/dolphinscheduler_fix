@@ -151,7 +151,7 @@ public class TaskInstanceServiceImpl extends BaseServiceImpl implements TaskInst
             if (null != executor) {
                 taskInstance.setExecutorName(executor.getUserName());
             }
-
+            // 代码有用,用于查询任务实例的灰度标志,用于页面展示
             final GrayRelationInstanceLog grayRelationTaskInstanceLog = grayRelationInstanceLogMapper.queryInstanceLogByTypeAndIdAndCode(PROCESSINSTANCE, taskInstance.getProcessInstanceId(), null);
             if (grayRelationTaskInstanceLog != null && grayRelationTaskInstanceLog.getGrayFlag() == GrayFlag.GRAY) {
                 taskInstance.setGrayFlag(GrayFlag.GRAY);

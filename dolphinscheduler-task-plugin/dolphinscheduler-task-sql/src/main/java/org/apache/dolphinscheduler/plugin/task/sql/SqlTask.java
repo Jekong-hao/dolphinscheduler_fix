@@ -117,6 +117,11 @@ public class SqlTask extends AbstractTaskExecutor {
     private static final String DEFAULT_NEW_LINE_CHAR = "\n";
 
     /**
+     *  default sql split char
+     */
+    private static final String DEFAULT_SQL_SPLIT_CHAR = ";";
+
+    /**
      * Abstract Yarn Task
      *
      * @param taskRequest taskRequest
@@ -179,6 +184,7 @@ public class SqlTask extends AbstractTaskExecutor {
 
             // execute sql task
             executeFuncAndSql(mainSqlBinds, preStatementSqlBinds, postStatementSqlBinds, createFuncs);
+
             if (statusCode ==  TaskConstants.EXIT_CODE_SUCCESS) {
                 setExitStatusCode(TaskConstants.EXIT_CODE_SUCCESS);
             }
@@ -206,8 +212,6 @@ public class SqlTask extends AbstractTaskExecutor {
         ResultSet resultSet = null;
         String dbType = sqlParameters.getType();
         try {
-
-
             // 如果是hive 或者 spark的非查询，使用shell来执行脚本
             if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()
                     && (DbType.HIVE.getDescp().equalsIgnoreCase(dbType) || DbType.SPARK.getDescp().equalsIgnoreCase(dbType))) {
@@ -215,25 +219,40 @@ public class SqlTask extends AbstractTaskExecutor {
                 // UDF
                 if (CollectionUtils.isNotEmpty(createFuncs)) {
                     for (String createFunc : createFuncs) {
-                        logger.info("hive create function sql: {}", createFunc);
+                        if (!DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(createFunc.substring(createFunc.length() - 1))) {
+                            createFunc += DEFAULT_SQL_SPLIT_CHAR;
+                        }
                         sqlScript.append(createFunc).append(DEFAULT_NEW_LINE_CHAR);
+                        logger.info("hive create function sql: {}", createFunc);
                     }
                 }
 
                 // pre sql
                 for (SqlBinds sqlBind : preStatementsBinds) {
-                    sqlScript.append(sqlBind.getSql()).append(DEFAULT_NEW_LINE_CHAR);
-                    logger.info("pre execute sql: {}", sqlBind.getSql());
+                    String preSql = sqlBind.getSql();
+                    if (!DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(preSql.substring(preSql.length() - 1))) {
+                        preSql += ";";
+                    }
+                    sqlScript.append(preSql).append(DEFAULT_NEW_LINE_CHAR);
+                    logger.info("pre execute sql: {}", preSql);
                 }
 
-                // sql
-                sqlScript.append(mainSqlBinds.getSql()).append(DEFAULT_NEW_LINE_CHAR);
-                logger.info("main execute sql: {}", mainSqlBinds.getSql());
+                // main sql
+                String mainSql = mainSqlBinds.getSql();
+                if (!DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(mainSql.substring(mainSql.length() - 1))) {
+                    mainSql += ";";
+                }
+                sqlScript.append(mainSql).append(DEFAULT_NEW_LINE_CHAR);
+                logger.info("main execute sql: {}", mainSql);
 
                 // post sql
                 for (SqlBinds sqlBind : postStatementsBinds) {
-                    sqlScript.append(sqlBind.getSql());
-                    logger.info("post execute sql: {}", sqlBind.getSql());
+                    String postSql = sqlBind.getSql();
+                    if (!DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(postSql.substring(postSql.length() - 1))) {
+                        postSql += ";";
+                    }
+                    sqlScript.append(postSql);
+                    logger.info("post execute sql: {}", postSql);
                 }
 
                 // 以上放到文件 sql
@@ -241,7 +260,7 @@ public class SqlTask extends AbstractTaskExecutor {
 
                 // shell exec sql
                 // 获取sh命令
-                String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
+                String rawScript = String.format("beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
                     baseConnectionParam.getUser(),
                     baseConnectionParam.getPassword(),
                     baseConnectionParam.getJdbcUrl(),

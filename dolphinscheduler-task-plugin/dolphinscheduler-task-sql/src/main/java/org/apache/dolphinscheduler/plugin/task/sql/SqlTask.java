@@ -231,7 +231,7 @@ public class SqlTask extends AbstractTaskExecutor {
                 for (SqlBinds sqlBind : preStatementsBinds) {
                     String preSql = sqlBind.getSql();
                     if (!DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(preSql.substring(preSql.length() - 1))) {
-                        preSql += ";";
+                        preSql += DEFAULT_SQL_SPLIT_CHAR;
                     }
                     sqlScript.append(preSql).append(DEFAULT_NEW_LINE_CHAR);
                     logger.info("pre execute sql: {}", preSql);
@@ -240,7 +240,7 @@ public class SqlTask extends AbstractTaskExecutor {
                 // main sql
                 String mainSql = mainSqlBinds.getSql();
                 if (!DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(mainSql.substring(mainSql.length() - 1))) {
-                    mainSql += ";";
+                    mainSql += DEFAULT_SQL_SPLIT_CHAR;
                 }
                 sqlScript.append(mainSql).append(DEFAULT_NEW_LINE_CHAR);
                 logger.info("main execute sql: {}", mainSql);
@@ -249,7 +249,7 @@ public class SqlTask extends AbstractTaskExecutor {
                 for (SqlBinds sqlBind : postStatementsBinds) {
                     String postSql = sqlBind.getSql();
                     if (!DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(postSql.substring(postSql.length() - 1))) {
-                        postSql += ";";
+                        postSql += DEFAULT_SQL_SPLIT_CHAR;
                     }
                     sqlScript.append(postSql);
                     logger.info("post execute sql: {}", postSql);

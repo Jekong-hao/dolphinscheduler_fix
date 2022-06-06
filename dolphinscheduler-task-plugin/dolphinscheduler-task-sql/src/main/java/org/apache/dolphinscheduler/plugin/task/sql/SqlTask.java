@@ -260,7 +260,7 @@ public class SqlTask extends AbstractTaskExecutor {
 
                 // shell exec sql
                 // 获取sh命令
-                String rawScript = String.format("beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
+                String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
                     baseConnectionParam.getUser(),
                     baseConnectionParam.getPassword(),
                     baseConnectionParam.getJdbcUrl(),

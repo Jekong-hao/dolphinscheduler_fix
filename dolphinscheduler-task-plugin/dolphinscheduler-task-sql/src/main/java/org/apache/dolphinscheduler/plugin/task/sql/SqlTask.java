@@ -219,40 +219,29 @@ public class SqlTask extends AbstractTaskExecutor {
                 // UDF
                 if (CollectionUtils.isNotEmpty(createFuncs)) {
                     for (String createFunc : createFuncs) {
-                        if (!DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(createFunc.substring(createFunc.length() - 1))) {
-                            createFunc += DEFAULT_SQL_SPLIT_CHAR;
-                        }
-                        sqlScript.append(createFunc).append(DEFAULT_NEW_LINE_CHAR);
-                        logger.info("hive create function sql: {}", createFunc);
+                        String trimFunc = trimRight(createFunc);
+                        sqlScript.append(trimFunc).append(DEFAULT_NEW_LINE_CHAR);
+                        logger.info("hive create function sql: {}", trimFunc);
                     }
                 }
 
                 // pre sql
                 for (SqlBinds sqlBind : preStatementsBinds) {
-                    String preSql = sqlBind.getSql();
-                    if (!DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(preSql.substring(preSql.length() - 1))) {
-                        preSql += DEFAULT_SQL_SPLIT_CHAR;
-                    }
-                    sqlScript.append(preSql).append(DEFAULT_NEW_LINE_CHAR);
-                    logger.info("pre execute sql: {}", preSql);
+                    String trimPreSql = trimRight(sqlBind.getSql());
+                    sqlScript.append(trimPreSql).append(DEFAULT_NEW_LINE_CHAR);
+                    logger.info("pre execute sql: {}", trimPreSql);
                 }
 
                 // main sql
-                String mainSql = mainSqlBinds.getSql();
-                if (!DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(mainSql.substring(mainSql.length() - 1))) {
-                    mainSql += DEFAULT_SQL_SPLIT_CHAR;
-                }
-                sqlScript.append(mainSql).append(DEFAULT_NEW_LINE_CHAR);
-                logger.info("main execute sql: {}", mainSql);
+                String trimMainSql = trimRight(mainSqlBinds.getSql());
+                sqlScript.append(trimMainSql).append(DEFAULT_NEW_LINE_CHAR);
+                logger.info("main execute sql: {}", trimMainSql);
 
                 // post sql
                 for (SqlBinds sqlBind : postStatementsBinds) {
-                    String postSql = sqlBind.getSql();
-                    if (!DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(postSql.substring(postSql.length() - 1))) {
-                        postSql += DEFAULT_SQL_SPLIT_CHAR;
-                    }
-                    sqlScript.append(postSql);
-                    logger.info("post execute sql: {}", postSql);
+                    String trimPostSql = trimRight(sqlBind.getSql());
+                    sqlScript.append(trimPostSql).append(DEFAULT_NEW_LINE_CHAR);
+                    logger.info("post execute sql: {}", trimPostSql);
                 }
 
                 // 以上放到文件 sql
@@ -740,5 +729,30 @@ public class SqlTask extends AbstractTaskExecutor {
         Files.write(path, script.getBytes(), StandardOpenOption.APPEND);
 
         return fileName;
+    }
+
+    /**
+     * 去掉右边的空白,并判断右边是否存在";",不存在则加上
+     *
+     * @return str
+     * @throws Exception exception
+     */
+    private String trimRight(String s){
+        if (s == null) {
+            return "";
+        }
+        String whitespace = " \t\n\r";
+        String str = s;
+        if (whitespace.indexOf(str.charAt(str.length()-1)) != -1){
+            int i = str.length() - 1;
+            while (i >= 0 && whitespace.indexOf(str.charAt(i)) != -1){
+                i--;
+            }
+            str = str.substring(0, i+1);
+        }
+        if (str.length() > 0 && !DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(str.substring(str.length() - 1))) {
+            str += DEFAULT_SQL_SPLIT_CHAR;
+        }
+        return str;
     }
 }

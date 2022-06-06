@@ -39,18 +39,6 @@ public class SqlBinds {
         return sql;
     }
 
-    public List<String> getSqlList() {
-        // TODO ";"切割有风险
-        return Arrays.asList(getSql().split(";"));
-    }
-
-    public String getReplaceSql() {
-        return sql.replaceAll("\\\\", "\\\\\\\\")
-            .replaceAll("\\$","\\\\\\$")
-            .replaceAll("`", "\\\\`")
-            .replaceAll("\"", "\\\\\"");
-    }
-
     public Map<Integer, Property> getParamsMap() {
         return paramsMap;
     }

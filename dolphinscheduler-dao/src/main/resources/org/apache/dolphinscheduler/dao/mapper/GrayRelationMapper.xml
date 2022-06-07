@@ -36,4 +36,17 @@
         limit 1
     </select>
 
+    <select id="queryByDefinitionCodes" resultType="org.apache.dolphinscheduler.dao.entity.GrayRelation">
+        select
+        <include refid="baseSql"/>
+        from t_ds_relation_gray
+        where 1 = 1
+        <if test="codes != null and codes.size() != 0">
+          and element_code in
+          <foreach collection="codes" index="index" item="i" open="(" separator="," close=")">
+            #{i}
+          </foreach>
+        </if>
+    </select>
+
 </mapper>

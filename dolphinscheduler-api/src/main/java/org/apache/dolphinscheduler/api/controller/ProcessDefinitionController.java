@@ -494,6 +494,7 @@ public class ProcessDefinitionController extends BaseController {
      * @param pageNo page number
      * @param pageSize page size
      * @param userId user id
+     * @param grayFlag 如果此参数为空,显示全部内容,如果此参数不为空,就按照此参数指定的值显示
      * @return process definition page
      */
     @ApiOperation(value = "queryListPaging", notes = "QUERY_PROCESS_DEFINITION_LIST_PAGING_NOTES")
@@ -512,14 +513,15 @@ public class ProcessDefinitionController extends BaseController {
                                                    @RequestParam(value = "searchVal", required = false) String searchVal,
                                                    @RequestParam(value = "userId", required = false, defaultValue = "0") Integer userId,
                                                    @RequestParam("pageNo") Integer pageNo,
-                                                   @RequestParam("pageSize") Integer pageSize) {
+                                                   @RequestParam("pageSize") Integer pageSize,
+                                                   @RequestParam(value = "grayFlag", required = false) String grayFlag) {
         Result result = checkPageParams(pageNo, pageSize);
         if (!result.checkResult()) {
             return result;
         }
         searchVal = ParameterUtils.handleEscapes(searchVal);
 
-        return processDefinitionService.queryProcessDefinitionListPaging(loginUser, projectCode, searchVal, userId, pageNo, pageSize);
+        return processDefinitionService.queryProcessDefinitionListPaging(loginUser, projectCode, searchVal, userId, pageNo, pageSize, grayFlag);
     }
 
     /**
@@ -684,6 +686,32 @@ public class ProcessDefinitionController extends BaseController {
         } catch (Exception e) {
             logger.error(Status.BATCH_EXPORT_PROCESS_DEFINE_BY_IDS_ERROR.getMsg(), e);
         }
+    }
+
+    /**
+     * batch update gray by codes
+     *
+     * @param loginUser login user
+     * @param projectCode project code
+     * @param codes process definition codes
+     * @param grayFlag gray flag
+     * @param response response
+     */
+    @ApiOperation(value = "batchUpdateGrayByCodes", notes = "BATCH_UPDATE_GRAY_BY_CODES_NOTES")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "codes", value = "PROCESS_DEFINITION_CODE", required = true, dataType = "String"),
+            @ApiImplicitParam(name = "grayFlag", value = "GRAY_FLAG", required = true, dataType = "String")
+    })
+    @PostMapping(value = "/batch-update-gray")
+    @ResponseBody
+    @AccessLogAnnotation(ignoreRequestArgs = {"loginUser", "response"})
+    public Result batchUpdateGrayByCodes(@ApiIgnore @RequestAttribute(value = Constants.SESSION_USER) User loginUser,
+                                                    @ApiParam(name = "projectCode", value = "PROJECT_CODE", required = true) @PathVariable long projectCode,
+                                                    @RequestParam("codes") String codes,
+                                                    @RequestParam(value = "grayFlag", required = true) GrayFlag grayFlag,
+                                                    HttpServletResponse response) {
+        final Map<String, Object> stringObjectMap = processDefinitionService.batchUpdateGrayByCodes(loginUser, projectCode, codes, grayFlag, response);
+        return returnDataList(stringObjectMap);
     }
 
     /**

@@ -216,6 +216,8 @@ public enum Status {
     QUERY_AUTHORIZED_USER(10183, "query authorized user error", "查询拥有项目权限的用户错误"),
     GRAY_TEST_PROCESS_DEFINITION_SET_ERROR(10184, "gray test process definition error", "工作流设置灰度测试标记发生错误"),
     GRAY_TEST_SCHEDULE_SET_ERROR(10185, "gray test schedule set error", "调度设置灰度测试标记发生错误"),
+    PROCESS_DEFINITION_CODES_HAVE_ERROR(10158, "process definition codes have error", "前端拼接的字符串有错误"),
+    GRAY_RELATION_DEFINITION_CODES_HAVE_ERROR(10159, "", "灰度关系表和工作流定义表数据不重合"),
 
     UDF_FUNCTION_NOT_EXIST(20001, "UDF function not found", "UDF函数不存在"),
     UDF_FUNCTION_EXISTS(20002, "UDF function already exists", "UDF函数已存在"),

@@ -90,6 +90,7 @@ public interface ProcessDefinitionService {
      * @param pageNo page number
      * @param pageSize page size
      * @param userId user id
+     * @param grayFlag gray flag
      * @return process definition page
      */
     Result queryProcessDefinitionListPaging(User loginUser,
@@ -97,7 +98,8 @@ public interface ProcessDefinitionService {
                                             String searchVal,
                                             Integer userId,
                                             Integer pageNo,
-                                            Integer pageSize);
+                                            Integer pageSize,
+                                            String grayFlag);
 
     /**
      * query detail of process definition
@@ -243,6 +245,24 @@ public interface ProcessDefinitionService {
                                              long projectCode,
                                              String codes,
                                              HttpServletResponse response);
+
+    /**
+     * batch update gray by codes
+     *
+     * @param loginUser login user
+     * @param projectCode project code
+     * @param codes process definition codes
+     * @param grayFlag grayFlag
+     * @param response http servlet response
+     * @return gray test result code
+     */
+    Map<String, Object> batchUpdateGrayByCodes(User loginUser,
+                                             long projectCode,
+                                             String codes,
+                                             GrayFlag grayFlag,
+                                             HttpServletResponse response);
+
+
 
     /**
      * import process definition

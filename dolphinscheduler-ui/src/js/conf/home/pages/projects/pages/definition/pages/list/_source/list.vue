@@ -64,7 +64,7 @@
         <el-table-column :label="$t('Gray Flag')">
           <template slot-scope="scope">
             <span v-if="scope.row.grayFlag === 'GRAY'" class="time_offline">{{$t('onGray')}}</span>
-            <span v-if="scope.row.grayFlag === 'NO_GRAY'" class="time_online">{{$t('offGray')}}</span>
+            <span v-if="scope.row.grayFlag === 'PROD'" class="time_online">{{$t('offGray')}}</span>
             <span v-if="!scope.row.grayFlag">-</span>
           </template>
         </el-table-column>
@@ -113,7 +113,7 @@
               <span><el-button type="primary" size="mini" icon="el-icon-info" @click="_version(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('to_gray')" placement="top" :enterable="false">
-              <span><el-button type="warning" size="mini" v-if="scope.row.grayFlag === 'NO_GRAY'"  icon="el-icon-star-on" @click="_popgray(scope.row)" circle></el-button></span>
+              <span><el-button type="warning" size="mini" v-if="scope.row.grayFlag === 'PROD'"  icon="el-icon-star-on" @click="_popgray(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('to_no_gray')" placement="top" :enterable="false">
               <span><el-button type="danger" size="mini" icon="el-icon-star-off" v-if="scope.row.grayFlag === 'GRAY'" @click="_cancelgray(scope.row)" circle></el-button></span>
@@ -308,7 +308,7 @@
       _cancelgray (item) {
         this._upGrayState({
           ...item,
-          grayFlag: 'NO_GRAY'
+          grayFlag: 'PROD'
         })
       },
       /**

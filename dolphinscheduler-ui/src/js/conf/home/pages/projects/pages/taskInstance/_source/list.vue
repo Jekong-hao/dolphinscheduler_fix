@@ -73,7 +73,7 @@
         <el-table-column :label="$t('Gray Flag')">
           <template slot-scope="scope">
             <span v-if="scope.row.grayFlag === 'GRAY'" class="time_offline">{{$t('onGray')}}</span>
-            <span v-if="scope.row.grayFlag === 'NO_GRAY'" class="time_online">{{$t('offGray')}}</span>
+            <span v-if="scope.row.grayFlag === 'PROD'" class="time_online">{{$t('offGray')}}</span>
             <span v-if="!scope.row.grayFlag">-</span>
           </template>
         </el-table-column>

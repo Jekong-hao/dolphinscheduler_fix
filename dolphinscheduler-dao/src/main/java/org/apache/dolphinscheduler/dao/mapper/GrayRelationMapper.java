@@ -22,6 +22,9 @@ import org.apache.dolphinscheduler.common.enums.ElementType;
 import org.apache.dolphinscheduler.dao.entity.GrayRelation;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Collection;
+import java.util.List;
+
 
 /**
  * gray relation mapper interface
@@ -29,7 +32,6 @@ import org.apache.ibatis.annotations.Param;
 public interface GrayRelationMapper extends BaseMapper<GrayRelation> {
 
     /**
-     * todo: 此处未来要定义是否启用缓存
      *
      * @param elementType elementType
      * @param elementId elementId
@@ -37,5 +39,14 @@ public interface GrayRelationMapper extends BaseMapper<GrayRelation> {
      * @return
      */
     GrayRelation queryByTypeAndIdAndCode(@Param("elementType") ElementType elementType, @Param("elementId") Integer elementId, @Param("elementCode") Long elementCode);
+
+
+    /**
+     *
+     * @param elementType elementType
+     * @param codes element codes
+     * @return
+     */
+    List<GrayRelation> queryByDefinitionCodes(@Param("elementType") ElementType elementType, @Param("codes") Collection<Long> codes);
 
 }

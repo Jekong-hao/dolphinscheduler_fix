@@ -406,7 +406,7 @@ public class SchedulerServiceImpl extends BaseServiceImpl implements SchedulerSe
             if (grayRelationProcessDefinition != null && grayRelationProcessDefinition.getGrayFlag() == GrayFlag.GRAY) {
                 schedule.setGrayFlag(GrayFlag.GRAY);
             } else {
-                schedule.setGrayFlag(GrayFlag.NO_GRAY);
+                schedule.setGrayFlag(GrayFlag.PROD);
             }
         }
 

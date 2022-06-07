@@ -24,10 +24,10 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 public enum GrayFlag {
 
     /**
-     * 0 Non-grayscale test
-     * 1 grayscale test
+     * 0 prod
+     * 1 gray
      */
-    NO_GRAY(0, "no_gray"),
+    PROD(0, "prod"),
     GRAY(1, "gray");
 
     GrayFlag(int code, String descp){

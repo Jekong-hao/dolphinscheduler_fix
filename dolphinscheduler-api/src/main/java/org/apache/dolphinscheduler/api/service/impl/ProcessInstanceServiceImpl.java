@@ -287,7 +287,7 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
             if (grayRelationProcessInstanceLog != null && grayRelationProcessInstanceLog.getGrayFlag() == GrayFlag.GRAY) {
                 processInstance.setGrayFlag(GrayFlag.GRAY);
             } else {
-                processInstance.setGrayFlag(GrayFlag.NO_GRAY);
+                processInstance.setGrayFlag(GrayFlag.PROD);
             }
         }
 

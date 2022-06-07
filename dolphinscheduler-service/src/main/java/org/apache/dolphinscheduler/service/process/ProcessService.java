@@ -277,7 +277,7 @@ public class ProcessService {
             if (grayRelationCommand != null && grayRelationCommand.getGrayFlag() == GrayFlag.GRAY) {
                 command.setGrayFlag(GrayFlag.GRAY);
             } else {
-                command.setGrayFlag(GrayFlag.NO_GRAY);
+                command.setGrayFlag(GrayFlag.PROD);
             }
         }
         return commands;
@@ -401,7 +401,7 @@ public class ProcessService {
         if (grayRelationProcessDefinition != null && grayRelationProcessDefinition.getGrayFlag() == GrayFlag.GRAY) {
             processDefinition.setGrayFlag(GrayFlag.GRAY);
         } else {
-            processDefinition.setGrayFlag(GrayFlag.NO_GRAY);
+            processDefinition.setGrayFlag(GrayFlag.PROD);
         }
 
         return processDefinition;

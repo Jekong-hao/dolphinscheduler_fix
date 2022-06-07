@@ -223,6 +223,22 @@ export default {
   },
 
   /**
+   * batch update gray state
+   */
+  batchUpdateGray ({ state }, payload) {
+    return new Promise((resolve, reject) => {
+      io.post(`projects/${state.projectCode}/process-definition/batch-update-gray`, {
+        codes: payload.codes,
+        grayFlag: payload.grayFlag
+      }, res => {
+        resolve(res)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+
+  /**
    * Get process definition DAG diagram details
    */
   moveProcess ({ state }, payload) {

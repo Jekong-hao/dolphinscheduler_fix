@@ -99,7 +99,7 @@ const grayFlag = [
   {
     id: 1,
     desc: `${i18n.$t('offGray')}`,
-    code: 'NO_GRAY'
+    code: 'PROD'
   }
 ]
 

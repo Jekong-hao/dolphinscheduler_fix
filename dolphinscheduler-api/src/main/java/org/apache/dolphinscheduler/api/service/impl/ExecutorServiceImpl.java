@@ -135,7 +135,7 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
         if (grayRelationProcessDefinition != null && grayRelationProcessDefinition.getGrayFlag() == GrayFlag.GRAY) {
             processDefinition.setGrayFlag(GrayFlag.GRAY);
         } else {
-            processDefinition.setGrayFlag(GrayFlag.NO_GRAY);
+            processDefinition.setGrayFlag(GrayFlag.PROD);
         }
 
         result = checkProcessDefinitionValid(projectCode, processDefinition, processDefinitionCode);

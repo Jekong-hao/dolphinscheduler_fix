@@ -156,7 +156,7 @@ public class TaskInstanceServiceImpl extends BaseServiceImpl implements TaskInst
             if (grayRelationTaskInstanceLog != null && grayRelationTaskInstanceLog.getGrayFlag() == GrayFlag.GRAY) {
                 taskInstance.setGrayFlag(GrayFlag.GRAY);
             } else {
-                taskInstance.setGrayFlag(GrayFlag.NO_GRAY);
+                taskInstance.setGrayFlag(GrayFlag.PROD);
             }
         }
         pageInfo.setTotal((int) taskInstanceIPage.getTotal());

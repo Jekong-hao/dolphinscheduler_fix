@@ -97,6 +97,8 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
 
     private static final String GRAYFLAG = "grayFlag";
 
+    private static final String CODES = "codes";
+
     private static final ElementType PROCESSDEFINITION = ElementType.PROCESSDEFINITION;
 
     @Autowired
@@ -380,7 +382,7 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
      * @return process definition page
      */
     @Override
-    public Result queryProcessDefinitionListPaging(User loginUser, long projectCode, String searchVal, Integer userId, Integer pageNo, Integer pageSize) {
+    public Result queryProcessDefinitionListPaging(User loginUser, long projectCode, String searchVal, Integer userId, Integer pageNo, Integer pageSize, String grayFlag) {
         Result result = new Result();
         Project project = projectMapper.queryByCode(projectCode);
         //check user access for project
@@ -405,9 +407,13 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
             if(grayRelationProcessDefinition != null && grayRelationProcessDefinition.getGrayFlag() == GrayFlag.GRAY) {
                 pd.setGrayFlag(GrayFlag.GRAY);
             } else {
-                pd.setGrayFlag(GrayFlag.NO_GRAY);
+                pd.setGrayFlag(GrayFlag.PROD);
             }
         }
+        if (grayFlag != null) {
+            records = records.stream().filter(item -> grayFlag.equals(item.getGrayFlag().getDescp())).collect(Collectors.toList());
+        }
+
         processDefinitionIPage.setRecords(records);
         PageInfo<ProcessDefinition> pageInfo = new PageInfo<>(pageNo, pageSize);
         pageInfo.setTotal((int) processDefinitionIPage.getTotal());
@@ -851,7 +857,7 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
                 grayRelationProcessDefinition.setGrayFlag(GrayFlag.GRAY);
                 grayRelationMapper.insert(grayRelationProcessDefinition);
                 break;
-            case NO_GRAY:
+            case PROD:
                 if(grayRelationProcessDefinition == null) {
                     putMsg(result, Status.GRAY_RELATION_SHOULD_EXIST);
                     return result;
@@ -892,6 +898,83 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
         if (CollectionUtils.isNotEmpty(dagDataSchedules)) {
             downloadProcessDefinitionFile(response, dagDataSchedules);
         }
+    }
+
+    /**
+     * batch update gray by codes
+     */
+    @Override
+    public Map<String, Object> batchUpdateGrayByCodes(User loginUser, long projectCode, String codes, GrayFlag grayFlag, HttpServletResponse response) {
+
+        Project project = projectMapper.queryByCode(projectCode);
+        //check user access for project
+        Map<String, Object> result = projectService.checkProjectAndAuth(loginUser, project, projectCode);
+        if (result.get(Constants.STATUS) != Status.SUCCESS) {
+            return result;
+        }
+        if (StringUtils.isEmpty(codes)) {
+            putMsg(result, Status.REQUEST_PARAMS_NOT_VALID_ERROR, CODES);
+            return result;
+        }
+        // check state
+        if (null == grayFlag) {
+            putMsg(result, Status.REQUEST_PARAMS_NOT_VALID_ERROR, GRAYFLAG);
+            return result;
+        }
+
+        // 查询工作流定义表,并形成集合
+        Set<Long> defineCodeSet = Lists.newArrayList(codes.split(Constants.COMMA)).stream().map(Long::parseLong).collect(Collectors.toSet());
+        List<ProcessDefinition> processDefinitionList = processDefinitionMapper.queryByCodes(defineCodeSet);
+        if (defineCodeSet.size() != processDefinitionList.size()) {
+            putMsg(result, Status.PROCESS_DEFINITION_CODES_HAVE_ERROR);
+            return result;
+        }
+
+        List<GrayRelation> grayRelationProcessDefinitions = grayRelationMapper.queryByDefinitionCodes(PROCESSDEFINITION, defineCodeSet);
+
+        switch (grayFlag) {
+            case GRAY:
+                if (grayRelationProcessDefinitions != null && grayRelationProcessDefinitions.size() != 0) {
+                    final String definitionCodes = StringUtils.join(grayRelationProcessDefinitions.stream().map(GrayRelation::getElementCode).collect(Collectors.toList()), Constants.COMMA);
+                    putMsg(result, Status.GRAY_RELATION_SHOULD_NOT_EXIST, definitionCodes);
+                    return result;
+                }
+
+                for (ProcessDefinition processDefinition : processDefinitionList) {
+                    List<ProcessTaskRelation> relationList = processService.findRelationByCode(processDefinition.getCode(), processDefinition.getVersion());
+                    if (CollectionUtils.isEmpty(relationList)) {
+                        putMsg(result, Status.PROCESS_DAG_IS_EMPTY);
+                        return result;
+                    }
+
+                    if (grayRelationProcessDefinitions == null) {
+                        grayRelationProcessDefinitions = new ArrayList<>();
+                    }
+                    final GrayRelation grayRelationProcessDefinition = new GrayRelation(PROCESSDEFINITION, processDefinition.getId(), processDefinition.getCode());
+                    grayRelationProcessDefinition.setGrayFlag(GrayFlag.GRAY);
+                    grayRelationMapper.insert(grayRelationProcessDefinition);
+                }
+                break;
+            case PROD:
+                if(grayRelationProcessDefinitions == null) {
+                    putMsg(result, Status.GRAY_RELATION_SHOULD_EXIST);
+                    return result;
+                }
+                if (grayRelationProcessDefinitions.size() != processDefinitionList.size()) {
+                    putMsg(result, Status.GRAY_RELATION_DEFINITION_CODES_HAVE_ERROR);
+                    return result;
+                }
+                for (GrayRelation grayRelation : grayRelationProcessDefinitions) {
+                    final int delete = grayRelationMapper.deleteById(grayRelation.getId());
+                    if (delete != 1) {
+                        throw new ServiceException("delete grayRelation fail, id:" + grayRelation.getId());
+                    }
+                }
+                break;
+        }
+
+        putMsg(result, Status.SUCCESS);
+        return result;
     }
 
     /**

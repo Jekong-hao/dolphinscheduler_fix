@@ -112,6 +112,16 @@ public class SqlTask extends AbstractTaskExecutor {
     protected volatile int statusCode = 0;
 
     /**
+     *  default new line char
+     */
+    private static final String DEFAULT_NEW_LINE_CHAR = "\n";
+
+    /**
+     *  default sql split char
+     */
+    private static final String DEFAULT_SQL_SPLIT_CHAR = ";";
+
+    /**
      * Abstract Yarn Task
      *
      * @param taskRequest taskRequest
@@ -174,6 +184,7 @@ public class SqlTask extends AbstractTaskExecutor {
 
             // execute sql task
             executeFuncAndSql(mainSqlBinds, preStatementSqlBinds, postStatementSqlBinds, createFuncs);
+
             if (statusCode ==  TaskConstants.EXIT_CODE_SUCCESS) {
                 setExitStatusCode(TaskConstants.EXIT_CODE_SUCCESS);
             }
@@ -201,50 +212,87 @@ public class SqlTask extends AbstractTaskExecutor {
         ResultSet resultSet = null;
         String dbType = sqlParameters.getType();
         try {
+            // 如果是hive 或者 spark的非查询，使用shell来执行脚本
+            if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()
+                    && (DbType.HIVE.getDescp().equalsIgnoreCase(dbType) || DbType.SPARK.getDescp().equalsIgnoreCase(dbType))) {
+                StringBuffer sqlScript = new StringBuffer();
+                // UDF
+                if (CollectionUtils.isNotEmpty(createFuncs)) {
+                    for (String createFunc : createFuncs) {
+                        String trimFunc = trimRight(createFunc);
+                        sqlScript.append(trimFunc).append(DEFAULT_NEW_LINE_CHAR);
+                        logger.info("hive create function sql: {}", trimFunc);
+                    }
+                }
 
-            // create connection
-            connection = DataSourceClientProvider.getInstance().getConnection(DbType.valueOf(sqlParameters.getType()), baseConnectionParam);
-            // create temp function
-            if (CollectionUtils.isNotEmpty(createFuncs)) {
-                createTempFunction(connection, createFuncs);
-            }
+                // pre sql
+                for (SqlBinds sqlBind : preStatementsBinds) {
+                    String trimPreSql = trimRight(sqlBind.getSql());
+                    sqlScript.append(trimPreSql).append(DEFAULT_NEW_LINE_CHAR);
+                    logger.info("pre execute sql: {}", trimPreSql);
+                }
 
-            // pre sql
-            preSql(connection, preStatementsBinds);
-            // bind sql
-            stmt = prepareStatementAndBind(connection, mainSqlBinds);
-            String result = null;
-            // decide whether to executeQuery or executeUpdate based on sqlType
-            if (sqlParameters.getSqlType() == SqlType.QUERY.ordinal()) {
-                // query statements need to be convert to JsonArray and inserted into Alert to send
-                resultSet = stmt.executeQuery();
-                result = resultProcess(resultSet);
-            } else if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()) {
-                // 使用shell执行HSQL
-                String updateResult = "";
-                if(DbType.HIVE.getDescp().equalsIgnoreCase(dbType)) {
-                    // 获取sh命令
-                    String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
-                        baseConnectionParam.getUser(),
-                        baseConnectionParam.getPassword(),
-                        baseConnectionParam.getJdbcUrl(),
-                        baseConnectionParam.getOther(),
-                        getSqlFile(mainSqlBinds.getSql())
-                    );
-                    // logger.info("execute sql: {}", mainSqlBinds.getReplaceSql());
-                    String command = buildCommand(rawScript);
-                    TaskResponse commandExecuteResult = shellCommandExecutor.run(command);
-                    statusCode = commandExecuteResult.getExitStatusCode();
-                    setExitStatusCode(commandExecuteResult.getExitStatusCode());
-                } else {
+                // main sql
+                String trimMainSql = trimRight(mainSqlBinds.getSql());
+                sqlScript.append(trimMainSql).append(DEFAULT_NEW_LINE_CHAR);
+                logger.info("main execute sql: {}", trimMainSql);
+
+                // post sql
+                for (SqlBinds sqlBind : postStatementsBinds) {
+                    String trimPostSql = trimRight(sqlBind.getSql());
+                    sqlScript.append(trimPostSql).append(DEFAULT_NEW_LINE_CHAR);
+                    logger.info("post execute sql: {}", trimPostSql);
+                }
+
+                // 以上放到文件 sql
+                String sqlFile = getSqlFile(sqlScript.toString());
+
+                // shell exec sql
+                // 获取sh命令
+                String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
+                    baseConnectionParam.getUser(),
+                    baseConnectionParam.getPassword(),
+                    baseConnectionParam.getJdbcUrl(),
+                    baseConnectionParam.getOther(),
+                    sqlFile
+                );
+                String command = buildCommand(rawScript);
+                TaskResponse commandExecuteResult = shellCommandExecutor.run(command);
+                statusCode = commandExecuteResult.getExitStatusCode();
+                // 设置执行状态
+                setExitStatusCode(commandExecuteResult.getExitStatusCode());
+
+            } else {
+                // create connection
+                connection = DataSourceClientProvider.getInstance().getConnection(DbType.valueOf(sqlParameters.getType()), baseConnectionParam);
+                // create temp function
+                if (CollectionUtils.isNotEmpty(createFuncs)) {
+                    createTempFunction(connection, createFuncs);
+                }
+
+                // pre sql
+                preSql(connection, preStatementsBinds);
+
+                // bind sql
+                stmt = prepareStatementAndBind(connection, mainSqlBinds);
+                String result = null;
+                // decide whether to executeQuery or executeUpdate based on sqlType
+                if (sqlParameters.getSqlType() == SqlType.QUERY.ordinal()) {
+                    // query statements need to be convert to JsonArray and inserted into Alert to send
+                    resultSet = stmt.executeQuery();
+                    result = resultProcess(resultSet);
+                } else if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()) {
                     stmt = prepareStatementAndBind(connection, mainSqlBinds);
-                    updateResult = String.valueOf(stmt.executeUpdate());
+                    String updateResult = String.valueOf(stmt.executeUpdate());
                     result = setNonQuerySqlReturn(updateResult, sqlParameters.getLocalParams());
                 }
+                // deal out params
+                sqlParameters.dealOutParam(result);
+
+                // post sql
+                postSql(connection, postStatementsBinds);
             }
-            sqlParameters.dealOutParam(result);
-            //deal out params
-            postSql(connection, postStatementsBinds);
+
         } catch (Exception e) {
             logger.error("execute sql error: {}", e.getMessage());
             throw e;
@@ -681,5 +729,30 @@ public class SqlTask extends AbstractTaskExecutor {
         Files.write(path, script.getBytes(), StandardOpenOption.APPEND);
 
         return fileName;
+    }
+
+    /**
+     * 去掉右边的空白,并判断右边是否存在";",不存在则加上
+     *
+     * @return str
+     * @throws Exception exception
+     */
+    private String trimRight(String s){
+        if (s == null) {
+            return "";
+        }
+        String whitespace = " \t\n\r";
+        String str = s;
+        if (whitespace.indexOf(str.charAt(str.length()-1)) != -1){
+            int i = str.length() - 1;
+            while (i >= 0 && whitespace.indexOf(str.charAt(i)) != -1){
+                i--;
+            }
+            str = str.substring(0, i+1);
+        }
+        if (str.length() > 0 && !DEFAULT_SQL_SPLIT_CHAR.equalsIgnoreCase(str.substring(str.length() - 1))) {
+            str += DEFAULT_SQL_SPLIT_CHAR;
+        }
+        return str;
     }
 }

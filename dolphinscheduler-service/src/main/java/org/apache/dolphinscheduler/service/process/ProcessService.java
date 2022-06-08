@@ -29,6 +29,7 @@ import static org.apache.dolphinscheduler.common.Constants.LOCAL_PARAMS;
 
 import static java.util.stream.Collectors.toSet;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.apache.dolphinscheduler.common.Constants;
 import org.apache.dolphinscheduler.common.enums.*;
 import org.apache.dolphinscheduler.common.graph.DAG;
@@ -47,47 +48,8 @@ import org.apache.dolphinscheduler.common.utils.DateUtils;
 import org.apache.dolphinscheduler.common.utils.JSONUtils;
 import org.apache.dolphinscheduler.common.utils.ParameterUtils;
 import org.apache.dolphinscheduler.common.utils.TaskParametersUtils;
-import org.apache.dolphinscheduler.dao.entity.Command;
-import org.apache.dolphinscheduler.dao.entity.DagData;
-import org.apache.dolphinscheduler.dao.entity.DataSource;
-import org.apache.dolphinscheduler.dao.entity.Environment;
-import org.apache.dolphinscheduler.dao.entity.ErrorCommand;
-import org.apache.dolphinscheduler.dao.entity.ProcessDefinition;
-import org.apache.dolphinscheduler.dao.entity.ProcessDefinitionLog;
-import org.apache.dolphinscheduler.dao.entity.ProcessInstance;
-import org.apache.dolphinscheduler.dao.entity.ProcessInstanceMap;
-import org.apache.dolphinscheduler.dao.entity.ProcessTaskRelation;
-import org.apache.dolphinscheduler.dao.entity.ProcessTaskRelationLog;
-import org.apache.dolphinscheduler.dao.entity.Project;
-import org.apache.dolphinscheduler.dao.entity.ProjectUser;
-import org.apache.dolphinscheduler.dao.entity.Resource;
-import org.apache.dolphinscheduler.dao.entity.Schedule;
-import org.apache.dolphinscheduler.dao.entity.TaskDefinition;
-import org.apache.dolphinscheduler.dao.entity.TaskDefinitionLog;
-import org.apache.dolphinscheduler.dao.entity.TaskInstance;
-import org.apache.dolphinscheduler.dao.entity.Tenant;
-import org.apache.dolphinscheduler.dao.entity.UdfFunc;
-import org.apache.dolphinscheduler.dao.entity.User;
-import org.apache.dolphinscheduler.dao.mapper.CommandMapper;
-import org.apache.dolphinscheduler.dao.mapper.DataSourceMapper;
-import org.apache.dolphinscheduler.dao.mapper.EnvironmentMapper;
-import org.apache.dolphinscheduler.dao.mapper.ErrorCommandMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProcessDefinitionLogMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProcessDefinitionMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProcessInstanceMapMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProcessInstanceMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProcessTaskRelationLogMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProcessTaskRelationMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProjectMapper;
-import org.apache.dolphinscheduler.dao.mapper.ResourceMapper;
-import org.apache.dolphinscheduler.dao.mapper.ResourceUserMapper;
-import org.apache.dolphinscheduler.dao.mapper.ScheduleMapper;
-import org.apache.dolphinscheduler.dao.mapper.TaskDefinitionLogMapper;
-import org.apache.dolphinscheduler.dao.mapper.TaskDefinitionMapper;
-import org.apache.dolphinscheduler.dao.mapper.TaskInstanceMapper;
-import org.apache.dolphinscheduler.dao.mapper.TenantMapper;
-import org.apache.dolphinscheduler.dao.mapper.UdfFuncMapper;
-import org.apache.dolphinscheduler.dao.mapper.UserMapper;
+import org.apache.dolphinscheduler.dao.entity.*;
+import org.apache.dolphinscheduler.dao.mapper.*;
 import org.apache.dolphinscheduler.dao.utils.DagHelper;
 import org.apache.dolphinscheduler.remote.utils.Host;
 import org.apache.dolphinscheduler.service.alert.ProcessAlertManager;
@@ -130,6 +92,12 @@ public class ProcessService {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
+    private static final ElementType COMMAND = ElementType.COMMAND;
+
+    private static final ElementType PROCESSDEFINITION = ElementType.PROCESSDEFINITION;
+
+    private static final ElementType PROCESSINSTANCE = ElementType.PROCESSINSTANCE;
+
     private final int[] stateArray = new int[]{ExecutionStatus.SUBMITTED_SUCCESS.ordinal(),
             ExecutionStatus.RUNNING_EXECUTION.ordinal(),
             ExecutionStatus.DELAY_EXECUTION.ordinal(),
@@ -141,6 +109,12 @@ public class ProcessService {
 
     @Autowired
     private ProcessDefinitionMapper processDefineMapper;
+
+    @Autowired
+    private GrayRelationMapper grayRelationMapper;
+
+    @Autowired
+    private GrayRelationInstanceLogMapper grayRelationInstanceLogMapper;
 
     @Autowired
     private ProcessDefinitionLogMapper processDefineLogMapper;
@@ -217,6 +191,7 @@ public class ProcessService {
             return null;
         }
         processInstance.setCommandType(command.getCommandType());
+        processInstance.setGrayFlag(command.getGrayFlag());
         processInstance.addHistoryCmd(command.getCommandType());
         saveProcessInstance(processInstance);
         this.setSubProcessParam(processInstance);
@@ -263,7 +238,16 @@ public class ProcessService {
     public int createCommand(Command command) {
         int result = 0;
         if (command != null) {
-            result = commandMapper.insert(command);
+
+//            result = commandMapper.insert(command);
+            result = commandMapper.insertAndReturnId(command);
+
+            // 此处有用,用于标记command的灰度性质
+            if (command.getGrayFlag() == GrayFlag.GRAY) {
+                final GrayRelation grayRelationCommand = new GrayRelation(COMMAND, command.getId(), null);
+                grayRelationCommand.setGrayFlag(GrayFlag.GRAY);
+                grayRelationMapper.insert(grayRelationCommand);
+            }
         }
         return result;
     }
@@ -271,8 +255,32 @@ public class ProcessService {
     /**
      * get command page
      */
-    public List<Command> findCommandPage(int pageSize, int pageNumber) {
-        return commandMapper.queryCommandPage(pageSize, pageNumber * pageSize);
+    public List<Command> findCommandPage(int pageSize, int pageNumber, String grayFlag) {
+
+        List<Command> commands = commandMapper.queryCommandPage(pageSize, pageNumber * pageSize);
+        final Map<Integer, GrayFlag> idAndGrayFlag =
+                grayRelationMapper.selectList(new QueryWrapper<GrayRelation>().eq("element_type", COMMAND))
+                .stream().collect(Collectors.toMap(GrayRelation::getElementId, GrayRelation::getGrayFlag));
+        if (Constants.DOLPHINSCHEDULER_SERVER_GRAY_FLAG_GRAY.equals(grayFlag)) {  // gray
+            commands =
+                    commands.stream().filter(item -> idAndGrayFlag.containsKey(item.getId())).collect(Collectors.toList());
+        } else if (Constants.DOLPHINSCHEDULER_SERVER_GRAY_FLAG_PROD.equals(grayFlag)) {  // prod
+            commands =
+                    commands.stream().filter(item -> !idAndGrayFlag.containsKey(item.getId())).collect(Collectors.toList());
+        } else {
+            logger.error("parameter job.gray error!");
+            throw new ServiceException("parameter job.gray error!");
+        }
+
+        for (Command command : commands) {
+            final GrayRelation grayRelationCommand = grayRelationMapper.queryByTypeAndIdAndCode(COMMAND, command.getId(), null);
+            if (grayRelationCommand != null && grayRelationCommand.getGrayFlag() == GrayFlag.GRAY) {
+                command.setGrayFlag(GrayFlag.GRAY);
+            } else {
+                command.setGrayFlag(GrayFlag.PROD);
+            }
+        }
+        return commands;
     }
 
     /**
@@ -385,7 +393,18 @@ public class ProcessService {
      * @return process definition
      */
     public ProcessDefinition findProcessDefinitionByCode(Long processDefinitionCode) {
-        return processDefineMapper.queryByCode(processDefinitionCode);
+
+        final ProcessDefinition processDefinition = processDefineMapper.queryByCode(processDefinitionCode);
+
+        // 标记灰度标签
+        final GrayRelation grayRelationProcessDefinition = grayRelationMapper.queryByTypeAndIdAndCode(PROCESSDEFINITION, null, processDefinitionCode);
+        if (grayRelationProcessDefinition != null && grayRelationProcessDefinition.getGrayFlag() == GrayFlag.GRAY) {
+            processDefinition.setGrayFlag(GrayFlag.GRAY);
+        } else {
+            processDefinition.setGrayFlag(GrayFlag.PROD);
+        }
+
+        return processDefinition;
     }
 
     /**
@@ -526,7 +545,8 @@ public class ProcessService {
                     processInstance.getProcessInstancePriority(),
                     processInstance.getDryRun(),
                     processInstance.getId(),
-                    processInstance.getProcessDefinitionVersion()
+                    processInstance.getProcessDefinitionVersion(),
+                    null
             );
             saveCommand(command);
             return;
@@ -1257,7 +1277,8 @@ public class ProcessService {
                 parentProcessInstance.getProcessInstancePriority(),
                 parentProcessInstance.getDryRun(),
                 subProcessInstanceId,
-                subProcessDefinition.getVersion()
+                subProcessDefinition.getVersion(),
+                null
         );
     }
 
@@ -1422,7 +1443,17 @@ public class ProcessService {
         if (processInstance.getId() != 0) {
             processInstanceMapper.updateById(processInstance);
         } else {
-            processInstanceMapper.insert(processInstance);
+            final int processInstanceId = processInstanceMapper.insertAndReturnId(processInstance);
+            if (processInstance.getGrayFlag() == GrayFlag.GRAY) {
+                GrayRelationInstanceLog grayRelationProcessInstanceLog = grayRelationInstanceLogMapper.queryInstanceLogByTypeAndIdAndCode(PROCESSINSTANCE, processInstance.getId(), null);
+                if (grayRelationProcessInstanceLog != null) {
+                    logger.error("grayRelationInstanceLog表,id:{},这条数据不应该存在", grayRelationProcessInstanceLog.getId());
+                    return;
+                }
+                grayRelationProcessInstanceLog = new GrayRelationInstanceLog(PROCESSINSTANCE, processInstance.getId(), null);
+                grayRelationProcessInstanceLog.setGrayFlag(GrayFlag.GRAY);
+                grayRelationInstanceLogMapper.insert(grayRelationProcessInstanceLog);
+            }
         }
     }
 
@@ -2619,6 +2650,13 @@ public class ProcessService {
     }
 
     private void deleteCommandWithCheck(int commandId) {
+        final GrayRelation grayRelation = grayRelationMapper.queryByTypeAndIdAndCode(COMMAND, commandId, null);
+        if (grayRelation != null) {
+            final int grayRelationDelete = grayRelationMapper.deleteById(grayRelation.getId());
+            if (grayRelationDelete != 1) {
+                throw new ServiceException("delete grayRelation fail, id:" + grayRelation.getId());
+            }
+        }
         int delete = this.commandMapper.deleteById(commandId);
         if (delete != 1) {
             throw new ServiceException("delete command fail, id:" + commandId);

@@ -233,7 +233,8 @@
         // Global custom parameters
         definitionGlobalParams: [],
         udpList: [],
-        dryRun: 0
+        dryRun: 0,
+        grayFlag: ''
       }
     },
     mixins: [disabledState],
@@ -299,7 +300,8 @@
           environmentCode: this.environmentCode,
           startParams: !_.isEmpty(startParams) ? JSON.stringify(startParams) : '',
           expectedParallelismNumber: this.parallismNumber,
-          dryRun: this.dryRun
+          dryRun: this.dryRun,
+          grayFlag: this.grayFlag
         }
         // Executed from the specified node
         if (this.sourceType === 'contextmenu') {
@@ -361,6 +363,7 @@
     created () {
       this.warningType = this.warningTypeList[0].id
       this.workflowName = this.startData.name
+      this.grayFlag = this.startData.grayFlag
       this._getGlobalParams()
       let stateWorkerGroupsList = this.store.state.security.workerGroupsListAll || []
       if (stateWorkerGroupsList.length) {
@@ -382,6 +385,7 @@
         })
       })
       this.workflowName = this.startData.name
+      this.grayFlag = this.startData.grayFlag
     },
     computed: {},
     components: { mPriority, mWorkerGroups, mLocalParams, mRelatedEnvironment }

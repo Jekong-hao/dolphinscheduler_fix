@@ -22,7 +22,7 @@
     </div>
     <div class="leven-1" v-for="(item,$index) in menuList" :key="$index">
       <div v-if="item.enabled">
-        <template v-if="item.path">
+        <template v-if="item.path && item.path !== 'process' && item.path !== 'gray-manager'">
           <router-link :to="{ name: item.path}">
             <div class="name" @click="_toggleSubMenu(item)">
               <a href="javascript:">
@@ -33,7 +33,7 @@
             </div>
           </router-link>
         </template>
-        <template v-if="!item.path">
+        <template v-if="item.path === 'process'">
           <div class="name" @click="_toggleSubMenu(item)">
             <a href="javascript:">
               <em class="fa icon" :class="item.icon"></em>
@@ -42,13 +42,31 @@
             </a>
           </div>
         </template>
-        <ul v-if="item.isOpen && item.children.length">
+        <ul v-if="item.isOpen && item.children.length && item.path === 'process'">
           <template v-for="(el,index) in item.children">
             <router-link :to="{ name: el.path}" tag="li" active-class="active" v-if="el.enabled" :key="index">
               <span>{{el.name}}</span>
             </router-link>
           </template>
         </ul>
+        <!--灰度管理-->
+        <template v-if="item.path === 'gray-manager'">
+          <div class="name" @click="_toggleSubMenu(item)">
+            <a href="javascript:">
+              <em class="fa icon" :class="item.icon"></em>
+              <span>{{item.name}}</span>
+              <em class="fa angle" :class="item.isOpen ? 'el-icon-arrow-down' : 'el-icon-arrow-right'" v-if="item.children.length"></em>
+            </a>
+          </div>
+        </template>
+        <ul v-if="item.isOpen && item.children.length && item.path === 'gray-manager'">
+          <template v-for="(el,index) in item.children">
+            <router-link :to="{ name: el.path, params: {grayFlag: el.grayFlag}}" tag="li" active-class="active" v-if="el.enabled" :key="index" @click.native="_flushCom">
+              <span>{{el.name}}</span>
+            </router-link>
+          </template>
+        </ul>
+        <!--灰度管理-->
       </div>
     </div>
   </div>
@@ -96,6 +114,9 @@
           const dag = findComponentDownward(this.$root, 'dag-chart')
           dag && dag.canvasResize()
         }
+      },
+      _flushCom () {
+        // this.$router.go(0)
       }
     },
     mounted () {

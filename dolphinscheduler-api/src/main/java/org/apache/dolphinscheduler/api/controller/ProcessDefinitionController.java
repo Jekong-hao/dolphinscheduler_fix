@@ -34,6 +34,7 @@ import static org.apache.dolphinscheduler.api.enums.Status.RELEASE_PROCESS_DEFIN
 import static org.apache.dolphinscheduler.api.enums.Status.SWITCH_PROCESS_DEFINITION_VERSION_ERROR;
 import static org.apache.dolphinscheduler.api.enums.Status.UPDATE_PROCESS_DEFINITION_ERROR;
 import static org.apache.dolphinscheduler.api.enums.Status.VERIFY_PROCESS_DEFINITION_NAME_UNIQUE_ERROR;
+import static org.apache.dolphinscheduler.api.enums.Status.GRAY_TEST_PROCESS_DEFINITION_SET_ERROR;
 
 import org.apache.dolphinscheduler.api.aspect.AccessLogAnnotation;
 import org.apache.dolphinscheduler.api.enums.Status;
@@ -41,6 +42,7 @@ import org.apache.dolphinscheduler.api.exceptions.ApiException;
 import org.apache.dolphinscheduler.api.service.ProcessDefinitionService;
 import org.apache.dolphinscheduler.api.utils.Result;
 import org.apache.dolphinscheduler.common.Constants;
+import org.apache.dolphinscheduler.common.enums.GrayFlag;
 import org.apache.dolphinscheduler.common.enums.ReleaseState;
 import org.apache.dolphinscheduler.common.utils.ParameterUtils;
 import org.apache.dolphinscheduler.dao.entity.ProcessDefinition;
@@ -375,6 +377,33 @@ public class ProcessDefinitionController extends BaseController {
     }
 
     /**
+     * gray test process definition
+     *
+     * @param loginUser login user
+     * @param projectCode project code
+     * @param code process definition code
+     * @param grayFlag gray flag
+     * @return  gray test result code
+     */
+    @ApiOperation(value = "gray", notes = "GRAY_TEST_PROCESS_DEFINITION_NOTES")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "name", value = "PROCESS_DEFINITION_NAME", required = true, type = "String"),
+            @ApiImplicitParam(name = "code", value = "PROCESS_DEFINITION_CODE", required = true, dataType = "Long", example = "123456789"),
+            @ApiImplicitParam(name = "grayFlag", value = "PROCESS_DEFINITION_RELEASE", required = true, dataType = "GrayFlag"),
+    })
+    @PostMapping(value = "/{code}/gray")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiException(GRAY_TEST_PROCESS_DEFINITION_SET_ERROR)
+    @AccessLogAnnotation(ignoreRequestArgs = "loginUser")
+    public Result grayTestProcessDefinition(@ApiIgnore @RequestAttribute(value = Constants.SESSION_USER) User loginUser,
+                                           @ApiParam(name = "projectCode", value = "PROJECT_CODE", required = true) @PathVariable long projectCode,
+                                           @PathVariable(value = "code", required = true) long code,
+                                           @RequestParam(value = "grayFlag", required = true) GrayFlag grayFlag) {
+        Map<String, Object> result = processDefinitionService.grayTestProcessDefinition(loginUser, projectCode, code, grayFlag);
+        return returnDataList(result);
+    }
+
+    /**
      * query detail of process definition by code
      *
      * @param loginUser login user
@@ -465,6 +494,7 @@ public class ProcessDefinitionController extends BaseController {
      * @param pageNo page number
      * @param pageSize page size
      * @param userId user id
+     * @param grayFlag 如果此参数为空,显示全部内容,如果此参数不为空,就按照此参数指定的值显示
      * @return process definition page
      */
     @ApiOperation(value = "queryListPaging", notes = "QUERY_PROCESS_DEFINITION_LIST_PAGING_NOTES")
@@ -483,14 +513,15 @@ public class ProcessDefinitionController extends BaseController {
                                                    @RequestParam(value = "searchVal", required = false) String searchVal,
                                                    @RequestParam(value = "userId", required = false, defaultValue = "0") Integer userId,
                                                    @RequestParam("pageNo") Integer pageNo,
-                                                   @RequestParam("pageSize") Integer pageSize) {
+                                                   @RequestParam("pageSize") Integer pageSize,
+                                                   @RequestParam(value = "grayFlag", required = false) String grayFlag) {
         Result result = checkPageParams(pageNo, pageSize);
         if (!result.checkResult()) {
             return result;
         }
         searchVal = ParameterUtils.handleEscapes(searchVal);
 
-        return processDefinitionService.queryProcessDefinitionListPaging(loginUser, projectCode, searchVal, userId, pageNo, pageSize);
+        return processDefinitionService.queryProcessDefinitionListPaging(loginUser, projectCode, searchVal, userId, pageNo, pageSize, grayFlag);
     }
 
     /**
@@ -655,6 +686,32 @@ public class ProcessDefinitionController extends BaseController {
         } catch (Exception e) {
             logger.error(Status.BATCH_EXPORT_PROCESS_DEFINE_BY_IDS_ERROR.getMsg(), e);
         }
+    }
+
+    /**
+     * batch update gray by codes
+     *
+     * @param loginUser login user
+     * @param projectCode project code
+     * @param codes process definition codes
+     * @param grayFlag gray flag
+     * @param response response
+     */
+    @ApiOperation(value = "batchUpdateGrayByCodes", notes = "BATCH_UPDATE_GRAY_BY_CODES_NOTES")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "codes", value = "PROCESS_DEFINITION_CODE", required = true, dataType = "String"),
+            @ApiImplicitParam(name = "grayFlag", value = "GRAY_FLAG", required = true, dataType = "String")
+    })
+    @PostMapping(value = "/batch-update-gray")
+    @ResponseBody
+    @AccessLogAnnotation(ignoreRequestArgs = {"loginUser", "response"})
+    public Result batchUpdateGrayByCodes(@ApiIgnore @RequestAttribute(value = Constants.SESSION_USER) User loginUser,
+                                                    @ApiParam(name = "projectCode", value = "PROJECT_CODE", required = true) @PathVariable long projectCode,
+                                                    @RequestParam("codes") String codes,
+                                                    @RequestParam(value = "grayFlag", required = true) GrayFlag grayFlag,
+                                                    HttpServletResponse response) {
+        final Map<String, Object> stringObjectMap = processDefinitionService.batchUpdateGrayByCodes(loginUser, projectCode, codes, grayFlag, response);
+        return returnDataList(stringObjectMap);
     }
 
     /**

@@ -42,3 +42,9 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
+dolphinscheduler:
+  server:
+    # gray/prod
+    gray-flag: prod
+

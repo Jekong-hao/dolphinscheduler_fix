@@ -268,6 +268,8 @@ export default {
   'Failure Strategy': 'Failure Strategy',
   online: 'online',
   offline: 'offline',
+  gray: 'gray',
+  no_gray: 'no gray',
   'Task Status': 'Task Status',
   'Process Instance': 'Process Instance',
   'Task Instance': 'Task Instance',

@@ -14,49 +14,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.dolphinscheduler.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-
-import org.apache.dolphinscheduler.dao.entity.Command;
-import org.apache.dolphinscheduler.dao.entity.CommandCount;
+import org.apache.dolphinscheduler.common.enums.ElementType;
+import org.apache.dolphinscheduler.dao.entity.GrayRelation;
 import org.apache.ibatis.annotations.Param;
 
-import java.util.Date;
+import java.util.Collection;
 import java.util.List;
 
+
 /**
- * command mapper interface
+ * gray relation mapper interface
  */
-public interface CommandMapper extends BaseMapper<Command> {
+public interface GrayRelationMapper extends BaseMapper<GrayRelation> {
 
     /**
-     * count command state
-     * @param userId userId
-     * @param startTime startTime
-     * @param endTime endTime
-     * @param projectCodeArray projectCodeArray
-     * @return CommandCount list
-     */
-    List<CommandCount> countCommandState(
-            @Param("userId") int userId,
-            @Param("startTime") Date startTime,
-            @Param("endTime") Date endTime,
-            @Param("projectCodeArray") Long[] projectCodeArray);
-
-    /**
-     * query command page
-     * @return
-     */
-    List<Command> queryCommandPage(@Param("limit") int limit, @Param("offset") int offset);
-
-    /**
-     * 插入数据,返回自增id
      *
-     * @param command
+     * @param elementType elementType
+     * @param elementId elementId
+     * @param elementCode element_code
      * @return
      */
-    int insertAndReturnId(@Param("command") Command command);
+    GrayRelation queryByTypeAndIdAndCode(@Param("elementType") ElementType elementType, @Param("elementId") Integer elementId, @Param("elementCode") Long elementCode);
+
+
+    /**
+     *
+     * @param elementType elementType
+     * @param codes element codes
+     * @return
+     */
+    List<GrayRelation> queryByDefinitionCodes(@Param("elementType") ElementType elementType, @Param("codes") Collection<Long> codes);
 
 }

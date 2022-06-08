@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -102,6 +103,9 @@ public class MasterSchedulerService extends Thread {
 
     @Autowired
     NettyExecutorManager nettyExecutorManager;
+
+    @Value("${dolphinscheduler.server.gray-flag}")
+    private String grayFlag;
 
     /**
      * master exec service
@@ -311,7 +315,7 @@ public class MasterSchedulerService extends Thread {
                 return null;
             }
             logger.debug("master size:{}",ServerNodeManager.MASTER_SIZE);
-            List<Command> commandList = processService.findCommandPage(ServerNodeManager.MASTER_SIZE, pageNumber);
+            List<Command> commandList = processService.findCommandPage(ServerNodeManager.MASTER_SIZE, pageNumber, grayFlag);
             if (commandList.size() == 0) {
                 return null;
             }

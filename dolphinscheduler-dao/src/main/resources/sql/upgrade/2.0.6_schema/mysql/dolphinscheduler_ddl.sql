@@ -24,7 +24,7 @@ CREATE TABLE `t_ds_relation_gray` (
   `create_time` datetime NOT NULL COMMENT 'create time',
   `update_time` datetime NOT NULL COMMENT 'update time',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1;
 
 CREATE TABLE `t_ds_relation_gray_instance_log` (
    `id` int NOT NULL AUTO_INCREMENT COMMENT 'self_increasing id',
@@ -35,4 +35,4 @@ CREATE TABLE `t_ds_relation_gray_instance_log` (
    `create_time` datetime NOT NULL COMMENT 'create time',
    `update_time` datetime NOT NULL COMMENT 'update time',
    PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1;

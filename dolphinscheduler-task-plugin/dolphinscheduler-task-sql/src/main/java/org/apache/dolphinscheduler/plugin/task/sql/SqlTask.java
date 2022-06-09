@@ -20,6 +20,7 @@ package org.apache.dolphinscheduler.plugin.task.sql;
 import org.apache.dolphinscheduler.plugin.datasource.api.plugin.DataSourceClientProvider;
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.CommonUtils;
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.DatasourceUtil;
+import org.apache.dolphinscheduler.plugin.datasource.api.utils.PasswordUtils;
 import org.apache.dolphinscheduler.plugin.task.api.AbstractTaskExecutor;
 import org.apache.dolphinscheduler.plugin.task.api.ShellCommandExecutor;
 import org.apache.dolphinscheduler.plugin.task.api.TaskException;
@@ -251,9 +252,9 @@ public class SqlTask extends AbstractTaskExecutor {
                 // 获取sh命令
                 String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
                     baseConnectionParam.getUser(),
-                    baseConnectionParam.getPassword(),
+                    PasswordUtils.decodePassword(baseConnectionParam.getPassword()),
                     baseConnectionParam.getJdbcUrl(),
-                    baseConnectionParam.getOther(),
+                    baseConnectionParam.getOther().replaceAll("SSL=1", "ssl=true").replaceAll("ssl=1", "ssl=true"),
                     sqlFile
                 );
                 String command = buildCommand(rawScript);

@@ -137,6 +137,8 @@
       '$route' (a) {
         // url no params get instance list
         this.searchParams.pageNo = _.isEmpty(a.query) ? 1 : a.query.pageNo
+        this.searchParams.grayFlag = a.params.grayFlag
+        // this._getList()
       }
     },
     created () {

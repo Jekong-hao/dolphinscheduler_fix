@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -115,7 +116,10 @@ public class HiveDatasourceProcessor extends AbstractDatasourceProcessor {
         HiveConnectionParam hiveConnectionParam = (HiveConnectionParam) connectionParam;
         String jdbcUrl = hiveConnectionParam.getJdbcUrl();
         String otherParams = filterOther(hiveConnectionParam.getOther());
-        if (StringUtils.isNotEmpty(otherParams) && !"?".equals(otherParams.substring(0, 1))) {
+//        if (StringUtils.isNotEmpty(otherParams) && !"?".equals(otherParams.substring(0, 1))) {
+//            jdbcUrl += ";";
+//        }
+        if (StringUtils.isNotEmpty(otherParams)) {
             jdbcUrl += ";";
         }
         return jdbcUrl + otherParams;
@@ -141,7 +145,51 @@ public class HiveDatasourceProcessor extends AbstractDatasourceProcessor {
             return null;
         }
         StringBuilder stringBuilder = new StringBuilder();
-        otherMap.forEach((key, value) -> stringBuilder.append(String.format("%s=%s;", key, value)));
+        // 适配kyuubi
+        // jdbc:hive2://<host>:<port>/<dbName>;<sessionVars>?<kyuubiConfs>#<[spark|hive]Vars>
+        // sessionVars: Optional Semicolon(;) separated key=value parameters for the JDBC/ODBC driver. Such as user, password and hive.server2.proxy.user.
+        // kyuubiConfs: Optional Semicolon(;) separated key=value parameters for Kyuubi server to create the corresponding engine, dismissed if engine exists.
+        // [spark|hive]Vars: Optional Semicolon(;) separated key=value parameters for Spark/Hive variables used for variable substitution.
+        Map<String, String> sessionVarMap = new HashMap<>();
+        Map<String, String> kyuubiConfMap = new HashMap<>();
+        Map<String, String> sparkHiveVarMap = new HashMap<>();
+        otherMap.forEach((key, value) -> {
+            if (key.startsWith("?")) {
+                kyuubiConfMap.put(key, value);
+            } else if (key.startsWith("#")) {
+                sparkHiveVarMap.put(key, value);
+            } else {
+                sessionVarMap.put(key, value);
+            }
+        });
+        if (!sessionVarMap.isEmpty()) {
+            sessionVarMap.forEach((key, value) -> {
+                if (stringBuilder.length() > 0) {
+                    stringBuilder.append(";");
+                }
+                stringBuilder.append(String.format("%s=%s", key, value));
+            });
+        }
+        if (!kyuubiConfMap.isEmpty()) {
+            StringBuffer tmp = new StringBuffer();
+            kyuubiConfMap.forEach((key, value) -> {
+                if (tmp.length() > 0) {
+                    tmp.append(";");
+                }
+                tmp.append(key).append("=").append(value);
+            });
+            stringBuilder.append("?").append(tmp);
+        }
+        if (!sparkHiveVarMap.isEmpty()) {
+            StringBuffer tmp = new StringBuffer();
+            sparkHiveVarMap.forEach((key, value) -> {
+                if (tmp.length() > 0) {
+                    tmp.append(";");
+                }
+                tmp.append(key).append("=").append(value);
+            });
+            stringBuilder.append("#").append(tmp);
+        }
         return stringBuilder.toString();
     }
 

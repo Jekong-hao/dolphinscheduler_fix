@@ -192,7 +192,7 @@ const menu = {
     {
       name: `${i18n.$t('UDF manage')}`,
       id: 1,
-      path: '',
+      path: 'udfManage',
       isOpen: true,
       icon: 'el-icon-document',
       enabled: true,
@@ -245,7 +245,7 @@ const menu = {
     {
       name: `${i18n.$t('Servers manage')}`,
       id: 1,
-      path: '',
+      path: 'serversManage',
       isOpen: true,
       enabled: true,
       icon: 'el-icon-menu',
@@ -273,7 +273,7 @@ const menu = {
     {
       name: `${i18n.$t('Statistics manage')}`,
       id: 0,
-      path: '',
+      path: 'statisticsManage',
       isOpen: true,
       enabled: true,
       icon: 'el-icon-menu',

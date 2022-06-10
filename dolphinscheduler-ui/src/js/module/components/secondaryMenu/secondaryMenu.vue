@@ -22,7 +22,7 @@
     </div>
     <div class="leven-1" v-for="(item,$index) in menuList" :key="$index">
       <div v-if="item.enabled">
-        <template v-if="item.path && item.path !== 'process' && item.path !== 'gray-manager'">
+        <template v-if="item.path && item.path !== 'process' && item.path !== 'gray-manager' && item.path !== 'serversManage' && item.path !== 'statisticsManage' && item.path !== 'udfManage'">
           <router-link :to="{ name: item.path}">
             <div class="name" @click="_toggleSubMenu(item)">
               <a href="javascript:">
@@ -33,7 +33,7 @@
             </div>
           </router-link>
         </template>
-        <template v-if="item.path === 'process'">
+        <template v-if="item.path === 'process' || item.path === 'serversManage' || item.path === 'statisticsManage' || item.path === 'udfManage'">
           <div class="name" @click="_toggleSubMenu(item)">
             <a href="javascript:">
               <em class="fa icon" :class="item.icon"></em>
@@ -42,7 +42,7 @@
             </a>
           </div>
         </template>
-        <ul v-if="item.isOpen && item.children.length && item.path === 'process'">
+        <ul v-if="item.isOpen && item.children.length && (item.path === 'process' || item.path === 'serversManage' || item.path === 'statisticsManage' || item.path === 'udfManage')">
           <template v-for="(el,index) in item.children">
             <router-link :to="{ name: el.path}" tag="li" active-class="active" v-if="el.enabled" :key="index">
               <span>{{el.name}}</span>

@@ -104,7 +104,7 @@ public class MasterSchedulerService extends Thread {
     @Autowired
     NettyExecutorManager nettyExecutorManager;
 
-    @Value("${dolphinscheduler.server.gray-flag}")
+    @Value("${dolphinscheduler.server.gray-flag:prod}")
     private String grayFlag;
 
     /**

@@ -46,6 +46,7 @@ import org.slf4j.LoggerFactory;
 
 import com.zaxxer.hikari.HikariDataSource;
 
+import org.springframework.jdbc.core.JdbcTemplate;
 import sun.security.krb5.Config;
 
 public class HiveDataSourceClient extends CommonDataSourceClient {
@@ -78,8 +79,9 @@ public class HiveDataSourceClient extends CommonDataSourceClient {
         this.ugi = createUserGroupInformation(baseConnectionParam.getUser());
         logger.info("Create ugi success.");
 
-        super.initClient(baseConnectionParam, dbType);
+//        super.initClient(baseConnectionParam, dbType);
         this.oneSessionDataSource = JdbcDataSourceProvider.createOneSessionJdbcDataSource(baseConnectionParam, dbType);
+        this.jdbcTemplate = new JdbcTemplate(this.oneSessionDataSource);
         logger.info("Init {} success.", getClass().getName());
     }
 

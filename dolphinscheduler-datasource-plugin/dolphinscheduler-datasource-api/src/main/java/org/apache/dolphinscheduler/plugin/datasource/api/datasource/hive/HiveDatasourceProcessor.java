@@ -29,6 +29,8 @@ import org.apache.dolphinscheduler.spi.utils.JSONUtils;
 import org.apache.dolphinscheduler.spi.utils.StringUtils;
 
 import org.apache.commons.collections4.MapUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -40,6 +42,8 @@ import java.util.Map;
 
 public class HiveDatasourceProcessor extends AbstractDatasourceProcessor {
 
+    private final static Logger logger = LoggerFactory.getLogger(HiveDatasourceProcessor.class);
+
     @Override
     public BaseDataSourceParamDTO createDatasourceParamDTO(String connectionJson) {
         HiveDataSourceParamDTO hiveDataSourceParamDTO = new HiveDataSourceParamDTO();
@@ -47,7 +51,8 @@ public class HiveDatasourceProcessor extends AbstractDatasourceProcessor {
 
         hiveDataSourceParamDTO.setDatabase(hiveConnectionParam.getDatabase());
         hiveDataSourceParamDTO.setUserName(hiveConnectionParam.getUser());
-        hiveDataSourceParamDTO.setOther(parseOther(hiveConnectionParam.getOther()));
+//        hiveDataSourceParamDTO.setOther(parseOther(hiveConnectionParam.getOther()));
+        hiveDataSourceParamDTO.setOther(hiveConnectionParam.getProps());
         hiveDataSourceParamDTO.setLoginUserKeytabUsername(hiveConnectionParam.getLoginUserKeytabUsername());
         hiveDataSourceParamDTO.setLoginUserKeytabPath(hiveConnectionParam.getLoginUserKeytabPath());
         hiveDataSourceParamDTO.setJavaSecurityKrb5Conf(hiveConnectionParam.getJavaSecurityKrb5Conf());
@@ -131,7 +136,9 @@ public class HiveDatasourceProcessor extends AbstractDatasourceProcessor {
         CommonUtils.loadKerberosConf(hiveConnectionParam.getJavaSecurityKrb5Conf(),
                 hiveConnectionParam.getLoginUserKeytabUsername(), hiveConnectionParam.getLoginUserKeytabPath());
         Class.forName(getDatasourceDriver());
-        return DriverManager.getConnection(getJdbcUrl(connectionParam),
+        String jdbc = getJdbcUrl(connectionParam);
+        logger.info("Get connection for user {} from JDBC : {}", hiveConnectionParam.getUser(), jdbc);
+        return DriverManager.getConnection(jdbc,
                 hiveConnectionParam.getUser(), PasswordUtils.decodePassword(hiveConnectionParam.getPassword()));
     }
 
@@ -155,9 +162,9 @@ public class HiveDatasourceProcessor extends AbstractDatasourceProcessor {
         Map<String, String> sparkHiveVarMap = new HashMap<>();
         otherMap.forEach((key, value) -> {
             if (key.startsWith("?")) {
-                kyuubiConfMap.put(key, value);
+                kyuubiConfMap.put(key.substring(1), value);
             } else if (key.startsWith("#")) {
-                sparkHiveVarMap.put(key, value);
+                sparkHiveVarMap.put(key.substring(1), value);
             } else {
                 sessionVarMap.put(key, value);
             }

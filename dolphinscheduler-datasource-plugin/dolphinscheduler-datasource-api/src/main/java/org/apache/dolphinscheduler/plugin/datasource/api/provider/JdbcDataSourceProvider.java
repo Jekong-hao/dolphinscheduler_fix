@@ -83,11 +83,11 @@ public class JdbcDataSourceProvider {
         dataSource.setUsername(properties.getUser());
         dataSource.setPassword(PasswordUtils.decodePassword(properties.getPassword()));
 
-        Boolean isOneSession = PropertyUtils.getBoolean(Constants.SUPPORT_HIVE_ONE_SESSION, false);
-        dataSource.setMinimumIdle(isOneSession ? 1 : PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MIN_IDLE, 5));
+        Boolean isOneSession = PropertyUtils.getBoolean(Constants.SUPPORT_HIVE_ONE_SESSION, true);
+        dataSource.setMinimumIdle(isOneSession ? 1 : PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MIN_IDLE, 1));
         dataSource.setMaximumPoolSize(isOneSession ? 1 : PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_ACTIVE, 50));
-        dataSource.setConnectionTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_CONNECTION_TIMEOUT, 60000));
-        dataSource.setValidationTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_VALIDATION_TIMEOUT, 3000));
+        dataSource.setConnectionTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_CONNECTION_TIMEOUT, 180000));
+        dataSource.setValidationTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_VALIDATION_TIMEOUT, 30000));
         dataSource.setMaxLifetime(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_MAX_LIFETIME, 600000));
         dataSource.setIdleTimeout(PropertyUtils.getInt(Constants.SPRING_DATASOURCE_IDLE_TIMEOUT, 60000));
 

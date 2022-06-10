@@ -33,7 +33,7 @@ spring:
       spec: maximumSize=100,expireAfterWrite=300s,recordStats
 
 server:
-  port: 23456
+  port: 12345
 
 management:
   endpoints:

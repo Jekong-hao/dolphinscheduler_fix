@@ -168,7 +168,7 @@ const menu = {
     {
       name: `${i18n.$t('Process Perm Manage')}`,
       id: 1,
-      path: 'porocess-manage',
+      path: 'process-manage',
       isOpen: true,
       enabled: true,
       icon: 'el-icon-share',

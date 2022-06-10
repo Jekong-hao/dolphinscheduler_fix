@@ -68,7 +68,7 @@
   import mListConstruction from '@/module/components/listConstruction/listConstruction'
 
   export default {
-    name: 'projects-index',
+    name: 'projects-authorize-index',
     data () {
       return {
         total: null,

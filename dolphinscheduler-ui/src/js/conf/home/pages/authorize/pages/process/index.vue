@@ -68,7 +68,7 @@
   import mListConstruction from '@/module/components/listConstruction/listConstruction'
 
   export default {
-    name: 'processes-index',
+    name: 'processes-authorize-index',
     data () {
       return {
         total: null,

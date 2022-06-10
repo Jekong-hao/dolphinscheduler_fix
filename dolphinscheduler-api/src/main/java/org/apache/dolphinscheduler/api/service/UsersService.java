@@ -152,6 +152,16 @@ public interface UsersService {
      */
     Map<String, Object> grantProject(User loginUser, int userId, String projectIds);
 
+    /**
+     * grant project
+     *
+     * @param loginUser login user
+     * @param projectId user id
+     * @param userIds project id array
+     * @return grant result code
+     */
+    Map<String, Object> grantProjectToUsers(User loginUser, int projectId, String userIds);
+
 
     /**
      * grant project by code
@@ -286,4 +296,7 @@ public interface UsersService {
      * @return create result code
      */
     Map<String, Object> batchActivateUser(User loginUser, List<String> userNames);
+
+
+    Map<String, Object> grantProcessToUsers(User loginUser, int processId, String userIds);
 }

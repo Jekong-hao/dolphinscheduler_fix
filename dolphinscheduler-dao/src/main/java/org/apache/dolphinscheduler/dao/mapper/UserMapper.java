@@ -173,4 +173,12 @@ public interface UserMapper extends BaseMapper<User> {
 
 
     User queryByProcessDefinitionCode(@Param("code") Long processDefinitionCode);
+
+    /**
+     * query authed user list by processDefinitionId
+     *
+     * @param processDefinitionId processDefinitionId
+     * @return user list
+     */
+    List<User> queryAuthedUserListByProcessDefinitionId(@Param("processDefinitionId") int processDefinitionId);
 }

@@ -60,6 +60,9 @@
           <router-link :to="{ path: '/security'}" tag="a" active-class="active" v-ps="['ADMIN_USER']">
             <span><em class="ansfont ri-shield-check-line"></em>{{$t('Security')}}</span><strong></strong>
           </router-link>
+          <router-link :to="{ path: '/authorize'}" tag="a" active-class="active" v-ps="['GENERAL_USER']">
+            <span><em class="ansfont ri-shield-check-line"></em>{{$t('Authorize')}}</span><strong></strong>
+          </router-link>
         </div>
       </div>
     </div>
@@ -130,6 +133,10 @@
             <router-link :to="{ path: '/security'}" tag="li" active-class="active" v-ps="['ADMIN_USER']">
               <em class="ansfont ri-shield-check-line"></em>
               <span>{{$t('Security')}}</span>
+            </router-link>
+            <router-link :to="{ path: '/authorize'}" tag="li" active-class="active" v-ps="['GENERAL_USER']">
+              <em class="ansfont ri-shield-check-line"></em>
+              <span>{{$t('Authorize')}}</span>
             </router-link>
           </ul>
         </div>

@@ -125,6 +125,17 @@ public interface ProcessDefinitionMapper extends BaseMapper<ProcessDefinition> {
     List<ProcessDefinition> queryAllDefinitionList(@Param("projectCode") long projectCode);
 
     /**
+     * query all process definition list
+     *
+     * @param userId userId
+     * @return process definition list
+     */
+    IPage<ProcessDefinition> queryAllDefinitionListPagingByUser(IPage<ProcessDefinition> page,
+                                                                @Param("searchVal") String searchVal,
+                                                                @Param("userId") int userId,
+                                                                @Param("isAdmin") boolean isAdmin);
+
+    /**
      * query process definition by ids
      *
      * @param ids ids

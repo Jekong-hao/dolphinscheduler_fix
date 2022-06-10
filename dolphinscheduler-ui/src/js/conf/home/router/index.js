@@ -464,6 +464,35 @@ const router = new Router({
       ]
     },
     {
+      path: '/authorize',
+      name: 'authorize',
+      component: resolve => require(['../pages/authorize/index'], resolve),
+      meta: {
+        title: `${i18n.$t('Authorize')}`
+      },
+      redirect: {
+        name: 'project-manage'
+      },
+      children: [
+        {
+          path: '/authorize/project',
+          name: 'project-manage',
+          component: resolve => require(['../pages/authorize/pages/project/index'], resolve),
+          meta: {
+            title: `${i18n.$t('Project Perm Manage')}`
+          }
+        },
+        {
+          path: '/authorize/process',
+          name: 'process-manage',
+          component: resolve => require(['../pages/authorize/pages/process/index'], resolve),
+          meta: {
+            title: `${i18n.$t('Process Perm Manage')}`
+          }
+        }
+      ]
+    },
+    {
       path: '/user',
       name: 'user',
       component: resolve => require(['../pages/user/index'], resolve),

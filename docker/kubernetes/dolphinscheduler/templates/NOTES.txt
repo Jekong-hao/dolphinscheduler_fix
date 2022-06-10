@@ -27,7 +27,7 @@ Access DolphinScheduler UI URL by:
 
   kubectl port-forward -n {{ .Release.Namespace }} svc/{{ template "dolphinscheduler.fullname" . }}-api 12345:12345
 
-  DolphinScheduler UI URL: http://127.0.0.1:12345/dolphinscheduler
+  DolphinScheduler UI URL: http://127.0.0.1:10234/dolphinscheduler
 
 {{- else if eq .Values.api.service.type "NodePort" }}
 
@@ -43,8 +43,8 @@ Access DolphinScheduler UI URL by:
         You can watch the status of by running 'kubectl get svc {{ template "dolphinscheduler.fullname" . }}-api -n {{ .Release.Namespace }} -w'
 
   SERVICE_IP=$(kubectl get svc {{ template "dolphinscheduler.fullname" . }}-api -n {{ .Release.Namespace }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  echo http://$SERVICE_IP:12345/dolphinscheduler
+  echo http://$SERVICE_IP:10234/dolphinscheduler
 
-  DolphinScheduler UI URL: http://$SERVICE_IP:12345/dolphinscheduler
+  DolphinScheduler UI URL: http://$SERVICE_IP:10234/dolphinscheduler
 
 {{- end }}

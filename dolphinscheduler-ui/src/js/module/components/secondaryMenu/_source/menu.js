@@ -155,6 +155,26 @@ const menu = {
       enabled: true
     }
   ],
+  authorize: [
+    {
+      name: `${i18n.$t('Project Perm Manage')}`,
+      id: 0,
+      path: 'project-manage',
+      isOpen: true,
+      enabled: true,
+      icon: 'el-icon-tickets',
+      children: []
+    },
+    {
+      name: `${i18n.$t('Process Perm Manage')}`,
+      id: 1,
+      path: 'porocess-manage',
+      isOpen: true,
+      enabled: true,
+      icon: 'el-icon-share',
+      children: []
+    }
+  ],
   resource: [
     {
       name: `${i18n.$t('File Manage')}`,

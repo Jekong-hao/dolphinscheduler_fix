@@ -113,6 +113,7 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
         Project project = projectMapper.queryByCode(projectCode);
         //check user access for project
         Map<String, Object> result = projectService.checkProjectAndAuth(loginUser, project, projectCode);
+
         if (result.get(Constants.STATUS) != Status.SUCCESS) {
             return result;
         }

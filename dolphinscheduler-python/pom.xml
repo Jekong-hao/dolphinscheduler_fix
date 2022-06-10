@@ -73,7 +73,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>python3</executable>
+                                    <executable>python</executable>
                                     <workingDirectory>${project.basedir}/pydolphinscheduler</workingDirectory>
                                     <arguments>
                                         <argument>-m</argument>
@@ -92,7 +92,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>python3</executable>
+                                    <executable>python</executable>
                                     <workingDirectory>${project.basedir}/pydolphinscheduler</workingDirectory>
                                     <arguments>
                                         <argument>setup.py</argument>
@@ -107,7 +107,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>python3</executable>
+                                    <executable>python</executable>
                                     <workingDirectory>${project.basedir}/pydolphinscheduler</workingDirectory>
                                     <arguments>
                                         <argument>-m</argument>

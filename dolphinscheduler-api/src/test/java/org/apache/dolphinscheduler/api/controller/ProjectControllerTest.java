@@ -107,6 +107,20 @@ public class ProjectControllerTest {
         Assert.assertTrue(response != null && response.isSuccess());
     }
 
+//    @Test
+//    public void testQueryProjectListPagingByUser() {
+//        int pageNo = 1;
+//        int pageSize = 10;
+//        String searchVal = "";
+//
+//        Result result = Result.success(new PageInfo<Resource>(1, 10));
+//
+//        Mockito.when(projectService.queryProjectListPagingByUser(user, pageSize, pageNo, searchVal)).thenReturn(result);
+//        Result response = projectController.queryProjectListPagingByUser(user, searchVal, pageSize, pageNo);
+//
+//        Assert.assertTrue(response != null && response.isSuccess());
+//    }
+
     @Test
     public void testQueryUnauthorizedProject() {
         Map<String, Object> result = new HashMap<>();

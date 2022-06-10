@@ -18,6 +18,7 @@
 package org.apache.dolphinscheduler.api.service;
 
 import org.apache.dolphinscheduler.api.utils.Result;
+import org.apache.dolphinscheduler.common.enums.GrayFlag;
 import org.apache.dolphinscheduler.common.enums.ReleaseState;
 import org.apache.dolphinscheduler.dao.entity.TaskDefinitionLog;
 import org.apache.dolphinscheduler.dao.entity.User;
@@ -89,6 +90,7 @@ public interface ProcessDefinitionService {
      * @param pageNo page number
      * @param pageSize page size
      * @param userId user id
+     * @param grayFlag gray flag
      * @return process definition page
      */
     Result queryProcessDefinitionListPaging(User loginUser,
@@ -96,7 +98,8 @@ public interface ProcessDefinitionService {
                                             String searchVal,
                                             Integer userId,
                                             Integer pageNo,
-                                            Integer pageSize);
+                                            Integer pageSize,
+                                            String grayFlag);
 
     /**
      * query detail of process definition
@@ -217,6 +220,20 @@ public interface ProcessDefinitionService {
                                                  ReleaseState releaseState);
 
     /**
+     * gray test process definition: onGray / offGray
+     *
+     * @param loginUser login user
+     * @param projectCode project code
+     * @param code process definition code
+     * @param grayFlag gray flag
+     * @return gray test result code
+     */
+    Map<String, Object> grayTestProcessDefinition(User loginUser,
+                                                 long projectCode,
+                                                 long code,
+                                                 GrayFlag grayFlag);
+
+    /**
      * batch export process definition by codes
      *
      * @param loginUser login user
@@ -228,6 +245,24 @@ public interface ProcessDefinitionService {
                                              long projectCode,
                                              String codes,
                                              HttpServletResponse response);
+
+    /**
+     * batch update gray by codes
+     *
+     * @param loginUser login user
+     * @param projectCode project code
+     * @param codes process definition codes
+     * @param grayFlag grayFlag
+     * @param response http servlet response
+     * @return gray test result code
+     */
+    Map<String, Object> batchUpdateGrayByCodes(User loginUser,
+                                             long projectCode,
+                                             String codes,
+                                             GrayFlag grayFlag,
+                                             HttpServletResponse response);
+
+
 
     /**
      * import process definition

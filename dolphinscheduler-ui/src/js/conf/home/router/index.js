@@ -208,6 +208,24 @@ const router = new Router({
 
         },
         {
+          path: '/projects/:projectCode/grayManager/:grayFlag',
+          name: 'prod-process',
+          component: resolve => require(['../pages/projects/pages/grayManager/index'], resolve),
+          meta: {
+            title: `${i18n.$t('Process definition')}`,
+            refreshInSwitchedTab: config.refreshInSwitchedTab
+          }
+        },
+        {
+          path: '/projects/:projectCode/grayManager/:grayFlag',
+          name: 'gray-process',
+          component: resolve => require(['../pages/projects/pages/grayManager/index'], resolve),
+          meta: {
+            title: `${i18n.$t('Process definition')}`,
+            refreshInSwitchedTab: config.refreshInSwitchedTab
+          }
+        },
+        {
           path: '/projects/:projectCode/task-record',
           name: 'task-record',
           component: resolve => require(['../pages/projects/pages/taskRecord'], resolve),

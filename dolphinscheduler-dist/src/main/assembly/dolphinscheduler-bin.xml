@@ -170,6 +170,9 @@
                 <include>stop-all.sh</include>
                 <include>dolphinscheduler-daemon.sh</include>
                 <include>status-all.sh</include>
+                <include>start-masterandworker.sh</include>
+                <include>stop-masterandworker.sh</include>
+                <include>status-masterandworker.sh</include>
             </includes>
             <outputDirectory>./bin</outputDirectory>
         </fileSet>

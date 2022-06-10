@@ -214,6 +214,10 @@ public enum Status {
     CURRENT_LOGIN_USER_TENANT_NOT_EXIST(10181, "the tenant of the currently login user is not specified", "未指定当前登录用户的租户"),
     REVOKE_PROJECT_ERROR(10182, "revoke project error", "撤销项目授权错误"),
     QUERY_AUTHORIZED_USER(10183, "query authorized user error", "查询拥有项目权限的用户错误"),
+    GRAY_TEST_PROCESS_DEFINITION_SET_ERROR(10184, "gray test process definition error", "工作流设置灰度测试标记发生错误"),
+    GRAY_TEST_SCHEDULE_SET_ERROR(10185, "gray test schedule set error", "调度设置灰度测试标记发生错误"),
+    PROCESS_DEFINITION_CODES_HAVE_ERROR(10158, "process definition codes have error", "前端拼接的字符串有错误"),
+    GRAY_RELATION_DEFINITION_CODES_HAVE_ERROR(10159, "", "灰度关系表和工作流定义表数据不重合"),
 
     UDF_FUNCTION_NOT_EXIST(20001, "UDF function not found", "UDF函数不存在"),
     UDF_FUNCTION_EXISTS(20002, "UDF function already exists", "UDF函数已存在"),
@@ -295,7 +299,10 @@ public enum Status {
     DELETE_EDGE_ERROR(50055, "delete edge error", "删除工作流任务连接线错误"),
     NOT_SUPPORT_UPDATE_TASK_DEFINITION(50056, "task state does not support modification", "当前任务不支持修改"),
     NOT_SUPPORT_COPY_TASK_TYPE(50057, "task type [{0}] does not support copy", "不支持复制的任务类型[{0}]"),
+    GRAY_RELATION_SHOULD_NOT_EXIST(50058, "relation gray {0} shoule not exist", "灰度关系[{0}]不应该存在"),
+    GRAY_RELATION_SHOULD_EXIST(50059, "relation gray shoule exist", "灰度关系应该存在"),
     HDFS_NOT_STARTUP(60001, "hdfs not startup", "hdfs未启用"),
+
 
     /**
      * for monitor

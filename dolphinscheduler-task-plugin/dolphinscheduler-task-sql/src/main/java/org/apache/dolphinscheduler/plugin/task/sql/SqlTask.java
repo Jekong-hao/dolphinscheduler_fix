@@ -122,6 +122,8 @@ public class SqlTask extends AbstractTaskExecutor {
      */
     private static final String DEFAULT_SQL_SPLIT_CHAR = ";";
 
+    private static final String DEFAULT_SQL_RGEX = "\\$\\{(.*)\\}";
+
     /**
      * Abstract Yarn Task
      *
@@ -577,10 +579,12 @@ public class SqlTask extends AbstractTaskExecutor {
         // special characters need to be escaped, ${} needs to be escaped
         setSqlParamsMap(sql, rgex, sqlParamsMap, paramsMap,taskExecutionContext.getTaskInstanceId());
         //Replace the original value in sql ！{...} ，Does not participate in precompilation
-        String rgexo = "['\"]*\\!\\{(.*?)\\}['\"]*";
+        String rgexo = "\\!\\{(.*?)\\}";
         sql = replaceOriginalValue(sql, rgexo, paramsMap);
         // replace the ${} of the SQL statement with the Placeholder
-        String formatSql = sql.replaceAll(rgex, "?");
+//        String formatSql = sql.replaceAll(rgex, "?");
+        // TODO 存在sql注入风险
+        String formatSql = replaceOriginalValue(sql, DEFAULT_SQL_RGEX, paramsMap);
         sqlBuilder.append(formatSql);
 
         // print repalce sql
@@ -596,8 +600,10 @@ public class SqlTask extends AbstractTaskExecutor {
                 break;
             }
             String paramName = m.group(1);
-            String paramValue = sqlParamsMap.get(paramName).getValue();
-            content = m.replaceFirst(paramValue);
+            if (sqlParamsMap.containsKey(paramName)) {
+                String paramValue = sqlParamsMap.get(paramName).getValue();
+                content = m.replaceFirst(paramValue);
+            }
         }
         return content;
     }

@@ -17,10 +17,7 @@
 
 package org.apache.dolphinscheduler.dao.entity;
 
-import org.apache.dolphinscheduler.common.enums.FailureStrategy;
-import org.apache.dolphinscheduler.common.enums.Priority;
-import org.apache.dolphinscheduler.common.enums.ReleaseState;
-import org.apache.dolphinscheduler.common.enums.WarningType;
+import org.apache.dolphinscheduler.common.enums.*;
 
 import java.util.Date;
 
@@ -123,6 +120,12 @@ public class Schedule {
      * release state
      */
     private ReleaseState releaseState;
+
+    /**
+     * gray test flag : gray/no_gray
+     */
+    @TableField(exist = false)
+    private GrayFlag grayFlag;
 
     /**
      * warning group id
@@ -228,6 +231,14 @@ public class Schedule {
         this.releaseState = releaseState;
     }
 
+    public GrayFlag getGrayFlag() {
+        return grayFlag;
+    }
+
+    public void setGrayFlag(GrayFlag grayFlag) {
+        this.grayFlag = grayFlag;
+    }
+
     public long getProcessDefinitionCode() {
         return processDefinitionCode;
     }
@@ -319,6 +330,7 @@ public class Schedule {
                 + ", userId=" + userId
                 + ", userName='" + userName + '\''
                 + ", releaseState=" + releaseState
+                + ", grayFlag=" + grayFlag
                 + ", warningGroupId=" + warningGroupId
                 + ", processInstancePriority=" + processInstancePriority
                 + ", workerGroup='" + workerGroup + '\''

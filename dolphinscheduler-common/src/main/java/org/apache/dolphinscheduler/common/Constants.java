@@ -1101,4 +1101,11 @@ public final class Constants {
      * 默认重试启动失败的工作流实例次数
      */
     public static final int DEFAULT_RETRY_START_PROCESS_MAX_TIMES = 3;
+
+    /**
+     * dolphinscheduler集群-灰度集群和生产集群(master和worker)标志
+     */
+    public static final String DOLPHINSCHEDULER_SERVER_GRAY_FLAG_PROD = "prod";
+    public static final String DOLPHINSCHEDULER_SERVER_GRAY_FLAG_GRAY = "gray";
+
 }

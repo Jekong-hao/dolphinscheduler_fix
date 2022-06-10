@@ -1041,3 +1041,27 @@ CREATE TABLE t_ds_environment_worker_group_relation
     PRIMARY KEY (id),
     UNIQUE KEY environment_worker_group_unique (environment_code,worker_group)
 );
+
+DROP TABLE IF EXISTS t_ds_relation_gray CASCADE;
+CREATE TABLE t_ds_relation_gray (
+                                      `id` int NOT NULL AUTO_INCREMENT COMMENT 'self_increasing id',
+                                      `element_type` varchar(255) NOT NULL,
+                                      `element_id` int NOT NULL,
+                                      `element_code` bigint DEFAULT NULL,
+                                      `gray_flag` tinyint NOT NULL DEFAULT '1' COMMENT 'gray flag 此值默认为1,理论上这个值应该全部为1,即出现在此表中的都应该是灰度测试相关的',
+                                      `create_time` datetime NOT NULL COMMENT 'create time',
+                                      `update_time` datetime NOT NULL COMMENT 'update time',
+                                      PRIMARY KEY (`id`)
+) ;
+
+DROP TABLE IF EXISTS t_ds_relation_gray_instance_log CASCADE;
+CREATE TABLE `t_ds_relation_gray_instance_log` (
+                                                   `id` int NOT NULL AUTO_INCREMENT COMMENT 'self_increasing id',
+                                                   `element_type` varchar(255) NOT NULL,
+                                                   `element_id` int NOT NULL,
+                                                   `element_code` bigint DEFAULT NULL,
+                                                   `gray_flag` tinyint NOT NULL DEFAULT '1' COMMENT 'gray flag 此值默认为1,理论上这个值应该全部为1,即出现在此表中的都应该是灰度测试相关的',
+                                                   `create_time` datetime NOT NULL COMMENT 'create time',
+                                                   `update_time` datetime NOT NULL COMMENT 'update time',
+                                                   PRIMARY KEY (`id`)
+) ;

@@ -25,16 +25,13 @@ import org.apache.dolphinscheduler.api.service.UsersService;
 import org.apache.dolphinscheduler.api.utils.PageInfo;
 import org.apache.dolphinscheduler.api.utils.Result;
 import org.apache.dolphinscheduler.common.Constants;
+import org.apache.dolphinscheduler.common.enums.ElementType;
 import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
+import org.apache.dolphinscheduler.common.enums.GrayFlag;
 import org.apache.dolphinscheduler.common.utils.CollectionUtils;
 import org.apache.dolphinscheduler.common.utils.DateUtils;
-import org.apache.dolphinscheduler.dao.entity.Project;
-import org.apache.dolphinscheduler.dao.entity.TaskDefinition;
-import org.apache.dolphinscheduler.dao.entity.TaskInstance;
-import org.apache.dolphinscheduler.dao.entity.User;
-import org.apache.dolphinscheduler.dao.mapper.ProjectMapper;
-import org.apache.dolphinscheduler.dao.mapper.TaskDefinitionMapper;
-import org.apache.dolphinscheduler.dao.mapper.TaskInstanceMapper;
+import org.apache.dolphinscheduler.dao.entity.*;
+import org.apache.dolphinscheduler.dao.mapper.*;
 import org.apache.dolphinscheduler.service.process.ProcessService;
 
 import java.util.Date;
@@ -55,6 +52,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 @Service
 public class TaskInstanceServiceImpl extends BaseServiceImpl implements TaskInstanceService {
 
+//    private static final ElementType TASKINSTANCE = ElementType.TASKINSTANCE;
+
+    private static final ElementType PROCESSINSTANCE = ElementType.PROCESSINSTANCE;
+
     @Autowired
     ProjectMapper projectMapper;
 
@@ -66,6 +67,12 @@ public class TaskInstanceServiceImpl extends BaseServiceImpl implements TaskInst
 
     @Autowired
     TaskInstanceMapper taskInstanceMapper;
+
+    @Autowired
+    GrayRelationMapper grayRelationMapper;
+
+    @Autowired
+    GrayRelationInstanceLogMapper grayRelationInstanceLogMapper;
 
     @Autowired
     ProcessInstanceService processInstanceService;
@@ -143,6 +150,13 @@ public class TaskInstanceServiceImpl extends BaseServiceImpl implements TaskInst
             User executor = usersService.queryUser(taskInstance.getExecutorId());
             if (null != executor) {
                 taskInstance.setExecutorName(executor.getUserName());
+            }
+            // 代码有用,用于查询任务实例的灰度标志,用于页面展示
+            final GrayRelationInstanceLog grayRelationTaskInstanceLog = grayRelationInstanceLogMapper.queryInstanceLogByTypeAndIdAndCode(PROCESSINSTANCE, taskInstance.getProcessInstanceId(), null);
+            if (grayRelationTaskInstanceLog != null && grayRelationTaskInstanceLog.getGrayFlag() == GrayFlag.GRAY) {
+                taskInstance.setGrayFlag(GrayFlag.GRAY);
+            } else {
+                taskInstance.setGrayFlag(GrayFlag.PROD);
             }
         }
         pageInfo.setTotal((int) taskInstanceIPage.getTotal());

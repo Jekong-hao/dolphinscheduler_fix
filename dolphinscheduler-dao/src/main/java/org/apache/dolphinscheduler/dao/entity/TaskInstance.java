@@ -21,10 +21,7 @@ import static org.apache.dolphinscheduler.common.Constants.SEC_2_MINUTES_TIME_UN
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.dolphinscheduler.common.Constants;
-import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
-import org.apache.dolphinscheduler.common.enums.Flag;
-import org.apache.dolphinscheduler.common.enums.Priority;
-import org.apache.dolphinscheduler.common.enums.TaskType;
+import org.apache.dolphinscheduler.common.enums.*;
 import org.apache.dolphinscheduler.common.task.dependent.DependentParameters;
 import org.apache.dolphinscheduler.common.task.switchtask.SwitchParameters;
 import org.apache.dolphinscheduler.common.utils.DateUtils;
@@ -268,6 +265,12 @@ public class TaskInstance implements Serializable {
      * dry run flag
      */
     private int dryRun;
+
+    /**
+     * gray flag : gray/no_gray
+     */
+    @TableField(exist = false)
+    private GrayFlag grayFlag;
 
     public void init(String host, Date startTime, String executePath) {
         this.host = host;
@@ -545,6 +548,14 @@ public class TaskInstance implements Serializable {
         this.dryRun = dryRun;
     }
 
+    public GrayFlag getGrayFlag() {
+        return grayFlag;
+    }
+
+    public void setGrayFlag(GrayFlag grayFlag) {
+        this.grayFlag = grayFlag;
+    }
+
     public boolean isTaskComplete() {
 
         return this.getState().typeIsPause()
@@ -691,6 +702,7 @@ public class TaskInstance implements Serializable {
                 + ", executorName='" + executorName + '\''
                 + ", delayTime=" + delayTime
                 + ", dryRun=" + dryRun
+                + ", grayFlag" + grayFlag
                 + '}';
     }
 

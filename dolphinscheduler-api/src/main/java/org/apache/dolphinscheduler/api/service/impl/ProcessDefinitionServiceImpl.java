@@ -35,12 +35,7 @@ import org.apache.dolphinscheduler.api.utils.FileUtils;
 import org.apache.dolphinscheduler.api.utils.PageInfo;
 import org.apache.dolphinscheduler.api.utils.Result;
 import org.apache.dolphinscheduler.common.Constants;
-import org.apache.dolphinscheduler.common.enums.FailureStrategy;
-import org.apache.dolphinscheduler.common.enums.Priority;
-import org.apache.dolphinscheduler.common.enums.ReleaseState;
-import org.apache.dolphinscheduler.common.enums.TaskType;
-import org.apache.dolphinscheduler.common.enums.UserType;
-import org.apache.dolphinscheduler.common.enums.WarningType;
+import org.apache.dolphinscheduler.common.enums.*;
 import org.apache.dolphinscheduler.common.graph.DAG;
 import org.apache.dolphinscheduler.common.model.TaskNode;
 import org.apache.dolphinscheduler.common.model.TaskNodeRelation;
@@ -99,8 +94,17 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
 
     private static final String RELEASESTATE = "releaseState";
 
+    private static final String GRAYFLAG = "grayFlag";
+
+    private static final String CODES = "codes";
+
+    private static final ElementType PROCESSDEFINITION = ElementType.PROCESSDEFINITION;
+
     @Autowired
     private ProjectMapper projectMapper;
+
+    @Autowired
+    private GrayRelationMapper grayRelationMapper;
 
     @Autowired
     private ProjectService projectService;
@@ -377,7 +381,7 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
      * @return process definition page
      */
     @Override
-    public Result queryProcessDefinitionListPaging(User loginUser, long projectCode, String searchVal, Integer userId, Integer pageNo, Integer pageSize) {
+    public Result queryProcessDefinitionListPaging(User loginUser, long projectCode, String searchVal, Integer userId, Integer pageNo, Integer pageSize, String grayFlag) {
         Result result = new Result();
         Project project = projectMapper.queryByCode(projectCode);
         //check user access for project
@@ -397,7 +401,18 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
             ProcessDefinitionLog processDefinitionLog = processDefinitionLogMapper.queryByDefinitionCodeAndVersion(pd.getCode(), pd.getVersion());
             User user = userMapper.selectById(processDefinitionLog.getOperator());
             pd.setModifyBy(user.getUserName());
+            // 有用,用于查询灰度关系,在页面展示
+            GrayRelation grayRelationProcessDefinition = grayRelationMapper.queryByTypeAndIdAndCode(PROCESSDEFINITION, pd.getId(), pd.getCode());
+            if(grayRelationProcessDefinition != null && grayRelationProcessDefinition.getGrayFlag() == GrayFlag.GRAY) {
+                pd.setGrayFlag(GrayFlag.GRAY);
+            } else {
+                pd.setGrayFlag(GrayFlag.PROD);
+            }
         }
+        if (grayFlag != null) {
+            records = records.stream().filter(item -> grayFlag.equals(item.getGrayFlag().getDescp())).collect(Collectors.toList());
+        }
+
         processDefinitionIPage.setRecords(records);
         PageInfo<ProcessDefinition> pageInfo = new PageInfo<>(pageNo, pageSize);
         pageInfo.setTotal((int) processDefinitionIPage.getTotal());
@@ -791,6 +806,72 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
         return result;
     }
 
+
+    /**
+     * gray test process definition: gray / no_gray
+     *
+     * @param loginUser login user
+     * @param projectCode project code
+     * @param code process definition code
+     * @param grayFlag gray flag
+     * @return gray test result code
+     */
+    @Override
+    @Transactional(rollbackFor = RuntimeException.class)
+    public Map<String, Object> grayTestProcessDefinition(User loginUser, long projectCode, long code, GrayFlag grayFlag) {
+        Project project = projectMapper.queryByCode(projectCode);
+        //check user access for project
+        Map<String, Object> result = projectService.checkProjectAndAuth(loginUser, project, projectCode);
+        if (result.get(Constants.STATUS) != Status.SUCCESS) {
+            return result;
+        }
+
+        // check state
+        if (null == grayFlag) {
+            putMsg(result, Status.REQUEST_PARAMS_NOT_VALID_ERROR, GRAYFLAG);
+            return result;
+        }
+
+        ProcessDefinition processDefinition = processDefinitionMapper.queryByCode(code);
+        if (processDefinition == null || projectCode != processDefinition.getProjectCode()) {
+            putMsg(result, Status.PROCESS_DEFINE_NOT_EXIST, code);
+            return result;
+        }
+
+        GrayRelation grayRelationProcessDefinition =
+                grayRelationMapper.queryByTypeAndIdAndCode(PROCESSDEFINITION, processDefinition.getId(), processDefinition.getCode());
+
+        switch (grayFlag) {
+            case GRAY:
+                List<ProcessTaskRelation> relationList = processService.findRelationByCode(code, processDefinition.getVersion());
+                if (CollectionUtils.isEmpty(relationList)) {
+                    putMsg(result, Status.PROCESS_DAG_IS_EMPTY);
+                    return result;
+                }
+                if (grayRelationProcessDefinition != null ) {
+                    putMsg(result, Status.GRAY_RELATION_SHOULD_NOT_EXIST, grayRelationProcessDefinition.getId());
+                    return result;
+                }
+                grayRelationProcessDefinition = new GrayRelation(PROCESSDEFINITION, processDefinition.getId(), processDefinition.getCode());
+                grayRelationProcessDefinition.setGrayFlag(GrayFlag.GRAY);
+                grayRelationMapper.insert(grayRelationProcessDefinition);
+                break;
+            case PROD:
+                if(grayRelationProcessDefinition == null) {
+                    putMsg(result, Status.GRAY_RELATION_SHOULD_EXIST);
+                    return result;
+                }
+                final int delete = grayRelationMapper.deleteById(grayRelationProcessDefinition.getId());
+                if (delete != 1) {
+                    throw new ServiceException("delete grayRelation fail, id:" + grayRelationProcessDefinition.getId());
+                }
+                break;
+        }
+
+        putMsg(result, Status.SUCCESS);
+        return result;
+    }
+
     /**
      * batch export process definition by codes
      */
@@ -816,6 +897,83 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
         if (CollectionUtils.isNotEmpty(dagDataSchedules)) {
             downloadProcessDefinitionFile(response, dagDataSchedules);
         }
+    }
+
+    /**
+     * batch update gray by codes
+     */
+    @Override
+    public Map<String, Object> batchUpdateGrayByCodes(User loginUser, long projectCode, String codes, GrayFlag grayFlag, HttpServletResponse response) {
+
+        Project project = projectMapper.queryByCode(projectCode);
+        //check user access for project
+        Map<String, Object> result = projectService.checkProjectAndAuth(loginUser, project, projectCode);
+        if (result.get(Constants.STATUS) != Status.SUCCESS) {
+            return result;
+        }
+        if (StringUtils.isEmpty(codes)) {
+            putMsg(result, Status.REQUEST_PARAMS_NOT_VALID_ERROR, CODES);
+            return result;
+        }
+        // check state
+        if (null == grayFlag) {
+            putMsg(result, Status.REQUEST_PARAMS_NOT_VALID_ERROR, GRAYFLAG);
+            return result;
+        }
+
+        // 查询工作流定义表,并形成集合
+        Set<Long> defineCodeSet = Lists.newArrayList(codes.split(Constants.COMMA)).stream().map(Long::parseLong).collect(Collectors.toSet());
+        List<ProcessDefinition> processDefinitionList = processDefinitionMapper.queryByCodes(defineCodeSet);
+        if (defineCodeSet.size() != processDefinitionList.size()) {
+            putMsg(result, Status.PROCESS_DEFINITION_CODES_HAVE_ERROR);
+            return result;
+        }
+
+        List<GrayRelation> grayRelationProcessDefinitions = grayRelationMapper.queryByDefinitionCodes(PROCESSDEFINITION, defineCodeSet);
+
+        switch (grayFlag) {
+            case GRAY:
+                if (grayRelationProcessDefinitions != null && grayRelationProcessDefinitions.size() != 0) {
+                    final String definitionCodes = StringUtils.join(grayRelationProcessDefinitions.stream().map(GrayRelation::getElementCode).collect(Collectors.toList()), Constants.COMMA);
+                    putMsg(result, Status.GRAY_RELATION_SHOULD_NOT_EXIST, definitionCodes);
+                    return result;
+                }
+
+                for (ProcessDefinition processDefinition : processDefinitionList) {
+                    List<ProcessTaskRelation> relationList = processService.findRelationByCode(processDefinition.getCode(), processDefinition.getVersion());
+                    if (CollectionUtils.isEmpty(relationList)) {
+                        putMsg(result, Status.PROCESS_DAG_IS_EMPTY);
+                        return result;
+                    }
+
+                    if (grayRelationProcessDefinitions == null) {
+                        grayRelationProcessDefinitions = new ArrayList<>();
+                    }
+                    final GrayRelation grayRelationProcessDefinition = new GrayRelation(PROCESSDEFINITION, processDefinition.getId(), processDefinition.getCode());
+                    grayRelationProcessDefinition.setGrayFlag(GrayFlag.GRAY);
+                    grayRelationMapper.insert(grayRelationProcessDefinition);
+                }
+                break;
+            case PROD:
+                if(grayRelationProcessDefinitions == null) {
+                    putMsg(result, Status.GRAY_RELATION_SHOULD_EXIST);
+                    return result;
+                }
+                if (grayRelationProcessDefinitions.size() != processDefinitionList.size()) {
+                    putMsg(result, Status.GRAY_RELATION_DEFINITION_CODES_HAVE_ERROR);
+                    return result;
+                }
+                for (GrayRelation grayRelation : grayRelationProcessDefinitions) {
+                    final int delete = grayRelationMapper.deleteById(grayRelation.getId());
+                    if (delete != 1) {
+                        throw new ServiceException("delete grayRelation fail, id:" + grayRelation.getId());
+                    }
+                }
+                break;
+        }
+
+        putMsg(result, Status.SUCCESS);
+        return result;
     }
 
     /**

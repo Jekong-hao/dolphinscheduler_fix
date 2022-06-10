@@ -61,7 +61,14 @@
             <span v-if="!scope.row.scheduleReleaseState">-</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('Operation')" width="335" fixed="right">
+        <el-table-column :label="$t('Gray Flag')">
+          <template slot-scope="scope">
+            <span v-if="scope.row.grayFlag === 'GRAY'" class="time_offline">{{$t('onGray')}}</span>
+            <span v-if="scope.row.grayFlag === 'PROD'" class="time_online">{{$t('offGray')}}</span>
+            <span v-if="!scope.row.grayFlag">-</span>
+          </template>
+        </el-table-column>
+        <el-table-column :label="$t('Operation')" width="360" fixed="right">
           <template slot-scope="scope">
             <el-tooltip :content="$t('Edit')" placement="top" :enterable="false">
               <span><el-button type="primary" size="mini" icon="el-icon-edit-outline" :disabled="scope.row.releaseState === 'ONLINE'" @click="_edit(scope.row)" circle></el-button></span>
@@ -104,6 +111,12 @@
             </el-tooltip>
             <el-tooltip :content="$t('Version Info')" placement="top" :enterable="false">
               <span><el-button type="primary" size="mini" icon="el-icon-info" @click="_version(scope.row)" circle></el-button></span>
+            </el-tooltip>
+            <el-tooltip :content="$t('to_gray')" placement="top" :enterable="false">
+              <span><el-button type="warning" size="mini" v-if="scope.row.grayFlag === 'PROD'"  icon="el-icon-star-on" @click="_popgray(scope.row)" circle></el-button></span>
+            </el-tooltip>
+            <el-tooltip :content="$t('to_no_gray')" placement="top" :enterable="false">
+              <span><el-button type="danger" size="mini" icon="el-icon-star-off" v-if="scope.row.grayFlag === 'GRAY'" @click="_cancelgray(scope.row)" circle></el-button></span>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -190,7 +203,7 @@
       pageSize: Number
     },
     methods: {
-      ...mapActions('dag', ['editProcessState', 'getStartCheck', 'deleteDefinition', 'batchDeleteDefinition', 'exportDefinition', 'getProcessDefinitionVersionsPage', 'copyProcess', 'switchProcessDefinitionVersion', 'deleteProcessDefinitionVersion', 'moveProcess']),
+      ...mapActions('dag', ['editProcessState', 'editGrayState', 'getStartCheck', 'deleteDefinition', 'batchDeleteDefinition', 'exportDefinition', 'getProcessDefinitionVersionsPage', 'copyProcess', 'switchProcessDefinitionVersion', 'deleteProcessDefinitionVersion', 'moveProcess']),
       ...mapActions('security', ['getWorkerGroupsAll']),
 
       selectable (row, index) {
@@ -287,6 +300,24 @@
         this._upProcessState({
           ...item,
           releaseState: 'ONLINE'
+        })
+      },
+      /**
+       * NO_GRAY
+       */
+      _cancelgray (item) {
+        this._upGrayState({
+          ...item,
+          grayFlag: 'PROD'
+        })
+      },
+      /**
+       * GRAY
+       */
+      _popgray (item) {
+        this._upGrayState({
+          ...item,
+          grayFlag: 'GRAY'
         })
       },
       /**
@@ -464,6 +495,18 @@
        */
       _upProcessState (o) {
         this.editProcessState(o).then(res => {
+          this.$message.success(res.msg)
+          $('body').find('.tooltip.fade.top.in').remove()
+          this._onUpdate()
+        }).catch(e => {
+          this.$message.error(e.msg || '')
+        })
+      },
+      /**
+       * Gray state
+       */
+      _upGrayState (o) {
+        this.editGrayState(o).then(res => {
           this.$message.success(res.msg)
           $('body').find('.tooltip.fade.top.in').remove()
           this._onUpdate()

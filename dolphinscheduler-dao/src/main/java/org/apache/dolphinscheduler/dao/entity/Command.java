@@ -17,11 +17,7 @@
 
 package org.apache.dolphinscheduler.dao.entity;
 
-import org.apache.dolphinscheduler.common.enums.CommandType;
-import org.apache.dolphinscheduler.common.enums.FailureStrategy;
-import org.apache.dolphinscheduler.common.enums.Priority;
-import org.apache.dolphinscheduler.common.enums.TaskDependType;
-import org.apache.dolphinscheduler.common.enums.WarningType;
+import org.apache.dolphinscheduler.common.enums.*;
 
 import java.util.Date;
 
@@ -138,6 +134,12 @@ public class Command {
     @TableField("process_definition_version")
     private int processDefinitionVersion;
 
+    /**
+     * gray flag : gray/no_gray
+     */
+    @TableField(exist = false)
+    private GrayFlag grayFlag;
+
     public Command() {
         this.taskDependType = TaskDependType.TASK_POST;
         this.failureStrategy = FailureStrategy.CONTINUE;
@@ -160,7 +162,8 @@ public class Command {
             Priority processInstancePriority,
             int dryRun,
             int processInstanceId,
-            int processDefinitionVersion
+            int processDefinitionVersion,
+            GrayFlag grayFlag
     ) {
         this.commandType = commandType;
         this.executorId = executorId;
@@ -179,6 +182,7 @@ public class Command {
         this.dryRun = dryRun;
         this.processInstanceId = processInstanceId;
         this.processDefinitionVersion = processDefinitionVersion;
+        this.grayFlag = grayFlag;
     }
 
     public TaskDependType getTaskDependType() {
@@ -325,6 +329,14 @@ public class Command {
         this.processDefinitionVersion = processDefinitionVersion;
     }
 
+    public GrayFlag getGrayFlag() {
+        return grayFlag;
+    }
+
+    public void setGrayFlag(GrayFlag grayFlag) {
+        this.grayFlag = grayFlag;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -386,6 +398,9 @@ public class Command {
         if (processDefinitionVersion != command.getProcessDefinitionVersion()) {
             return false;
         }
+        if (grayFlag != command.getGrayFlag()) {
+            return false;
+        }
         return !(updateTime != null ? !updateTime.equals(command.updateTime) : command.updateTime != null);
     }
 
@@ -433,6 +448,7 @@ public class Command {
                 + ", dryRun='" + dryRun + '\''
                 + ", processInstanceId='" + processInstanceId + '\''
                 + ", processDefinitionVersion='" + processDefinitionVersion + '\''
+                + ", grayFlag='" + grayFlag + '\''
                 + '}';
     }
 

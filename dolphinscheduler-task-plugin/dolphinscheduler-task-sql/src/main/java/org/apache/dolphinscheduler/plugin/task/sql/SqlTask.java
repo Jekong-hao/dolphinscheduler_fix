@@ -20,6 +20,7 @@ package org.apache.dolphinscheduler.plugin.task.sql;
 import org.apache.dolphinscheduler.plugin.datasource.api.plugin.DataSourceClientProvider;
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.CommonUtils;
 import org.apache.dolphinscheduler.plugin.datasource.api.utils.DatasourceUtil;
+import org.apache.dolphinscheduler.plugin.datasource.api.utils.PasswordUtils;
 import org.apache.dolphinscheduler.plugin.task.api.AbstractTaskExecutor;
 import org.apache.dolphinscheduler.plugin.task.api.ShellCommandExecutor;
 import org.apache.dolphinscheduler.plugin.task.api.TaskException;
@@ -216,7 +217,7 @@ public class SqlTask extends AbstractTaskExecutor {
         try {
             // 如果是hive 或者 spark的非查询，使用shell来执行脚本
             if (sqlParameters.getSqlType() == SqlType.NON_QUERY.ordinal()
-                    && (DbType.HIVE.getDescp().equalsIgnoreCase(dbType) || DbType.SPARK.getDescp().equalsIgnoreCase(dbType))) {
+                   && DbType.HIVE.getDescp().equalsIgnoreCase(dbType)) {
                 StringBuffer sqlScript = new StringBuffer();
                 // UDF
                 if (CollectionUtils.isNotEmpty(createFuncs)) {
@@ -253,11 +254,16 @@ public class SqlTask extends AbstractTaskExecutor {
                 // 获取sh命令
                 String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s;%s\" -f %s",
                     baseConnectionParam.getUser(),
-                    baseConnectionParam.getPassword(),
+                    PasswordUtils.decodePassword(baseConnectionParam.getPassword()),
                     baseConnectionParam.getJdbcUrl(),
                     baseConnectionParam.getOther(),
                     sqlFile
                 );
+//                String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s\" -f %s",
+//                        baseConnectionParam.getUser(),
+//                        PasswordUtils.decodePassword(baseConnectionParam.getPassword()),
+//                        DatasourceUtil.getJdbcUrl(DbType.valueOf(dbType), baseConnectionParam),
+//                        sqlFile);
                 String command = buildCommand(rawScript);
                 TaskResponse commandExecuteResult = shellCommandExecutor.run(command);
                 statusCode = commandExecuteResult.getExitStatusCode();

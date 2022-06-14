@@ -127,6 +127,10 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
     @Autowired
     private ScheduleMapper scheduleMapper;
 
+
+    @Autowired
+    private ProcessUserMapper processUserMapper;
+
     @Autowired
     private ProcessService processService;
 
@@ -408,6 +412,13 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
             } else {
                 pd.setGrayFlag(GrayFlag.PROD);
             }
+            // 用于对于工作流的操作权限设置
+            ProcessUser processUser = processUserMapper.queryProcessRelation(pd.getId(), loginUser.getId());
+            if (pd.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER || processUser != null) {
+                pd.setPerm(Constants.ALL_PERMISSIONS);
+            } else {
+                pd.setPerm(Constants.READ_PERMISSION);
+            }
         }
         if (grayFlag != null) {
             records = records.stream().filter(item -> grayFlag.equals(item.getGrayFlag().getDescp())).collect(Collectors.toList());
@@ -451,6 +462,13 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
             DagData dagData = processService.genDagData(processDefinition);
             result.put(Constants.DATA_LIST, dagData);
             putMsg(result, Status.SUCCESS);
+            // 用于对于工作流的操作权限设置
+            ProcessUser processUser = processUserMapper.queryProcessRelation(processDefinition.getId(), loginUser.getId());
+            if (processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER || processUser != null) {
+                processDefinition.setPerm(Constants.ALL_PERMISSIONS);
+            } else {
+                processDefinition.setPerm(Constants.READ_PERMISSION);
+            }
         }
         return result;
     }

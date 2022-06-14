@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 <template>
-  <div class="menu-item" :class="disabled ? 'disabled' : ''" @click="onClick">
+  <div class="menu-item" :class="''" @click="onClick">
     <slot></slot>
   </div>
 </template>

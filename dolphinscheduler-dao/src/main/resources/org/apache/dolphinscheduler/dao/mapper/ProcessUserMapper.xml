@@ -30,4 +30,13 @@
             and user_id = #{userId}
         </if>
     </delete>
+
+    <select id="queryProcessRelation" resultType="org.apache.dolphinscheduler.dao.entity.ProcessUser">
+        select
+        <include refid="baseSql"/>
+        from t_ds_relation_process_user
+        where process_id = #{processId}
+        and user_id = #{userId}
+        limit 1
+    </select>
 </mapper>

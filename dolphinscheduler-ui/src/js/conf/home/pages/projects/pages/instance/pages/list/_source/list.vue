@@ -83,22 +83,22 @@
             <div v-show="scope.row.disabled">
               <el-tooltip :content="$t('Edit')" placement="top" :enterable="false">
                 <span>
-                  <el-button type="primary" size="mini" icon="el-icon-edit-outline" :disabled="scope.row.state !== 'SUCCESS' && scope.row.state !== 'PAUSE' && scope.row.state !== 'FAILURE' && scope.row.state !== 'STOP'" @click="_reEdit(scope.row)" circle></el-button>
+                  <el-button type="primary" size="mini" icon="el-icon-edit-outline" :disabled="scope.row.perm != 7 || (scope.row.state !== 'SUCCESS' && scope.row.state !== 'PAUSE' && scope.row.state !== 'FAILURE' && scope.row.state !== 'STOP')" @click="_reEdit(scope.row)" circle></el-button>
                 </span>
               </el-tooltip>
               <el-tooltip :content="$t('Rerun')" placement="top" :enterable="false">
-                <span><el-button type="primary" size="mini" :disabled="scope.row.state !== 'SUCCESS' && scope.row.state !== 'PAUSE' && scope.row.state !== 'FAILURE' && scope.row.state !== 'STOP'"  icon="el-icon-refresh" @click="_reRun(scope.row,scope.$index)" circle></el-button></span>
+                <span><el-button type="primary" size="mini" :disabled="scope.row.perm != 7 || (scope.row.state !== 'SUCCESS' && scope.row.state !== 'PAUSE' && scope.row.state !== 'FAILURE' && scope.row.state !== 'STOP')"  icon="el-icon-refresh" @click="_reRun(scope.row,scope.$index)" circle></el-button></span>
               </el-tooltip>
               <el-tooltip :content="$t('Recovery Failed')" placement="top" :enterable="false">
                 <span>
-                  <el-button type="success" size="mini" icon="el-icon-circle-close" :disabled="scope.row.state !== 'FAILURE'" @click="_restore(scope.row,scope.$index)" circle></el-button>
+                  <el-button type="success" size="mini" icon="el-icon-circle-close" :disabled="scope.row.perm != 7 || scope.row.state !== 'FAILURE'" @click="_restore(scope.row,scope.$index)" circle></el-button>
                 </span>
               </el-tooltip>
               <el-tooltip :content="scope.row.state === 'STOP' ? $t('Recovery Suspend') : $t('Stop')" placement="top" :enterable="false">
-                <span><el-button type="danger" size="mini" :disabled="scope.row.state !== 'RUNNING_EXECUTION' && scope.row.state !== 'STOP'"  :icon="scope.row.state === 'STOP' ? 'el-icon-video-play' : 'el-icon-close'" @click="_stop(scope.row,scope.$index)" circle></el-button></span>
+                <span><el-button type="danger" size="mini" :disabled="scope.row.perm != 7 || (scope.row.state !== 'RUNNING_EXECUTION' && scope.row.state !== 'STOP')"  :icon="scope.row.state === 'STOP' ? 'el-icon-video-play' : 'el-icon-close'" @click="_stop(scope.row,scope.$index)" circle></el-button></span>
               </el-tooltip>
               <el-tooltip :content="scope.row.state === 'PAUSE' ? $t('Recovery Suspend') : $t('Pause')" placement="top" :enterable="false">
-                <span><el-button type="warning" size="mini" :icon="scope.row.state === 'PAUSE' ? 'el-icon-video-play' : 'el-icon-video-pause'" :disabled="scope.row.state !== 'RUNNING_EXECUTION' && scope.row.state !== 'PAUSE'" @click="_suspend(scope.row,scope.$index)" circle></el-button></span>
+                <span><el-button type="warning" size="mini" :icon="scope.row.state === 'PAUSE' ? 'el-icon-video-play' : 'el-icon-video-pause'" :disabled="scope.row.perm != 7 || (scope.row.state !== 'RUNNING_EXECUTION' && scope.row.state !== 'PAUSE')" @click="_suspend(scope.row,scope.$index)" circle></el-button></span>
               </el-tooltip>
               <el-tooltip :content="$t('Delete')" placement="top" :enterable="false">
                 <el-popconfirm
@@ -108,7 +108,7 @@
                   iconColor="red"
                   :title="$t('Delete?')"
                   @onConfirm="_delete(scope.row,scope.row.id)">
-                  <el-button type="danger" size="mini" icon="el-icon-delete" :disabled="scope.row.state !== 'SUCCESS' && scope.row.state !== 'FAILURE' && scope.row.state !== 'STOP' && scope.row.state !== 'PAUSE'" circle slot="reference"></el-button>
+                  <el-button type="danger" size="mini" icon="el-icon-delete" :disabled="scope.row.perm != 7 || (scope.row.state !== 'SUCCESS' && scope.row.state !== 'FAILURE' && scope.row.state !== 'STOP' && scope.row.state !== 'PAUSE')" circle slot="reference"></el-button>
                 </el-popconfirm>
               </el-tooltip>
               <el-tooltip :content="$t('Gantt')" placement="top" :enterable="false">

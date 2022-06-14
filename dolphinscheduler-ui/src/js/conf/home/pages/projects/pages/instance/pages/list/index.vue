@@ -126,6 +126,7 @@
             this.processInstanceList = res.totalList
             this.total = res.total
             this.isLoading = false
+            console.log(this.processInstanceList)
           }
         }).catch(e => {
           this.isLoading = false

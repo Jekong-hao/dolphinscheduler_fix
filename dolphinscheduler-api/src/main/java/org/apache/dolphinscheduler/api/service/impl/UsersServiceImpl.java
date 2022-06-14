@@ -771,10 +771,10 @@ public class UsersServiceImpl extends BaseServiceImpl implements UsersService {
         }
 
         String[] userIdArr = userIds.split(",");
-        for (String userid : userIdArr) {
+        for (String userId : userIdArr) {
             Date now = new Date();
             ProjectUser projectUser = new ProjectUser();
-            projectUser.setUserId(Integer.parseInt(userid));
+            projectUser.setUserId(Integer.parseInt(userId));
             projectUser.setProjectId(projectId);
             projectUser.setPerm(7);
             projectUser.setCreateTime(now);
@@ -806,8 +806,28 @@ public class UsersServiceImpl extends BaseServiceImpl implements UsersService {
             return result;
         }
 
+        ProcessDefinition processDefinition = processDefinitionMapper.selectById(processId);
+        int projectId = -1;
+        if (processDefinition != null) {
+            Project project = projectMapper.queryByCode(processDefinition.getProjectCode());
+            if (project != null) {
+                projectId = project.getId();
+            }
+        }
+
         String[] userIdArr = userIds.split(",");
         for (String userId : userIdArr) {
+            ProjectUser projectUser = projectUserMapper.queryProjectRelation(projectId, Integer.parseInt(userId));
+            if (projectUser == null) {
+                Date now = new Date();
+                projectUser = new ProjectUser();
+                projectUser.setUserId(Integer.parseInt(userId));
+                projectUser.setProjectId(projectId);
+                projectUser.setPerm(7);
+                projectUser.setCreateTime(now);
+                projectUser.setUpdateTime(now);
+                projectUserMapper.insert(projectUser);
+            }
             Date now = new Date();
             ProcessUser processUser = new ProcessUser();
             processUser.setUserId(Integer.parseInt(userId));

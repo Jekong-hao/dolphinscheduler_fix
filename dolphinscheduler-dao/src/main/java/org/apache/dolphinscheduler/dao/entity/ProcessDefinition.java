@@ -76,6 +76,12 @@ public class ProcessDefinition {
     private GrayFlag grayFlag;
 
     /**
+     * permission
+     */
+    @TableField(exist = false)
+    private int perm;
+
+    /**
      * project code
      */
     private long projectCode;
@@ -210,6 +216,14 @@ public class ProcessDefinition {
         this.timeout = timeout;
         this.tenantId = tenantId;
         this.flag = Flag.YES;
+    }
+
+    public int getPerm() {
+        return perm;
+    }
+
+    public void setPerm(int perm) {
+        this.perm = perm;
     }
 
     public String getName() {

@@ -50,9 +50,9 @@
         <el-table-column :label="$t('Operation')" width="150">
           <template slot-scope="scope">
             <el-tooltip :content="$t('Edit')" placement="top" :enterable="false">
-              <span><el-button type="primary" size="mini" icon="el-icon-edit-outline" @click="_edit(scope.row)" circle></el-button></span>
+              <span><el-button type="primary" size="mini" icon="el-icon-edit-outline" @click="_edit(scope.row)" :disabled="scope.row.perm != 7" circle></el-button></span>
             </el-tooltip>
-            <el-tooltip :content="$t('Delete')" placement="top" :enterable="false">
+            <el-tooltip :content="$t('Delete')" placement="top" :enterable="false" >
               <el-popconfirm
                 :confirmButtonText="$t('Confirm')"
                 :cancelButtonText="$t('Cancel')"
@@ -61,7 +61,7 @@
                 :title="$t('Delete?')"
                 @onConfirm="_delete(scope.row,scope.row.id)"
               >
-                <el-button type="danger" size="mini" icon="el-icon-delete" circle slot="reference"></el-button>
+                <el-button type="danger" size="mini" icon="el-icon-delete" :disabled="scope.row.perm != 7" circle slot="reference"></el-button>
               </el-popconfirm>
             </el-tooltip>
           </template>

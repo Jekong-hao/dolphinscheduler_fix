@@ -175,7 +175,7 @@
       window.addEventListener('resize', this.resizeDebounceFunc)
 
       // init graph
-      this.$refs.canvas.graphInit(!this.isDetails)
+      this.$refs.canvas.graphInit((!this.isDetails))
 
       // backfill graph with tasks, locations and connects
       this.backfill()

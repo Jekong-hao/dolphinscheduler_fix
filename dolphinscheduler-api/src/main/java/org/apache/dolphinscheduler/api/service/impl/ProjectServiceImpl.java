@@ -223,9 +223,11 @@ public class ProjectServiceImpl extends BaseServiceImpl implements ProjectServic
         IPage<Project> projectIPage = projectMapper.queryProjectListPaging(page, userId, searchVal);
 
         List<Project> projectList = projectIPage.getRecords();
-        if (userId != 0) {
-            for (Project project : projectList) {
-                project.setPerm(Constants.DEFAULT_ADMIN_PERMISSION);
+        for (Project project : projectList) {
+            if (project.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER) {
+                project.setPerm(Constants.ALL_PERMISSIONS);
+            } else {
+                project.setPerm(Constants.READ_PERMISSION);
             }
         }
         pageInfo.setTotal((int) projectIPage.getTotal());
@@ -234,6 +236,7 @@ public class ProjectServiceImpl extends BaseServiceImpl implements ProjectServic
         putMsg(result, Status.SUCCESS);
         return result;
     }
+
 
     /**
      * admin can view all projects
@@ -449,7 +452,6 @@ public class ProjectServiceImpl extends BaseServiceImpl implements ProjectServic
         Map<String, Object> result = new HashMap<>();
 
         Project project = this.projectMapper.queryByCode(projectCode);
-        System.out.println("项目名称: " + project.getName());
 
         // query all user list except specified userId
         List<User> userList = userMapper.queryAllGeneralUser()

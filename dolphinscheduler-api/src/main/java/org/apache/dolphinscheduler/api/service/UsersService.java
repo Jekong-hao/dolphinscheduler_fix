@@ -297,6 +297,13 @@ public interface UsersService {
      */
     Map<String, Object> batchActivateUser(User loginUser, List<String> userNames);
 
-
+    /**
+     * grant project
+     *
+     * @param loginUser login user
+     * @param processId process id
+     * @param userIds project id array
+     * @return grant result code
+     */
     Map<String, Object> grantProcessToUsers(User loginUser, int processId, String userIds);
 }

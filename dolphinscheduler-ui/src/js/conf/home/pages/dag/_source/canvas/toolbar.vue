@@ -89,7 +89,7 @@
         class="toolbar-operation"
         :content="$t('Delete selected lines or nodes')"
         placement="bottom"
-        v-if="!isDetails"
+        v-if="!isDetails && dagChart.definitionDetails.perm == 7"
       >
         <em class="el-icon-delete" @click="removeCells"></em>
       </el-tooltip>
@@ -112,7 +112,7 @@
         class="toolbar-operation"
         :content="$t('Format DAG')"
         placement="bottom"
-        v-if="!isDetails"
+        v-if="!isDetails && dagChart.definitionDetails.perm == 7"
       >
         <em class="custom-ico graph-format" @click="chartFormat"></em>
       </el-tooltip>
@@ -136,6 +136,7 @@
         v-if="dagChart.type === 'definition'"
         @click="showVersions"
         icon="el-icon-info"
+        :disabled="dagChart.definitionDetails.perm != 7"
         >{{ $t("Version Info") }}</el-button
       >
       <el-button
@@ -143,6 +144,7 @@
         type="primary"
         size="mini"
         @click="saveProcess"
+        :disabled="dagChart.definitionDetails.perm != 7"
         >{{ $t("Save") }}</el-button
       >
       <el-button

@@ -131,6 +131,9 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
     TaskDefinitionLogMapper taskDefinitionLogMapper;
 
     @Autowired
+    ProcessUserMapper processUserMapper;
+
+    @Autowired
     UsersService usersService;
 
     @Autowired
@@ -288,6 +291,14 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
                 processInstance.setGrayFlag(GrayFlag.GRAY);
             } else {
                 processInstance.setGrayFlag(GrayFlag.PROD);
+            }
+            // 用于对于工作流的操作权限设置
+            ProcessDefinition processDefinition = processDefineMapper.queryByCode(processInstance.getProcessDefinitionCode());
+            ProcessUser processUser = processUserMapper.queryProcessRelation(processDefinition.getId(), loginUser.getId());
+            if (processUser != null || processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER) {
+                processInstance.setPerm(Constants.ALL_PERMISSIONS);
+            } else {
+                processInstance.setPerm(Constants.READ_PERMISSION);
             }
         }
 

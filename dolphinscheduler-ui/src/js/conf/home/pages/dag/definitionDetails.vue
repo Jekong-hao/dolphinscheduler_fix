@@ -26,7 +26,6 @@
   import Affirm from './_source/jumpAffirm'
   import disabledState from '@/module/mixin/disabledState'
   import { mapActions, mapMutations } from 'vuex'
-  import console from 'console'
 
   export default {
     name: 'definition-details',
@@ -37,7 +36,7 @@
         // state
         releaseState: '',
         // permission
-        perm: 2
+        perm: 7
       }
     },
     provide () {
@@ -75,15 +74,7 @@
           let item = data[0]
           this.setIsDetails(item.processDefinition.releaseState === 'ONLINE')
           this.releaseState = item.processDefinition.releaseState
-          console.log('---------------------')
-          if (undefined === item.processDefinition.perm) {
-            this.perm = item.dagData.processDefinition.perm
-            console.log('---------------------')
-          } else {
-            this.perm = item.processDefinition.perm
-            console.log('++++++++++++++++++++++++++')
-          }
-          this.perm = 7
+          this.perm = item.processDefinition.perm
           this.isLoading = false
           // Whether to pop up the box?
           Affirm.init(this.$root)

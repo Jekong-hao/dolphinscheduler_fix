@@ -55,13 +55,17 @@
           </router-link>
         </div>
       </div>
+      <div class="clearfix list">
+        <div class="nav-links">
+          <router-link :to="{ path: '/authorize'}" tag="a" active-class="active">
+            <span><em class="ansiconfont el-icon-user"></em>{{$t('Authorize')}}</span><strong></strong>
+          </router-link>
+        </div>
+      </div>
       <div class="clearfix list" >
         <div class="nav-links">
           <router-link :to="{ path: '/security'}" tag="a" active-class="active" v-ps="['ADMIN_USER']">
             <span><em class="ansfont ri-shield-check-line"></em>{{$t('Security')}}</span><strong></strong>
-          </router-link>
-          <router-link :to="{ path: '/authorize'}" tag="a" active-class="active" v-ps="['GENERAL_USER']">
-            <span><em class="ansfont ri-shield-check-line"></em>{{$t('Authorize')}}</span><strong></strong>
           </router-link>
         </div>
       </div>

@@ -18,7 +18,7 @@
   <div class="list-model" style="position: relative;">
     <div class="table-box">
       <el-table class="fixed" :data="list" size="mini" style="width: 100%" @selection-change="_arrDelChange">
-        <el-table-column type="selection" width="50"></el-table-column>
+        <el-table-column type="selection" width="50" ></el-table-column>
         <el-table-column prop="id" :label="$t('#')" width="50"></el-table-column>
         <el-table-column :label="$t('Process Name')" min-width="200">
           <template slot-scope="scope">

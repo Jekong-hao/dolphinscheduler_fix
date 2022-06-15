@@ -203,7 +203,6 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
 
         ProcessDefinition processDefinition = processService.findProcessDefinition(processInstance.getProcessDefinitionCode(),
                 processInstance.getProcessDefinitionVersion());
-
         if (processDefinition == null || projectCode != processDefinition.getProjectCode()) {
             putMsg(result, Status.PROCESS_DEFINE_NOT_EXIST, processId);
         } else {
@@ -212,6 +211,13 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
             processInstance.setDagData(processService.genDagData(processDefinition));
             result.put(DATA_LIST, processInstance);
             putMsg(result, Status.SUCCESS);
+            // 权限管理
+            ProcessUser processUser = processUserMapper.queryProcessRelation(processDefinition.getId(), loginUser.getId());
+            if (processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER || processUser != null) {
+                processInstance.setPerm(Constants.ALL_PERMISSIONS);
+            } else {
+                processInstance.setPerm(Constants.READ_PERMISSION);
+            }
         }
 
         return result;

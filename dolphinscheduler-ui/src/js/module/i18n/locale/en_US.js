@@ -770,6 +770,7 @@ export default {
   rows: 'Rows',
   cols: 'Cols',
   processOnline: 'Online',
+  readOnly: 'read only',
   searchNode: 'Search Node',
   dagScale: 'Scale',
   workflowName: 'Workflow Name',

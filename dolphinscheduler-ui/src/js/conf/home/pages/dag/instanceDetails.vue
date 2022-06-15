@@ -36,7 +36,13 @@
     data () {
       return {
         // loading
-        isLoading: true
+        isLoading: true,
+        perm: 7
+      }
+    },
+    provide () {
+      return {
+        instanceDetails: this
       }
     },
     mixins: [disabledState],
@@ -75,7 +81,7 @@
           }
           this.setIsDetails(flag)
           this.isLoading = false
-
+          this.perm = item.perm
           // Whether to pop up the box?
           Affirm.init(this.$root)
         }).catch(() => {

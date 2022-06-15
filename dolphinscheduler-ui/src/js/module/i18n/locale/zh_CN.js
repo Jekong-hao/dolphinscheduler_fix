@@ -778,6 +778,7 @@ export default {
   rows: '行数',
   cols: '列数',
   processOnline: '已上线',
+  readOnly: '只读',
   searchNode: '搜索节点',
   dagScale: '缩放',
   workflowName: '工作流名称',

@@ -207,7 +207,7 @@
       ...mapActions('security', ['getWorkerGroupsAll']),
 
       selectable (row, index) {
-        if (row.releaseState === 'ONLINE') {
+        if (row.releaseState === 'ONLINE' || row.perm !== 7) {
           return false
         } else {
           return true

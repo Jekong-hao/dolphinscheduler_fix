@@ -103,7 +103,7 @@
       ...mapActions('dag', ['editGrayState', 'batchUpdateGray']),
 
       selectable (row, index) {
-        if (row.releaseState === 'ONLINE' || row.perm !== 7) {
+        if (row.perm !== 7) {
           return false
         } else {
           return true

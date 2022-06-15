@@ -236,6 +236,54 @@ public class UsersController extends BaseController {
     }
 
     /**
+     * grant project to users
+     *
+     * @param loginUser login user
+     * @param projectId project id
+     * @param userIds user id array
+     * @return grant result code
+     */
+    @ApiOperation(value = "grantProjectToUser", notes = "GRANT_PROJECT_TO_USER_NOTES")
+    @ApiImplicitParams({
+        @ApiImplicitParam(name = "projectId", value = "PROJECT_ID", required = true, dataType = "Int", example = "100"),
+        @ApiImplicitParam(name = "userIds", value = "USER_IDS", required = true, type = "String")
+    })
+    @PostMapping(value = "/grant-project-to-user")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiException(GRANT_PROJECT_ERROR)
+    @AccessLogAnnotation
+    public Result grantProjectToUser(@ApiIgnore @RequestAttribute(value = Constants.SESSION_USER) User loginUser,
+                               @RequestParam(value = "projectId") int projectId,
+                               @RequestParam(value = "userIds") String userIds) {
+        Map<String, Object> result = usersService.grantProjectToUsers(loginUser, projectId, userIds);
+        return returnDataList(result);
+    }
+
+    /**
+     * grant process to users
+     *
+     * @param loginUser login user
+     * @param processId process id
+     * @param userIds user id array
+     * @return grant result code
+     */
+    @ApiOperation(value = "grantProcessToUser", notes = "GRANT_PROCESS_TO_USER_NOTES")
+    @ApiImplicitParams({
+        @ApiImplicitParam(name = "processId", value = "PROCESS_ID", required = true, dataType = "Int", example = "100"),
+        @ApiImplicitParam(name = "userIds", value = "USER_IDS", required = true, type = "String")
+    })
+    @PostMapping(value = "/grant-process-to-user")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiException(GRANT_PROJECT_ERROR)
+    @AccessLogAnnotation
+    public Result grantProcessToUser(@ApiIgnore @RequestAttribute(value = Constants.SESSION_USER) User loginUser,
+                                     @RequestParam(value = "processId") int processId,
+                                     @RequestParam(value = "userIds") String userIds) {
+        Map<String, Object> result = usersService.grantProcessToUsers(loginUser, processId, userIds);
+        return returnDataList(result);
+    }
+
+    /**
      * grant project by code
      *
      * @param loginUser login user

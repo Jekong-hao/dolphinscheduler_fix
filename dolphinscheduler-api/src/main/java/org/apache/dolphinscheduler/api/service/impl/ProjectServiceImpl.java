@@ -43,6 +43,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -222,9 +223,44 @@ public class ProjectServiceImpl extends BaseServiceImpl implements ProjectServic
         IPage<Project> projectIPage = projectMapper.queryProjectListPaging(page, userId, searchVal);
 
         List<Project> projectList = projectIPage.getRecords();
+        for (Project project : projectList) {
+            if (project.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER) {
+                project.setPerm(Constants.ALL_PERMISSIONS);
+            } else {
+                project.setPerm(Constants.READ_PERMISSION);
+            }
+        }
+        pageInfo.setTotal((int) projectIPage.getTotal());
+        pageInfo.setTotalList(projectList);
+        result.setData(pageInfo);
+        putMsg(result, Status.SUCCESS);
+        return result;
+    }
+
+
+    /**
+     * admin can view all projects
+     *
+     * @param loginUser login user
+     * @param searchVal search value
+     * @param pageSize page size
+     * @param pageNo page number
+     * @return project list which the login user have permission to see
+     */
+    @Override
+    public Result queryProjectListPagingByUser(User loginUser, Integer pageSize, Integer pageNo, String searchVal) {
+        Result result = new Result();
+        PageInfo<Project> pageInfo = new PageInfo<>(pageNo, pageSize);
+
+        Page<Project> page = new Page<>(pageNo, pageSize);
+
+        int userId = loginUser.getUserType() == UserType.ADMIN_USER ? 0 : loginUser.getId();
+        IPage<Project> projectIPage = projectMapper.queryProjectListPagingByUser(page, userId, searchVal);
+
+        List<Project> projectList = projectIPage.getRecords();
         if (userId != 0) {
             for (Project project : projectList) {
-                project.setPerm(Constants.DEFAULT_ADMIN_PERMISSION);
+                project.setPerm(Constants.READ_PERMISSION);
             }
         }
         pageInfo.setTotal((int) projectIPage.getTotal());
@@ -401,6 +437,36 @@ public class ProjectServiceImpl extends BaseServiceImpl implements ProjectServic
         result.put(Constants.DATA_LIST, projects);
         putMsg(result, Status.SUCCESS);
 
+        return result;
+    }
+
+    /**
+     * query authorized user
+     *
+     * @param loginUser     login user
+     * @param projectCode   project code
+     * @return users        who have not permission for the specified project
+     */
+    @Override
+    public Map<String, Object> queryUnauthorizedUser(User loginUser, Long projectCode) {
+        Map<String, Object> result = new HashMap<>();
+
+        Project project = this.projectMapper.queryByCode(projectCode);
+
+        // query all user list except specified userId
+        List<User> userList = userMapper.queryAllGeneralUser()
+            .stream().filter(user -> user.getId() != loginUser.getId()).collect(Collectors.toList());
+        List<User> resultList = new ArrayList<>();
+        if (!userList.isEmpty()) {
+            List<User> authedUserList = userMapper.queryAuthedUserListByProjectId(project.getId());
+            if (authedUserList != null && !authedUserList.isEmpty()) {
+                resultList = userList.stream().filter(user -> !authedUserList.contains(user)).collect(Collectors.toList());
+            } else {
+                resultList = userList;
+            }
+        }
+        result.put(Constants.DATA_LIST, resultList);
+        putMsg(result, Status.SUCCESS);
         return result;
     }
 

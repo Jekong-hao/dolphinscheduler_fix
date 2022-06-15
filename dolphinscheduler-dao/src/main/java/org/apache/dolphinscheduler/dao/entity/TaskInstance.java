@@ -61,9 +61,22 @@ public class TaskInstance implements Serializable {
     private String taskType;
 
     /**
+     * permission
+     */
+    @TableField(exist = false)
+    private int perm;
+
+
+    /**
      * process instance id
      */
     private int processInstanceId;
+
+    /**
+     * process definition code
+     */
+    @TableField(exist = false)
+    private long processDefinitionCode;
 
     /**
      * task code
@@ -532,6 +545,14 @@ public class TaskInstance implements Serializable {
         this.executorId = executorId;
     }
 
+    public int getPerm() {
+        return perm;
+    }
+
+    public void setPerm(int perm) {
+        this.perm = perm;
+    }
+
     public String getExecutorName() {
         return executorName;
     }
@@ -570,6 +591,14 @@ public class TaskInstance implements Serializable {
 
     public void setResources(Map<String, String> resources) {
         this.resources = resources;
+    }
+
+    public long getProcessDefinitionCode() {
+        return processDefinitionCode;
+    }
+
+    public void setProcessDefinitionCode(long processDefinitionCode) {
+        this.processDefinitionCode = processDefinitionCode;
     }
 
     public boolean isSubProcess() {

@@ -15,28 +15,17 @@
  * limitations under the License.
  */
 <template>
-  <div class="menu-item" :class="''" @click="onClick">
-    <slot></slot>
+  <div class="main-layout-box">
+    <m-secondary-menu :type="'authorize'"></m-secondary-menu>
+    <router-view></router-view>
   </div>
 </template>
-
 <script>
+  import mSecondaryMenu from '@/module/components/secondaryMenu/secondaryMenu'
   export default {
-    name: 'dag-context-menu-item',
-    props: {
-      disabled: {
-        type: Boolean,
-        default: false
-      }
+    name: 'authorize-index',
+    mounted () {
     },
-    data () {
-      return {}
-    },
-    methods: {
-      onClick (e) {
-        if (this.disabled) return
-        this.$emit('on-click', e)
-      }
-    }
+    components: { mSecondaryMenu }
   }
 </script>

@@ -132,6 +132,15 @@
         where u.id = rel.user_id and rel.project_id = #{projectId}
     </select>
 
+    <select id="queryAuthedUserListByProcessDefinitionId" resultType="org.apache.dolphinscheduler.dao.entity.User">
+        select
+        <include refid="baseSqlV2">
+            <property name="alias" value="u"/>
+        </include>
+        from t_ds_user u, t_ds_relation_process_user rel
+        where u.id = rel.user_id and rel.process_id = #{processDefinitionId}
+    </select>
+
     <select id="queryByProcessDefinitionCode" resultType="org.apache.dolphinscheduler.dao.entity.User">
         select
         <include refid="baseSqlV2">

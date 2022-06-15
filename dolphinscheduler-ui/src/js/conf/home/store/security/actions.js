@@ -105,6 +105,27 @@ export default {
       })
     })
   },
+
+  getProcessListP ({ state }, payload) {
+    return new Promise((resolve, reject) => {
+      io.get('process-authority/list-paging', payload, res => {
+        resolve(res.data)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+
+  getProjectListP ({ state }, payload) {
+    return new Promise((resolve, reject) => {
+      io.get('projects/user-project-paging', payload, res => {
+        resolve(res.data)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+
   /**
    * user list expect admin
    */
@@ -188,6 +209,76 @@ export default {
     // Unauthorized project
     const p2 = new Promise((resolve, reject) => {
       io.get(`${o.category}/authed-${o.type}`, param, res => {
+        resolve(res.data)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+    return new Promise((resolve, reject) => {
+      Promise.all([p1, p2]).then(a => {
+        resolve(a)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+
+  getAuthProjectList ({ state }, payload) {
+    const o = {
+      type: payload.type,
+      category: payload.category
+    }
+
+    const param = {}
+    // Manage user
+    param.projectCode = payload.code
+
+    // Authorized project
+    const p1 = new Promise((resolve, reject) => {
+      io.get(`${o.category}/unauth-${o.type}`, param, res => {
+        resolve(res.data)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+    // Unauthorized project
+    const p2 = new Promise((resolve, reject) => {
+      io.get(`${o.category}/authed-${o.type}`, param, res => {
+        resolve(res.data)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+    return new Promise((resolve, reject) => {
+      Promise.all([p1, p2]).then(a => {
+        resolve(a)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+
+  getAuthProcessList ({ state }, payload) {
+    const o = {
+      type: payload.type,
+      category: payload.category
+    }
+
+    const param = {}
+    // Manage user
+    param.code = payload.code
+
+    // Authorized process
+    const p1 = new Promise((resolve, reject) => {
+      io.get(`process-authority/unauth-${o.type}`, param, res => {
+        resolve(res.data)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+    // Unauthorized process
+    const p2 = new Promise((resolve, reject) => {
+      io.get(`process-authority/authed-${o.type}`, param, res => {
         resolve(res.data)
       }).catch(e => {
         reject(e)

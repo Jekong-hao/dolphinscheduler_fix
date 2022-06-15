@@ -58,6 +58,12 @@ public class ProcessInstance {
     private ExecutionStatus state;
 
     /**
+     * permission
+     */
+    @TableField(exist = false)
+    private int perm;
+
+    /**
      * gray test flag
      */
     @TableField(exist = false)
@@ -733,4 +739,11 @@ public class ProcessInstance {
         return Objects.hash(id);
     }
 
+    public int getPerm() {
+        return perm;
+    }
+
+    public void setPerm(int perm) {
+        this.perm = perm;
+    }
 }

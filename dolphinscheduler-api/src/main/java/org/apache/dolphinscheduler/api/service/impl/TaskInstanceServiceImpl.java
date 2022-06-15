@@ -28,6 +28,7 @@ import org.apache.dolphinscheduler.common.Constants;
 import org.apache.dolphinscheduler.common.enums.ElementType;
 import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
 import org.apache.dolphinscheduler.common.enums.GrayFlag;
+import org.apache.dolphinscheduler.common.enums.UserType;
 import org.apache.dolphinscheduler.common.utils.CollectionUtils;
 import org.apache.dolphinscheduler.common.utils.DateUtils;
 import org.apache.dolphinscheduler.dao.entity.*;
@@ -67,6 +68,12 @@ public class TaskInstanceServiceImpl extends BaseServiceImpl implements TaskInst
 
     @Autowired
     TaskInstanceMapper taskInstanceMapper;
+
+    @Autowired
+    ProcessDefinitionMapper processDefineMapper;
+
+    @Autowired
+    ProcessUserMapper processUserMapper;
 
     @Autowired
     GrayRelationMapper grayRelationMapper;
@@ -157,6 +164,14 @@ public class TaskInstanceServiceImpl extends BaseServiceImpl implements TaskInst
                 taskInstance.setGrayFlag(GrayFlag.GRAY);
             } else {
                 taskInstance.setGrayFlag(GrayFlag.PROD);
+            }
+            // 用于task的操作权限设置
+            ProcessDefinition processDefinition = processDefineMapper.queryByCode(taskInstance.getProcessDefinitionCode());
+            ProcessUser processUser = processUserMapper.queryProcessRelation(processDefinition.getId(), loginUser.getId());
+            if (processUser != null || processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER) {
+                taskInstance.setPerm(Constants.ALL_PERMISSIONS);
+            } else {
+                taskInstance.setPerm(Constants.READ_PERMISSION);
             }
         }
         pageInfo.setTotal((int) taskInstanceIPage.getTotal());

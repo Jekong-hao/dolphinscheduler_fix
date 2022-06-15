@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 <template>
-  <m-popup :ok-text="$t('Submit')" :nameText="transferData.type.name + $t('Authorize')" @ok="_ok" @close="close" ref="popup">
+  <m-popup :ok-text="$t('Submit')" :nameText="$t('Authorize')" @ok="_ok" @close="close" ref="popup">
     <template slot="content">
       <div class="clearfix transfer-model">
         <div class="select-list-box">
           <div class="tf-header">
-            <div class="title">{{transferData.type.name}}{{$t('List')}}</div>
+            <div class="title">{{$t('User')}}{{$t('List')}}</div>
             <div class="count">（{{cacheSourceList.length}}）</div>
           </div>
           <div class="scrollbar tf-content">
@@ -35,7 +35,7 @@
         <div class="select-oper-box">&nbsp;</div>
         <div class="select-list-box">
           <div class="tf-header">
-            <div class="title">{{$t('Selected')}}{{transferData.type.name}}</div>
+            <div class="title">{{$t('Selected')}}{{$t('User')}}</div>
             <div class="count">（{{cacheTargetList.length}}）</div>
           </div>
           <div class="scrollbar tf-content">
@@ -81,6 +81,10 @@
             this.$emit('onUpdateAuthDataSource', _.map(this.targetList, v => v.id).join(','))
           } else if (this.transferData.type.name === `${i18n.$t('UDF Function')}`) {
             this.$emit('onUpdateAuthUdfFunc', _.map(this.targetList, v => v.id).join(','))
+          } else if (this.transferData.type.name === `${i18n.$t('Project Perm')}`) {
+            this.$emit('onUpdateAuthProjectPermissions', _.map(this.targetList, v => v.id).join(','))
+          } else if (this.transferData.type.name === `${i18n.$t('Process Perm')}`) {
+            this.$emit('onUpdateAuthProcessPermissions', _.map(this.targetList, v => v.id).join(','))
           }
         }, 800)
       },
@@ -121,6 +125,10 @@
           this.$emit('closeAuthDataSource')
         } else if (this.transferData.type.name === `${i18n.$t('UDF Function')}`) {
           this.$emit('closeAuthUdfFunc')
+        } else if (this.transferData.type.name === `${i18n.$t('Project Perm')}`) {
+          this.$emit('closeAuthProjectPermissions')
+        } else if (this.transferData.type.name === `${i18n.$t('Project Perm')}`) {
+          this.$emit('closeAuthProcessPermissions')
         }
       }
     },

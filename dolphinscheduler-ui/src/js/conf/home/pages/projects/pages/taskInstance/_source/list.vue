@@ -82,7 +82,7 @@
             <div>
               <el-tooltip :content="$t('Force success')" placement="top" :enterable="false">
                 <span>
-                  <el-button type="primary" size="mini" icon="el-icon-success" :disabled="!(scope.row.state === 'FAILURE' || scope.row.state === 'NEED_FAULT_TOLERANCE' || scope.row.state === 'KILL')" @click="_forceSuccess(scope.row)" circle></el-button>
+                  <el-button type="primary" size="mini" icon="el-icon-success" :disabled="!(scope.row.state === 'FAILURE' || scope.row.state === 'NEED_FAULT_TOLERANCE' || scope.row.state === 'KILL') || scope.row.perm != 7" @click="_forceSuccess(scope.row)" circle></el-button>
                 </span>
               </el-tooltip>
               <el-tooltip :content="$t('View log')" placement="top" :enterable="false">

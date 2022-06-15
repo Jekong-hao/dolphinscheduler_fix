@@ -71,25 +71,25 @@
         <el-table-column :label="$t('Operation')" width="360" fixed="right">
           <template slot-scope="scope">
             <el-tooltip :content="$t('Edit')" placement="top" :enterable="false">
-              <span><el-button type="primary" size="mini" icon="el-icon-edit-outline" :disabled="scope.row.releaseState === 'ONLINE'" @click="_edit(scope.row)" circle></el-button></span>
+              <span><el-button type="primary" size="mini" icon="el-icon-edit-outline" :disabled="scope.row.perm != 7 || scope.row.releaseState === 'ONLINE'" @click="_edit(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('Start')" placement="top" :enterable="false">
-              <span><el-button type="success" size="mini" :disabled="scope.row.releaseState !== 'ONLINE'"  icon="el-icon-video-play" @click="_start(scope.row)" circle></el-button></span>
+              <span><el-button type="success" size="mini" :disabled="scope.row.perm != 7 || scope.row.releaseState !== 'ONLINE'"  icon="el-icon-video-play" @click="_start(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('Timing')" placement="top" :enterable="false">
-              <span><el-button type="primary" size="mini" icon="el-icon-time" :disabled="scope.row.releaseState !== 'ONLINE' || scope.row.scheduleReleaseState !== null" @click="_timing(scope.row)" circle></el-button></span>
+              <span><el-button type="primary" size="mini" icon="el-icon-time" :disabled="scope.row.perm != 7 || scope.row.releaseState !== 'ONLINE' || scope.row.scheduleReleaseState !== null" @click="_timing(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('online')" placement="top" :enterable="false">
-              <span><el-button type="warning" size="mini" v-if="scope.row.releaseState === 'OFFLINE'"  icon="el-icon-upload2" @click="_poponline(scope.row)" circle></el-button></span>
+              <span><el-button type="warning" size="mini" v-if="scope.row.releaseState === 'OFFLINE'"  icon="el-icon-upload2" :disabled="scope.row.perm != 7" @click="_poponline(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('offline')" placement="top" :enterable="false">
-              <span><el-button type="danger" size="mini" icon="el-icon-download" v-if="scope.row.releaseState === 'ONLINE'" @click="_downline(scope.row)" circle></el-button></span>
+              <span><el-button type="danger" size="mini" icon="el-icon-download" :disabled="scope.row.perm != 7" v-if="scope.row.releaseState === 'ONLINE'" @click="_downline(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('Copy Workflow')" placement="top" :enterable="false">
-              <span><el-button type="primary" size="mini" :disabled="scope.row.releaseState === 'ONLINE'"  icon="el-icon-document-copy" @click="_copyProcess(scope.row)" circle></el-button></span>
+              <span><el-button type="primary" size="mini" :disabled="scope.row.perm != 7 || scope.row.releaseState === 'ONLINE'"  icon="el-icon-document-copy" @click="_copyProcess(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('Cron Manage')" placement="top" :enterable="false">
-              <span><el-button type="primary" size="mini" icon="el-icon-date" :disabled="scope.row.releaseState !== 'ONLINE'" @click="_timingManage(scope.row)" circle></el-button></span>
+              <span><el-button type="primary" size="mini" icon="el-icon-date" :disabled="scope.row.perm != 7 || scope.row.releaseState !== 'ONLINE'" @click="_timingManage(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('Delete')" placement="top" :enterable="false">
               <el-popconfirm
@@ -100,23 +100,23 @@
                 :title="$t('Delete?')"
                 @onConfirm="_delete(scope.row,scope.row.id)"
               >
-                <el-button type="danger" size="mini" icon="el-icon-delete" :disabled="scope.row.releaseState === 'ONLINE'" circle slot="reference"></el-button>
+                <el-button type="danger" size="mini" icon="el-icon-delete" :disabled="scope.row.perm != 7 || scope.row.releaseState === 'ONLINE'" circle slot="reference"></el-button>
               </el-popconfirm>
             </el-tooltip>
             <el-tooltip :content="$t('TreeView')" placement="top" :enterable="false">
               <span><el-button type="primary" size="mini" icon="el-icon-s-data" @click="_treeView(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('Export')" placement="top" :enterable="false">
-              <span><el-button type="primary" size="mini" icon="el-icon-s-unfold" @click="_export(scope.row)" circle></el-button></span>
+              <span><el-button type="primary" size="mini" icon="el-icon-s-unfold" :disabled="scope.row.perm != 7" @click="_export(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('Version Info')" placement="top" :enterable="false">
-              <span><el-button type="primary" size="mini" icon="el-icon-info" @click="_version(scope.row)" circle></el-button></span>
+              <span><el-button type="primary" size="mini" icon="el-icon-info" :disabled="scope.row.perm != 7" @click="_version(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('to_gray')" placement="top" :enterable="false">
-              <span><el-button type="warning" size="mini" v-if="scope.row.grayFlag === 'PROD'"  icon="el-icon-star-on" @click="_popgray(scope.row)" circle></el-button></span>
+              <span><el-button type="warning" size="mini" v-if="scope.row.grayFlag === 'PROD'"  icon="el-icon-star-on" :disabled="scope.row.perm != 7" @click="_popgray(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('to_no_gray')" placement="top" :enterable="false">
-              <span><el-button type="danger" size="mini" icon="el-icon-star-off" v-if="scope.row.grayFlag === 'GRAY'" @click="_cancelgray(scope.row)" circle></el-button></span>
+              <span><el-button type="danger" size="mini" icon="el-icon-star-off" v-if="scope.row.grayFlag === 'GRAY'" :disabled="scope.row.perm != 7" @click="_cancelgray(scope.row)" circle></el-button></span>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -207,7 +207,7 @@
       ...mapActions('security', ['getWorkerGroupsAll']),
 
       selectable (row, index) {
-        if (row.releaseState === 'ONLINE') {
+        if (row.releaseState === 'ONLINE' || row.perm !== 7) {
           return false
         } else {
           return true

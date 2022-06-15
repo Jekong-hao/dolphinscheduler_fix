@@ -31,26 +31,8 @@ import org.apache.dolphinscheduler.common.enums.UserType;
 import org.apache.dolphinscheduler.common.utils.EncryptionUtils;
 import org.apache.dolphinscheduler.common.utils.HadoopUtils;
 import org.apache.dolphinscheduler.common.utils.PropertyUtils;
-import org.apache.dolphinscheduler.dao.entity.AlertGroup;
-import org.apache.dolphinscheduler.dao.entity.DatasourceUser;
-import org.apache.dolphinscheduler.dao.entity.Project;
-import org.apache.dolphinscheduler.dao.entity.ProjectUser;
-import org.apache.dolphinscheduler.dao.entity.Resource;
-import org.apache.dolphinscheduler.dao.entity.ResourcesUser;
-import org.apache.dolphinscheduler.dao.entity.Tenant;
-import org.apache.dolphinscheduler.dao.entity.UDFUser;
-import org.apache.dolphinscheduler.dao.entity.User;
-import org.apache.dolphinscheduler.dao.mapper.AccessTokenMapper;
-import org.apache.dolphinscheduler.dao.mapper.AlertGroupMapper;
-import org.apache.dolphinscheduler.dao.mapper.DataSourceUserMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProcessDefinitionMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProjectMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProjectUserMapper;
-import org.apache.dolphinscheduler.dao.mapper.ResourceMapper;
-import org.apache.dolphinscheduler.dao.mapper.ResourceUserMapper;
-import org.apache.dolphinscheduler.dao.mapper.TenantMapper;
-import org.apache.dolphinscheduler.dao.mapper.UDFUserMapper;
-import org.apache.dolphinscheduler.dao.mapper.UserMapper;
+import org.apache.dolphinscheduler.dao.entity.*;
+import org.apache.dolphinscheduler.dao.mapper.*;
 import org.apache.dolphinscheduler.dao.utils.ResourceProcessDefinitionUtils;
 import org.apache.dolphinscheduler.spi.enums.ResourceType;
 
@@ -96,6 +78,9 @@ public class UsersServiceImpl extends BaseServiceImpl implements UsersService {
 
     @Autowired
     private ProjectUserMapper projectUserMapper;
+
+    @Autowired
+    private ProcessUserMapper processUserMapper;
 
     @Autowired
     private ResourceUserMapper resourceUserMapper;
@@ -561,8 +546,8 @@ public class UsersServiceImpl extends BaseServiceImpl implements UsersService {
         }
 
         //if the selected projectIds are empty, delete all items associated with the user
+        projectUserMapper.deleteProjectRelation(0, userId);
         if (check(result, StringUtils.isEmpty(projectIds), Status.SUCCESS)) {
-            projectUserMapper.deleteProjectRelation(0, userId);
             return result;
         }
 
@@ -762,6 +747,98 @@ public class UsersServiceImpl extends BaseServiceImpl implements UsersService {
 
         putMsg(result, Status.SUCCESS);
 
+        return result;
+    }
+
+    /**
+     * grant project to users
+     *
+     * @param loginUser login user
+     * @param projectId project id
+     * @param userIds user id array
+     * @return grant result code
+     */
+    @Override
+    @Transactional(rollbackFor = RuntimeException.class)
+    public Map<String, Object> grantProjectToUsers(User loginUser, int projectId, String userIds) {
+        Map<String, Object> result = new HashMap<>();
+        result.put(Constants.STATUS, false);
+
+        //if the selected userIds are empty, delete all items associated with the project
+        projectUserMapper.deleteProjectUserRelation(projectId, 0);
+        if (check(result, StringUtils.isEmpty(userIds), Status.SUCCESS)) {
+            return result;
+        }
+
+        String[] userIdArr = userIds.split(",");
+        for (String userId : userIdArr) {
+            Date now = new Date();
+            ProjectUser projectUser = new ProjectUser();
+            projectUser.setUserId(Integer.parseInt(userId));
+            projectUser.setProjectId(projectId);
+            projectUser.setPerm(7);
+            projectUser.setCreateTime(now);
+            projectUser.setUpdateTime(now);
+            projectUserMapper.insert(projectUser);
+        }
+
+        putMsg(result, Status.SUCCESS);
+        return result;
+    }
+
+    /**
+     * grant project to users
+     *
+     * @param loginUser login user
+     * @param processId process id
+     * @param userIds user id array
+     * @return grant result code
+     */
+    @Override
+    @Transactional(rollbackFor = RuntimeException.class)
+    public Map<String, Object> grantProcessToUsers(User loginUser, int processId, String userIds) {
+        Map<String, Object> result = new HashMap<>();
+        result.put(Constants.STATUS, false);
+
+        //if the selected userIds are empty, delete all items associated with the process
+        processUserMapper.deleteProcessUserRelation(processId, 0);
+        if (check(result, StringUtils.isEmpty(userIds), Status.SUCCESS)) {
+            return result;
+        }
+
+        ProcessDefinition processDefinition = processDefinitionMapper.selectById(processId);
+        int projectId = -1;
+        if (processDefinition != null) {
+            Project project = projectMapper.queryByCode(processDefinition.getProjectCode());
+            if (project != null) {
+                projectId = project.getId();
+            }
+        }
+
+        String[] userIdArr = userIds.split(",");
+        for (String userId : userIdArr) {
+            ProjectUser projectUser = projectUserMapper.queryProjectRelation(projectId, Integer.parseInt(userId));
+            if (projectUser == null) {
+                Date now = new Date();
+                projectUser = new ProjectUser();
+                projectUser.setUserId(Integer.parseInt(userId));
+                projectUser.setProjectId(projectId);
+                projectUser.setPerm(7);
+                projectUser.setCreateTime(now);
+                projectUser.setUpdateTime(now);
+                projectUserMapper.insert(projectUser);
+            }
+            Date now = new Date();
+            ProcessUser processUser = new ProcessUser();
+            processUser.setUserId(Integer.parseInt(userId));
+            processUser.setProcessId(processId);
+            processUser.setPerm(7);
+            processUser.setCreateTime(now);
+            processUser.setUpdateTime(now);
+            processUserMapper.insert(processUser);
+        }
+
+        putMsg(result, Status.SUCCESS);
         return result;
     }
 

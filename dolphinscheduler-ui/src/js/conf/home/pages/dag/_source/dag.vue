@@ -119,7 +119,7 @@
         dagChart: this
       }
     },
-    inject: ['definitionDetails'],
+    inject: ['definitionDetails', 'instanceDetails'],
     props: {
       type: String,
       releaseState: String
@@ -157,17 +157,19 @@
         // log dialog
         logDialog: false,
         logTaskInstance: null,
-        taskInstances: []
+        taskInstances: [],
+        perm: 7
       }
     },
     mounted () {
       this.setIsEditDag(false)
-
       if (this.type === 'instance') {
         this.instanceId = this.$route.params.id
         this.definitionCode = this.$route.query.code || this.code
+        this.perm = this.instanceDetails.perm
       } else if (this.type === 'definition') {
         this.definitionCode = this.$route.params.code
+        this.perm = this.definitionDetails.perm
       }
 
       // auto resize canvas
@@ -175,7 +177,7 @@
       window.addEventListener('resize', this.resizeDebounceFunc)
 
       // init graph
-      this.$refs.canvas.graphInit(!this.isDetails)
+      this.$refs.canvas.graphInit((!this.isDetails) && this.perm === 7)
 
       // backfill graph with tasks, locations and connects
       this.backfill()

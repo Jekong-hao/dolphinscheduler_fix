@@ -34,7 +34,9 @@
         // loading
         isLoading: true,
         // state
-        releaseState: ''
+        releaseState: '',
+        // permission
+        perm: 7
       }
     },
     provide () {
@@ -72,6 +74,7 @@
           let item = data[0]
           this.setIsDetails(item.processDefinition.releaseState === 'ONLINE')
           this.releaseState = item.processDefinition.releaseState
+          this.perm = item.processDefinition.perm
           this.isLoading = false
           // Whether to pop up the box?
           Affirm.init(this.$root)

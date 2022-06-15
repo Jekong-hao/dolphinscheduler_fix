@@ -38,6 +38,16 @@ public interface ProjectUserMapper extends BaseMapper<ProjectUser> {
                               @Param("userId") int userId);
 
     /**
+     * delte prject user relation
+     *
+     * @param projectId projectId
+     * @param userId userId
+     * @return delete result
+     */
+    void deleteProjectUserRelation(@Param("projectId") int projectId,
+                                   @Param("userId") int userId);
+
+    /**
      * query project relation
      *
      * @param projectId projectId

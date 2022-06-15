@@ -87,6 +87,24 @@
         order by sc.schedule_release_state desc,td.update_time desc,td.id asc
     </select>
 
+    <select id="queryAllDefinitionListPagingByUser" resultType="org.apache.dolphinscheduler.dao.entity.ProcessDefinition">
+        select
+        td.id, td.code, td.name, td.version, td.release_state, td.project_code, td.user_id, td.description,
+        td.global_params, td.flag, td.warning_group_id, td.timeout, td.tenant_id, td.update_time, td.create_time, tp.name as project_name
+        from t_ds_process_definition td
+        left join t_ds_project tp on td.project_code = tp.code
+        where 1=1
+        <if test=" searchVal != null and searchVal != ''">
+            AND (td.name like concat('%', #{searchVal}, '%')
+            OR td.description like concat('%', #{searchVal}, '%')
+            )
+        </if>
+        <if test=" isAdmin != true">
+            and td.user_id = #{userId}
+        </if>
+        order by create_time desc
+    </select>
+
     <select id="queryAllDefinitionList" resultType="org.apache.dolphinscheduler.dao.entity.ProcessDefinition">
         select
         <include refid="baseSql"/>

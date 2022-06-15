@@ -64,10 +64,10 @@
         <el-table-column :label="$t('Operation')" width="50" fixed="right">
           <template slot-scope="scope">
             <el-tooltip :content="$t('to_gray')" placement="top" :enterable="false">
-              <span><el-button type="warning" size="mini" v-if="scope.row.grayFlag === 'PROD'"  icon="el-icon-star-on" @click="_popgray(scope.row)" circle></el-button></span>
+              <span><el-button type="warning" size="mini" v-if="scope.row.grayFlag === 'PROD'"  icon="el-icon-star-on" :disabled="scope.row.perm != 7" @click="_popgray(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('to_no_gray')" placement="top" :enterable="false">
-              <span><el-button type="danger" size="mini" icon="el-icon-star-off" v-if="scope.row.grayFlag === 'GRAY'" @click="_cancelgray(scope.row)" circle></el-button></span>
+              <span><el-button type="danger" size="mini" icon="el-icon-star-off" v-if="scope.row.grayFlag === 'GRAY'" :disabled="scope.row.perm != 7" @click="_cancelgray(scope.row)" circle></el-button></span>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -103,7 +103,7 @@
       ...mapActions('dag', ['editGrayState', 'batchUpdateGray']),
 
       selectable (row, index) {
-        if (row.releaseState === 'ONLINE') {
+        if (row.releaseState === 'ONLINE' || row.perm !== 7) {
           return false
         } else {
           return true

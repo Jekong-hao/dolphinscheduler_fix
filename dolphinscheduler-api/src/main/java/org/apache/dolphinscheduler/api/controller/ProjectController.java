@@ -176,6 +176,40 @@ public class ProjectController extends BaseController {
     }
 
     /**
+     * query project list paging
+     *
+     * @param loginUser login user
+     * @param searchVal search value
+     * @param pageSize page size
+     * @param pageNo page number
+     * @return project list which the login user have permission to see
+     */
+    @ApiOperation(value = "queryProjectListPagingByUser", notes = "QUERY_PROJECT_LIST_PAGING_BY_USER_NOTES")
+    @ApiImplicitParams({
+        @ApiImplicitParam(name = "searchVal", value = "SEARCH_VAL", dataType = "String"),
+        @ApiImplicitParam(name = "pageSize", value = "PAGE_SIZE", required = true, dataType = "Int", example = "10"),
+        @ApiImplicitParam(name = "pageNo", value = "PAGE_NO", required = true, dataType = "Int", example = "1")
+    })
+    @GetMapping("/user-project-paging")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiException(LOGIN_USER_QUERY_PROJECT_LIST_PAGING_ERROR)
+    @AccessLogAnnotation(ignoreRequestArgs = "loginUser")
+    public Result queryProjectListPagingByUser(@ApiIgnore @RequestAttribute(value = Constants.SESSION_USER) User loginUser,
+                                         @RequestParam(value = "searchVal", required = false) String searchVal,
+                                         @RequestParam("pageSize") Integer pageSize,
+                                         @RequestParam("pageNo") Integer pageNo
+    ) {
+
+        Result result = checkPageParams(pageNo, pageSize);
+        if (!result.checkResult()) {
+            return result;
+        }
+        searchVal = ParameterUtils.handleEscapes(searchVal);
+        result = projectService.queryProjectListPagingByUser(loginUser, pageSize, pageNo, searchVal);
+        return result;
+    }
+
+    /**
      * delete project by code
      *
      * @param loginUser login user
@@ -256,6 +290,27 @@ public class ProjectController extends BaseController {
     public Result queryAuthorizedUser(@ApiIgnore @RequestAttribute(value = Constants.SESSION_USER) User loginUser,
             @RequestParam("projectCode") Long projectCode) {
         Map<String, Object> result = this.projectService.queryAuthorizedUser(loginUser, projectCode);
+        return this.returnDataList(result);
+    }
+
+    /**
+     * query unauthorized user
+     *
+     * @param loginUser     login user
+     * @param projectCode   project code
+     * @return users        who not have permission for the specified project
+     */
+    @ApiOperation(value = "queryUnauthorizedUser", notes = "QUERY_UNAUTHORIZED_USER_NOTES")
+    @ApiImplicitParams({
+        @ApiImplicitParam(name = "projectCode", value = "PROJECT_CODE", dataType = "Long", example = "100")
+    })
+    @GetMapping(value = "/unauth-user")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiException(QUERY_AUTHORIZED_USER)
+    @AccessLogAnnotation(ignoreRequestArgs = "loginUser")
+    public Result queryUnauthorizedUser(@ApiIgnore @RequestAttribute(value = Constants.SESSION_USER) User loginUser,
+                                      @RequestParam("projectCode") Long projectCode) {
+        Map<String, Object> result = this.projectService.queryUnauthorizedUser(loginUser, projectCode);
         return this.returnDataList(result);
     }
 

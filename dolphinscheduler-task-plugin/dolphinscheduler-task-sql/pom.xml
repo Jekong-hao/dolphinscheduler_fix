@@ -53,6 +53,5 @@
             <artifactId>jackson-annotations</artifactId>
             <scope>provided</scope>
         </dependency>
-
     </dependencies>
 </project>

@@ -81,6 +81,17 @@ public interface ProjectService {
     Result queryProjectListPaging(User loginUser, Integer pageSize, Integer pageNo, String searchVal);
 
     /**
+     * admin can view all projects
+     *
+     * @param loginUser login user
+     * @param searchVal search value
+     * @param pageSize page size
+     * @param pageNo page number
+     * @return project list which the login user have permission to see
+     */
+    Result queryProjectListPagingByUser(User loginUser, Integer pageSize, Integer pageNo, String searchVal);
+
+    /**
      * delete project by code
      *
      * @param loginUser login user
@@ -127,6 +138,15 @@ public interface ProjectService {
      * @return users        who have permission for the specified project
      */
     Map<String, Object> queryAuthorizedUser(User loginUser, Long projectCode);
+
+    /**
+     * query authorized user
+     *
+     * @param loginUser     login user
+     * @param projectCode   project code
+     * @return users        who not have permission for the specified project
+     */
+    Map<String, Object> queryUnauthorizedUser(User loginUser, Long projectCode);
 
     /**
      * query authorized project

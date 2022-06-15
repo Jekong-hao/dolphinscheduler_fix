@@ -256,7 +256,7 @@ public class SqlTask extends AbstractTaskExecutor {
                     baseConnectionParam.getUser(),
                     PasswordUtils.decodePassword(baseConnectionParam.getPassword()),
                     baseConnectionParam.getJdbcUrl(),
-                    baseConnectionParam.getOther(),
+                    baseConnectionParam.getOther().replaceAll("SSL=1", "ssl=true").replaceAll("ssl=1", "ssl=true"),
                     sqlFile
                 );
 //                String rawScript = String.format("sudo -u hive beeline -n %s -p \"%s\" -u \"%s\" -f %s",

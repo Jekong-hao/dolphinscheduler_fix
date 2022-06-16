@@ -122,7 +122,7 @@ public class SqlTask extends AbstractTaskExecutor {
      */
     private static final String DEFAULT_SQL_SPLIT_CHAR = ";";
 
-    private static final String DEFAULT_SQL_RGEX = "\\$\\{(.*)\\}";
+    private static final String DEFAULT_SQL_RGEX = "\\$\\{(.*?)\\}";
 
     /**
      * Abstract Yarn Task
@@ -486,13 +486,15 @@ public class SqlTask extends AbstractTaskExecutor {
             if (timeoutFlag) {
                 stmt.setQueryTimeout(taskExecutionContext.getTaskTimeout());
             }
-            Map<Integer, Property> params = sqlBinds.getParamsMap();
-            if (params != null) {
-                for (Map.Entry<Integer, Property> entry : params.entrySet()) {
-                    Property prop = entry.getValue();
-                    ParameterUtils.setInParameter(entry.getKey(), stmt, prop.getType(), prop.getValue());
-                }
-            }
+//            Map<Integer, Property> params = sqlBinds.getParamsMap();
+//            System.out.println("------------------替换参数");
+//            if (params != null) {
+//                for (Map.Entry<Integer, Property> entry : params.entrySet()) {
+//                    Property prop = entry.getValue();
+//                    ParameterUtils.setInParameter(entry.getKey(), stmt, prop.getType(), prop.getValue());
+//                    System.out.println("------------------替换参数2");
+//                }
+//            }
             logger.info("prepare statement replace sql : {} ", stmt);
             return stmt;
         } catch (Exception exception) {

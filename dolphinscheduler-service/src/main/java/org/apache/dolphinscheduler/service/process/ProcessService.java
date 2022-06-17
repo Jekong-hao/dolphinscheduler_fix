@@ -2337,23 +2337,7 @@ public class ProcessService {
             taskDefinitionLog.setOperateTime(now);
             taskDefinitionLog.setOperator(operator.getId());
             taskDefinitionLog.setResourceIds(getResourceIds(taskDefinitionLog));
-            if (taskDefinitionLog.getCode() > 0 && taskDefinitionLog.getVersion() > 0) {
-                TaskDefinitionLog definitionCodeAndVersion = taskDefinitionLogMapper
-                        .queryByDefinitionCodeAndVersion(taskDefinitionLog.getCode(), taskDefinitionLog.getVersion());
-                if (definitionCodeAndVersion != null) {
-                    if (!taskDefinitionLog.equals(definitionCodeAndVersion)) {
-                        taskDefinitionLog.setUserId(definitionCodeAndVersion.getUserId());
-                        Integer version = taskDefinitionLogMapper.queryMaxVersionForDefinition(taskDefinitionLog.getCode());
-                        taskDefinitionLog.setVersion(version + 1);
-                        taskDefinitionLog.setCreateTime(definitionCodeAndVersion.getCreateTime());
-                        updateTaskDefinitionLogs.add(taskDefinitionLog);
-                    }
-                    continue;
-                }
-            }
-            taskDefinitionLog.setUserId(operator.getId());
-            taskDefinitionLog.setVersion(Constants.VERSION_FIRST);
-            taskDefinitionLog.setCreateTime(now);
+
             if (taskDefinitionLog.getCode() == 0) {
                 try {
                     taskDefinitionLog.setCode(CodeGenerateUtils.getInstance().genCode());
@@ -2362,15 +2346,36 @@ public class ProcessService {
                     return Constants.DEFINITION_FAILURE;
                 }
             }
-            // 依赖节点给定默认等待时间
-            if (taskDefinitionLog.getTaskType().equals(TaskType.DEPENDENT.getDesc())) {
-                if (taskDefinitionLog.getTimeoutFlag() == TimeoutFlag.CLOSE) {
-                    taskDefinitionLog.setTimeoutFlag(TimeoutFlag.OPEN);
-                    taskDefinitionLog.setTimeout(Constants.DEPENDENT_TASK_DEFAULT_TIMEOUT_MINUTE);
-                    taskDefinitionLog.setTimeoutNotifyStrategy(TaskTimeoutStrategy.FAILED);
-                }
+
+            if (taskDefinitionLog.getVersion() == 0) {
+                taskDefinitionLog.setVersion(Constants.VERSION_FIRST);
             }
-            newTaskDefinitionLogs.add(taskDefinitionLog);
+            // 新建task重复保存时，传入的version为0，需要查询历史task，防止保存相同的任务导致产生bug
+            TaskDefinitionLog definitionCodeAndVersion = taskDefinitionLogMapper
+                .queryByDefinitionCodeAndVersion(taskDefinitionLog.getCode(), taskDefinitionLog.getVersion());
+
+            if (definitionCodeAndVersion == null) {
+                // 依赖节点给定默认等待时间
+                if (taskDefinitionLog.getTaskType().equals(TaskType.DEPENDENT.getDesc())) {
+                    if (taskDefinitionLog.getTimeoutFlag() == TimeoutFlag.CLOSE) {
+                        taskDefinitionLog.setTimeoutFlag(TimeoutFlag.OPEN);
+                        taskDefinitionLog.setTimeout(Constants.DEPENDENT_TASK_DEFAULT_TIMEOUT_MINUTE);
+                        taskDefinitionLog.setTimeoutNotifyStrategy(TaskTimeoutStrategy.FAILED);
+                    }
+                }
+                taskDefinitionLog.setUserId(operator.getId());
+                taskDefinitionLog.setCreateTime(now);
+                newTaskDefinitionLogs.add(taskDefinitionLog);
+                continue;
+            }
+
+            if (!taskDefinitionLog.equals(definitionCodeAndVersion)) {
+                taskDefinitionLog.setUserId(definitionCodeAndVersion.getUserId());
+                Integer version = taskDefinitionLogMapper.queryMaxVersionForDefinition(taskDefinitionLog.getCode());
+                taskDefinitionLog.setVersion(version + 1);
+                taskDefinitionLog.setCreateTime(definitionCodeAndVersion.getCreateTime());
+                updateTaskDefinitionLogs.add(taskDefinitionLog);
+            }
         }
         int insertResult = 0;
         int updateResult = 0;

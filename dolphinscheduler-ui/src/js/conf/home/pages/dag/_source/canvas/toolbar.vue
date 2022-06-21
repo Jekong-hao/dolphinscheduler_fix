@@ -139,6 +139,26 @@
         class="toolbar-el-btn"
         type="primary"
         size="mini"
+        @click="_poponline(dagChart.processDefinition)"
+        icon="el-icon-top"
+        v-if="dagChart.type === 'definition' && releaseState === 'OFFLINE'"
+        :disabled="dagChart.perm != 7"
+        >{{ $t("online") }}</el-button
+      >
+      <el-button
+        class="toolbar-el-btn"
+        type="primary"
+        size="mini"
+        @click="_downline(dagChart.processDefinition)"
+        icon="el-icon-bottom"
+        v-if="dagChart.type === 'definition' && releaseState === 'ONLINE'"
+        :disabled="dagChart.perm != 7"
+        >{{ $t("offline") }}</el-button
+      >
+      <el-button
+        class="toolbar-el-btn"
+        type="primary"
+        size="mini"
         v-if="dagChart.type === 'definition'"
         @click="showVersions"
         icon="el-icon-info"
@@ -178,11 +198,11 @@
 
 <script>
   import { findComponentDownward } from '@/module/util/'
-  import { mapState } from 'vuex'
+  import { mapState, mapActions } from 'vuex'
 
   export default {
     name: 'dag-toolbar',
-    inject: ['dagChart'],
+    inject: ['dagChart', 'reload'],
     data () {
       return {
         canvasRef: null,
@@ -194,6 +214,8 @@
       ...mapState('dag', ['isDetails', 'releaseState'])
     },
     methods: {
+      ...mapActions('dag', ['editProcessState']),
+
       onSearch () {
         const canvas = this.getDagCanvasRef()
         canvas.navigateTo(this.searchText)
@@ -270,6 +292,37 @@
       },
       showVersions () {
         this.dagChart.showVersions()
+      },
+      /**
+       * Offline
+       */
+      _downline (item) {
+        this._upProcessState({
+          ...item,
+          releaseState: 'OFFLINE'
+        })
+        this.releaseState = 'OFFLINE'
+      },
+      /**
+       * online
+       */
+      _poponline (item) {
+        this._upProcessState({
+          ...item,
+          releaseState: 'ONLINE'
+        })
+        this.releaseState = 'ONLINE'
+      },
+      /**
+       * Edit state
+       */
+      _upProcessState (o) {
+        this.editProcessState(o).then(res => {
+          this.$message.success(res.msg)
+          this.reload()
+        }).catch(e => {
+          this.$message.error(e.msg || '')
+        })
       }
     }
   }

@@ -27,6 +27,11 @@
   import mNav from '@/module/components/nav/nav'
   export default {
     name: 'app',
+    provide () {
+      return {
+        reload: this.reload
+      }
+    },
     data () {
       return {
         isRenderRouterView: true

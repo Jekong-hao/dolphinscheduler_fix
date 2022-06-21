@@ -339,7 +339,7 @@ public class WorkflowExecuteThread implements Runnable {
             ITaskProcessor taskProcessor = activeTaskProcessorMaps.get(stateEvent.getTaskInstanceId());
             taskProcessor.action(TaskAction.TIMEOUT);
         } else {
-            processAlertManager.sendTaskTimeoutAlert(processInstance, taskInstance, taskInstance.getTaskDefine());
+            processAlertManager.sendTaskTimeoutAlert(processInstance, taskInstance);
         }
         return true;
     }
@@ -385,9 +385,11 @@ public class WorkflowExecuteThread implements Runnable {
     }
 
     private void taskFinished(TaskInstance task) {
-        logger.info("[process instance {}] handle task {} finish with state {}",
+        logger.info("[process instance {}] handle task {} code {} type {} finish with state {}",
                 this.getProcessInstance().getId(),
                 task.getId(),
+                task.getTaskCode(),
+                task.getTaskType(),
                 task.getState());
 
         // 当前任务是否可重试
@@ -413,6 +415,10 @@ public class WorkflowExecuteThread implements Runnable {
                 this.addTimeoutCheck(task);
                 this.addRetryCheck(task);
             } else {
+                logger.info("[process instance {}] task {} code {} retry submit.",
+                        this.getProcessInstance().getId(),
+                        task.getId(),
+                        task.getTaskCode());
                 submitStandByTask();
                 taskTimeoutCheckList.remove(task.getId());
                 taskRetryCheckList.remove(task.getId());
@@ -434,8 +440,16 @@ public class WorkflowExecuteThread implements Runnable {
                         || DagHelper.haveConditionsAfterNode(Long.toString(task.getTaskCode()), dag)) {
                     submitPostNode(Long.toString(task.getTaskCode()));
                 } else {
+                    // TODO bugfix
+                    // 当 processInstance.getFailureStrategy() == FailureStrategy.END 时，会有消息重复
+                    // 需要过滤已经处理的event，或者在event源头控制
+                    // send alert message
+                    this.processAlertManager.sendTaskFailureAlert(processInstance, task);
                     errorTaskList.put(Long.toString(task.getTaskCode()), task);
                     if (processInstance.getFailureStrategy() == FailureStrategy.END) {
+                        logger.info("[process instance {}] process failure strategy {} , will kill all tasks.",
+                                this.getProcessInstance().getId(),
+                                processInstance.getFailureStrategy().getDescp());
                         killAllTasks();
                     }
                 }
@@ -1468,11 +1482,16 @@ public class WorkflowExecuteThread implements Runnable {
      * close the on going tasks
      */
     private void killAllTasks() {
-        logger.info("[process instance {}] kill called, num: {}", processInstance.getId(),
-                activeTaskProcessorMaps.size());
+        logger.info("[process instance {}] kill called, num: {}, task instance ids [{}]", processInstance.getId(),
+                activeTaskProcessorMaps.size(),
+                activeTaskProcessorMaps.keySet().stream().collect(Collectors.toList()));
 
         if (readyToSubmitTaskQueue.size() > 0) {
             readyToSubmitTaskQueue.clear();
+        }
+
+        if (taskRetryCheckList.size() > 0) {
+            this.taskRetryCheckList.clear();
         }
 
         for (int taskId : activeTaskProcessorMaps.keySet()) {
@@ -1489,11 +1508,6 @@ public class WorkflowExecuteThread implements Runnable {
                         this.processInstance.getId());
                 taskResponseService.addResponse(taskResponseEvent);
             }
-        }
-
-        if (taskRetryCheckList.size() > 0) {
-            this.taskRetryCheckList.clear();
-//            this.addProcessStopEvent(processInstance);
         }
 
         this.addProcessStopEvent(processInstance);

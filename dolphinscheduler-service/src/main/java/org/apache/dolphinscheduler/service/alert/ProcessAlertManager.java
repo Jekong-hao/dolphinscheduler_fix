@@ -276,13 +276,54 @@ public class ProcessAlertManager {
         saveMessage2DB(title, content.toString(), processInstance.getWarningGroupId());
     }
 
-    public void sendTaskTimeoutAlert(ProcessInstance processInstance, TaskInstance taskInstance, TaskDefinition taskDefinition) {
-        String title = "任务超时告警";
-        StringBuffer content = processInstanceAlertContent(processInstance);
-        content.append("超时任务：").append(taskDefinition.getName()).append(DEFAULT_NEW_LINE_CHAR);
+    /**
+     * 任务超时告警
+     * @param processInstance
+     * @param taskInstance
+     */
+    public void sendTaskTimeoutAlert(ProcessInstance processInstance, TaskInstance taskInstance) {
+        try {
+            String title = "任务超时告警";
+            StringBuffer content = processInstanceAlertContent(processInstance);
+            TaskDefinition taskDefinition =  taskInstance.getTaskDefine();
+            if (null == taskDefinition) {
+                taskDefinition = processService.findTaskDefinition(taskInstance.getTaskCode(), taskInstance.getTaskDefinitionVersion());
+            }
+            content.append("超时任务：").append(taskDefinition.getName()).append(DEFAULT_NEW_LINE_CHAR);
+            content.append("任务开始时间：").append(taskInstance.getStartTime()==null?"":df.format(taskInstance.getStartTime())).append(DEFAULT_NEW_LINE_CHAR);
+            content.append("任务结算时间：").append(taskInstance.getEndTime()==null?"":df.format(taskInstance.getEndTime())).append(DEFAULT_NEW_LINE_CHAR);
+            content.append("任务运行状态：").append(taskInstance.getState().getDescp()).append(DEFAULT_NEW_LINE_CHAR);
 
-//        alertDao.sendTaskTimeoutAlert(processInstance, taskInstance, taskDefinition);
-        saveMessage2DB(title, content.toString(), processInstance.getWarningGroupId());
+            saveMessage2DB(title, content.toString(), processInstance.getWarningGroupId());
+        } catch (Exception e) {
+            logger.warn("Send alert message failure.", e);
+        }
+
+    }
+
+    /**
+     * 任务失败告警
+     * @param processInstance
+     * @param taskInstance
+     */
+    public void sendTaskFailureAlert(ProcessInstance processInstance, TaskInstance taskInstance) {
+        try {
+            String title = "任务失败告警";
+            StringBuffer content = processInstanceAlertContent(processInstance);
+            TaskDefinition taskDefinition =  taskInstance.getTaskDefine();
+            if (null == taskDefinition) {
+                taskDefinition = processService.findTaskDefinition(taskInstance.getTaskCode(), taskInstance.getTaskDefinitionVersion());
+            }
+            content.append("失败任务：").append(taskDefinition.getName()).append(DEFAULT_NEW_LINE_CHAR);
+            content.append("任务开始时间：").append(taskInstance.getStartTime()==null?"":df.format(taskInstance.getStartTime())).append(DEFAULT_NEW_LINE_CHAR);
+            content.append("任务结算时间：").append(taskInstance.getEndTime()==null?"":df.format(taskInstance.getEndTime())).append(DEFAULT_NEW_LINE_CHAR);
+            content.append("任务运行状态：").append(taskInstance.getState().getDescp()).append(DEFAULT_NEW_LINE_CHAR);
+
+            saveMessage2DB(title, content.toString(), processInstance.getWarningGroupId());
+        } catch (Exception e) {
+            logger.warn("Send alert message failure.", e);
+        }
+
     }
 
     private StringBuffer processInstanceAlertContent(ProcessInstance processInstance){

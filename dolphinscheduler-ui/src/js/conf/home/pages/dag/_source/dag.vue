@@ -158,7 +158,8 @@
         logDialog: false,
         logTaskInstance: null,
         taskInstances: [],
-        perm: 7
+        perm: 7,
+        processDefinition: null
       }
     },
     mounted () {
@@ -170,6 +171,7 @@
       } else if (this.type === 'definition') {
         this.definitionCode = this.$route.params.code
         this.perm = this.definitionDetails.perm
+        this.processDefinition = this.definitionDetails.processDefinition
       }
 
       // auto resize canvas

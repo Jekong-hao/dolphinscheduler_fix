@@ -36,7 +36,8 @@
         // state
         releaseState: '',
         // permission
-        perm: 7
+        perm: 7,
+        processDefinition: null
       }
     },
     provide () {
@@ -75,6 +76,7 @@
           this.setIsDetails(item.processDefinition.releaseState === 'ONLINE')
           this.releaseState = item.processDefinition.releaseState
           this.perm = item.processDefinition.perm
+          this.processDefinition = item.processDefinition
           this.isLoading = false
           // Whether to pop up the box?
           Affirm.init(this.$root)

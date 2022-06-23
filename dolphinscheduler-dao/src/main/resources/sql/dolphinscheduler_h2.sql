@@ -1065,15 +1065,3 @@ CREATE TABLE `t_ds_relation_gray_instance_log` (
                                                    `update_time` datetime NOT NULL COMMENT 'update time',
                                                    PRIMARY KEY (`id`)
 ) ;
-
-DROP TABLE IF EXISTS `t_ds_relation_process_user`CASCADE;
-CREATE TABLE `t_ds_relation_process_user` (
-  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT 'key',
-  `user_id` int(11) NOT NULL COMMENT 'user id',
-  `process_id` int(11) DEFAULT NULL COMMENT 'process id',
-  `perm` int(11) DEFAULT '1' COMMENT 'limits of authority',
-  `create_time` datetime DEFAULT NULL COMMENT 'create time',
-  `update_time` datetime DEFAULT NULL COMMENT 'update time',
-  PRIMARY KEY (`id`),
-  KEY `user_id_index` (`user_id`) USING BTREE
-);

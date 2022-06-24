@@ -24,6 +24,7 @@ import org.apache.dolphinscheduler.dao.entity.TaskDefinitionLog;
 import org.apache.ibatis.annotations.MapKey;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -92,6 +93,20 @@ public interface TaskDefinitionMapper extends BaseMapper<TaskDefinition> {
      * @return int
      */
     int deleteByCode(@Param("code") long code);
+
+    /**
+     * delete task definition by codes
+     *
+     * @param codes codes
+     * @return int
+     */
+    int deleteByCodes(@Param("codes") List<Long> codes);
+
+    /**
+     * @param taskDefinitions taskDefinition list
+     * @return list
+     */
+    List<TaskDefinition> queryByTaskDefinitions(@Param("taskDefinitions") Collection<TaskDefinition> taskDefinitions);
 
     /**
      * batch insert task definitions

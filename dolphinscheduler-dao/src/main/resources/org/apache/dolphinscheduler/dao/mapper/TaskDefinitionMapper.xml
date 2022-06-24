@@ -73,6 +73,29 @@
         delete from t_ds_task_definition
         where code = #{code}
     </delete>
+    <delete id="deleteByCodes">
+        delete from t_ds_task_definition
+        where code = -1
+        <if test="codes != null and codes.size != 0">
+            or code in
+            <foreach collection="codes" index="index" item="code" open="(" separator="," close=")">
+                #{code}
+            </foreach>
+        </if>
+    </delete>
+    <select id="queryByTaskDefinitions" resultType="org.apache.dolphinscheduler.dao.entity.TaskDefinition">
+        select
+        <include refid="baseSql"/>
+        from t_ds_task_definition_log
+        WHERE  1 = 1
+        <if test="taskDefinitions != null and taskDefinitions.size != 0">
+            and
+            <foreach collection="taskDefinitions" index="index" item="item" open="(" separator=" or " close=")">
+                (code = #{item.code}
+                and version = #{item.version})
+            </foreach>
+        </if>
+    </select>
     <insert id="batchInsert">
         insert into t_ds_task_definition (code, name, version, description, project_code, user_id,
         task_type, task_params, flag, task_priority, worker_group, environment_code, fail_retry_times, fail_retry_interval,

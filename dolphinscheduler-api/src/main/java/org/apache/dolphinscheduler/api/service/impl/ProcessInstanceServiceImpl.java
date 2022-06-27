@@ -213,7 +213,7 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
             putMsg(result, Status.SUCCESS);
             // 权限管理
             ProcessUser processUser = processUserMapper.queryProcessRelation(processDefinition.getId(), loginUser.getId());
-            if (processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER || processUser != null) {
+            if (project.getUserId() == loginUser.getId() || processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER || processUser != null) {
                 processInstance.setPerm(Constants.ALL_PERMISSIONS);
             } else {
                 processInstance.setPerm(Constants.READ_PERMISSION);
@@ -301,7 +301,7 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
             // 用于对于工作流的操作权限设置
             ProcessDefinition processDefinition = processDefineMapper.queryByCode(processInstance.getProcessDefinitionCode());
             ProcessUser processUser = processUserMapper.queryProcessRelation(processDefinition.getId(), loginUser.getId());
-            if (processUser != null || processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER) {
+            if (processUser != null || project.getUserId() == loginUser.getId()  || processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER) {
                 processInstance.setPerm(Constants.ALL_PERMISSIONS);
             } else {
                 processInstance.setPerm(Constants.READ_PERMISSION);

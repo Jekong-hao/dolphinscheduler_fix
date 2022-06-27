@@ -168,7 +168,7 @@ public class TaskInstanceServiceImpl extends BaseServiceImpl implements TaskInst
             // 用于task的操作权限设置
             ProcessDefinition processDefinition = processDefineMapper.queryByCode(taskInstance.getProcessDefinitionCode());
             ProcessUser processUser = processUserMapper.queryProcessRelation(processDefinition.getId(), loginUser.getId());
-            if (processUser != null || processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER) {
+            if (project.getUserId() == loginUser.getId() || processUser != null || processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER) {
                 taskInstance.setPerm(Constants.ALL_PERMISSIONS);
             } else {
                 taskInstance.setPerm(Constants.READ_PERMISSION);

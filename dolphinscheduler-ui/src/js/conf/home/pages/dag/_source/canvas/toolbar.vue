@@ -216,9 +216,24 @@
     methods: {
       ...mapActions('dag', ['editProcessState']),
 
+      inSearch () {
+        if (this.$route.name === 'projects-instance-details') {
+          console.log(111111)
+        }
+        console.log('ID:', this.$route.params.id)
+      },
       onSearch () {
         const canvas = this.getDagCanvasRef()
-        canvas.navigateTo(this.searchText)
+        if (this.$route.query.taskName == null) {
+          console.log(1111111111)
+          canvas.navigateTo(this.searchText)
+        } else {
+          console.log(2222222)
+          console.log(this.$route.query.taskName)
+          canvas.navigateTo(this.$route.query.taskName)
+          this.$route.query.taskName = null
+          console.log(333333333333)
+        }
       },
       showSearchInput () {
         this.searchInputVisible = true
@@ -230,7 +245,9 @@
         }
       },
       getDagCanvasRef () {
+        console.log(444444)
         if (this.canvasRef) {
+          console.log(5555555555)
           return this.canvasRef
         } else {
           const canvas = findComponentDownward(this.dagChart, 'dag-canvas')
@@ -324,7 +341,13 @@
           this.$message.error(e.msg || '')
         })
       }
+    },
+    created () {
+      this.onSearch()
     }
+    // mounted () {
+    //   this.onSearch()
+    // }
   }
 </script>
 

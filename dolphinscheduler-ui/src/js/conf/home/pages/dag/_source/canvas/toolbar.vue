@@ -220,7 +220,12 @@
 
       onSearch () {
         const canvas = this.getDagCanvasRef()
-        canvas.navigateTo(this.searchText)
+        if (this.$route.query.taskName == null) {
+          canvas.navigateTo(this.searchText)
+        } else {
+          canvas.navigateTo(this.$route.query.taskName)
+          this.$route.query.taskName = null
+        }
       },
       showSearchInput () {
         this.searchInputVisible = true
@@ -330,6 +335,9 @@
           this.$message.error(e.msg || '')
         })
       }
+    },
+    mounted () {
+      setTimeout(() => { this.onSearch() }, 1000)
     }
   }
 </script>

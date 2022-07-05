@@ -132,6 +132,7 @@ public class TaskPriorityQueueConsumer extends Thread {
             ExecutionContext executionContext = new ExecutionContext(context.toCommand(), ExecutorType.WORKER, context.getWorkerGroup());
 
             if (taskInstanceIsFinalState(taskPriority.getTaskId())) {
+                // 这个task已经完成
                 // when task finish, ignore this task, there is no need to dispatch anymore
                 return true;
             } else {

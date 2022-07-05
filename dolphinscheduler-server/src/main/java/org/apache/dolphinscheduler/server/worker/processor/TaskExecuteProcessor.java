@@ -158,6 +158,7 @@ public class TaskExecuteProcessor implements NettyRequestProcessor {
             logger.error("[process instance {}] worker create execLocalPath: {}",
                     taskExecutionContext.getProcessInstanceId(),
                     execLocalPath, ex);
+            // 如果创建目录不成功,就直接删除掉缓存中的数据
             TaskExecutionContextCacheManager.removeByTaskInstanceId(taskExecutionContext.getTaskInstanceId());
         }
 

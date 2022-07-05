@@ -577,6 +577,7 @@ public class WorkflowExecuteThread implements Runnable {
         initTaskQueue();
 
         List<TaskInstance> pendingTaskInstanceList = new ArrayList<>();
+        // 在此处初始化taskInstance到数据库
         initTaskInstanceToDb(pendingTaskInstanceList);
         for(TaskInstance taskInstance : pendingTaskInstanceList) {
             this.processService.saveTaskInstance(taskInstance);

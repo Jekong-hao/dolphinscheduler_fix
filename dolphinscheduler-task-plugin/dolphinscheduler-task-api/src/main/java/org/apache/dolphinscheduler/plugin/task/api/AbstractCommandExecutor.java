@@ -142,6 +142,7 @@ public abstract class AbstractCommandExecutor {
     public TaskResponse run(String execCommand) throws IOException, InterruptedException {
         TaskResponse result = new TaskResponse();
         int taskInstanceId = taskRequest.getTaskInstanceId();
+        // 之前缓存中的taskInstance已经被删除,所以这里就抛出了kill
         if (null == TaskExecutionContextCacheManager.getByTaskInstanceId(taskInstanceId)) {
             result.setExitStatusCode(EXIT_CODE_KILL);
             return result;

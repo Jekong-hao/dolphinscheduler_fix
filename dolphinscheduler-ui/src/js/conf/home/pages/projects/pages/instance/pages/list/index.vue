@@ -78,6 +78,8 @@
           host: '',
           // State
           stateType: '',
+          // running type
+          runningType: '',
           // Start Time
           startDate: '',
           // End Time

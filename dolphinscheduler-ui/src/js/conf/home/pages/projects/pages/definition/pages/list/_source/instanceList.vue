@@ -17,7 +17,7 @@
 <template>
 
   <div class="instance-container">
-    <div class="table-box">
+    <div class="table-box" v-if="processInstanceData.processInstances.length > 0">
       <el-table :data="processInstanceData.processInstances" size="mini" style="width: 100%" row-key="name" lazy :load="loadTask"  :tree-props="{hasChildren: 'hasChildren'}">
         <el-table-column prop="id" :label="$t('#')" width="100"></el-table-column>
         <el-table-column :label="$t('Name')" min-width="200">

@@ -121,6 +121,7 @@ public interface ProcessInstanceMapper extends BaseMapper<ProcessInstance> {
                                                           @Param("searchVal") String searchVal,
                                                           @Param("executorId") Integer executorId,
                                                           @Param("states") int[] statusArray,
+                                                          @Param("commands") int[] runningArray,
                                                           @Param("host") String host,
                                                           @Param("startTime") Date startTime,
                                                           @Param("endTime") Date endTime);

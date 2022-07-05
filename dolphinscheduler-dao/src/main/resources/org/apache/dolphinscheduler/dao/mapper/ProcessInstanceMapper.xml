@@ -160,6 +160,12 @@
                 #{i}
             </foreach>
         </if>
+        <if test="commands != null and commands.length > 0">
+            and instance.command_type in
+            <foreach collection="commands" index="index" item="i" open="(" separator="," close=")">
+                #{i}
+            </foreach>
+        </if>
         <if test="host != null and host != ''">
             and instance.host like concat('%', #{host}, '%')
         </if>

@@ -601,8 +601,8 @@ public class SqlTask extends AbstractTaskExecutor {
 
     private String replaceOriginalValue(String content, String rgex, Map<String, Property> sqlParamsMap) {
         Pattern pattern = Pattern.compile(rgex);
+        Matcher m = pattern.matcher(content);
         while (true) {
-            Matcher m = pattern.matcher(content);
             if (!m.find()) {
                 break;
             }

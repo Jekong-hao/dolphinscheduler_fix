@@ -365,6 +365,7 @@ export default {
   'Delete selected lines or nodes': '删除选中的线或节点',
   'Full Screen': '全屏',
   Unpublished: '未发布',
+  'All Run Type': '全部运行类型',
   'Start Process': '启动工作流',
   'Execute from the current node': '从当前节点开始执行',
   'Recover tolerance fault process': '恢复被容错的工作流',

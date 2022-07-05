@@ -183,8 +183,8 @@
   import mRelatedItems from './relatedItems'
   import { mapActions, mapState } from 'vuex'
   import { publishStatus } from '@/conf/home/pages/dag/_source/config'
-  import mVersions from './versions'
   import mInstanceList from './instanceList'
+  import mVersions from './versions'
 
   export default {
     name: 'definition-list',
@@ -633,7 +633,7 @@
     computed: {
       ...mapState('dag', ['projectCode'])
     },
-    components: { mInstanceList, mVersions, mStart, mTiming, mRelatedItems }
+    components: { mVersions, mInstanceList, mStart, mTiming, mRelatedItems }
   }
 </script>
 

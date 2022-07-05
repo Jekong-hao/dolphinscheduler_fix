@@ -46,8 +46,7 @@
       <m-udp ref="mUdp" @onUdp="onSave" @close="cancelSave"></m-udp>
     </el-dialog>
     <el-dialog
-      :title="$t('Process Inst
-      ance')"
+      :title="$t('Process Instance')"
       :visible.sync="instanceDialog"
       width="auto"
     >

@@ -96,6 +96,19 @@ export default {
   },
 
   /**
+   * get process instance by process definition code
+   */
+  getProcessInstancesPageByCode ({ state }, payload) {
+    return new Promise((resolve, reject) => {
+      io.get(`projects/${state.projectCode}/process-instances/${payload.code}/processInstances`, payload, res => {
+        resolve(res)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+
+  /**
    * switch process definition version
    */
   switchProcessDefinitionVersion ({ state }, payload) {
@@ -760,6 +773,20 @@ export default {
     return new Promise((resolve, reject) => {
       io.get(`projects/${state.projectCode}/task-instances`, payload, res => {
         resolve(res.data)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+  /**
+   * Query task instance list by processInstanceId
+   */
+  getTaskInstanceListByProcessInstanceId ({ state }, payload) {
+    return new Promise((resolve, reject) => {
+      io.get(`projects/${state.projectCode}/process-instances/${payload}/tasks`, {
+        processInstanceId: payload
+      }, res => {
+        resolve(res)
       }).catch(e => {
         reject(e)
       })

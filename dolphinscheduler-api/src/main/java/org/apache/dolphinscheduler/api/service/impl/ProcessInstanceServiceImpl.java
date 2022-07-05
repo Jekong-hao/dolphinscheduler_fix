@@ -352,7 +352,9 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
             }
 
         }
-
+        for (TaskInstance taskInstance : taskInstanceList ) {
+            taskInstance.setDuration(DateUtils.format2Duration(taskInstance.getStartTime(), taskInstance.getEndTime()));
+        }
         resultMap.put(TASK_LIST, taskInstanceList);
         result.put(DATA_LIST, resultMap);
 
@@ -748,6 +750,33 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
             }
         }
         return localUserDefParams;
+    }
+
+    @Override
+    public Result queryProcessInstancesPageByCode(User loginUser, long projectCode, int pageNo, int pageSize, long processDefinitionCode) {
+        Result result = new Result();
+        Project project = projectMapper.queryByCode(projectCode);
+        // check user access for project
+        Map<String, Object> checkResult = projectService.checkProjectAndAuth(loginUser, project, projectCode);
+        Status resultStatus = (Status) checkResult.get(Constants.STATUS);
+        if (resultStatus != Status.SUCCESS) {
+            putMsg(result, resultStatus);
+            return result;
+        }
+        PageInfo<ProcessInstance> pageInfo = new PageInfo<>(pageNo, pageSize);
+        Page<ProcessInstance> page = new Page<>(pageNo, pageSize);
+        IPage<ProcessInstance> processInstanceIPage = processInstanceMapper.queryProcessInstancesPageByCode(page, processDefinitionCode, projectCode);
+        List<ProcessInstance> processInstances = processInstanceIPage.getRecords();
+        for (ProcessInstance processInstance : processInstances) {
+            processInstance.setHasChildren(true);
+            processInstance.setDuration(DateUtils.format2Duration(processInstance.getStartTime(), processInstance.getEndTime()));
+        }
+
+        pageInfo.setTotalList(processInstances);
+        pageInfo.setTotal((int) processInstanceIPage.getTotal());
+        result.setData(pageInfo);
+        putMsg(result, Status.SUCCESS);
+        return result;
     }
 
     /**

@@ -199,4 +199,15 @@ public interface ProcessInstanceService {
      */
     List<ProcessInstance> queryByProcessDefineCode(Long processDefinitionCode,
                                                    int size);
+    /**
+     * query process instance by processDefinitionCode
+     *
+     * @param loginUser login user
+     * @param projectCode project code
+     * @param pageNo page number
+     * @param pageSize page size
+     * @param processDefinitionCode processDefinitionCode
+     * @return process instance list
+     */
+    Result queryProcessInstancesPageByCode(User loginUser, long projectCode, int pageNo, int pageSize, long processDefinitionCode);
 }

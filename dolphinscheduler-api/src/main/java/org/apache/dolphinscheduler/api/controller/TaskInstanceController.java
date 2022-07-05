@@ -17,9 +17,6 @@
 
 package org.apache.dolphinscheduler.api.controller;
 
-import static org.apache.dolphinscheduler.api.enums.Status.FORCE_TASK_SUCCESS_ERROR;
-import static org.apache.dolphinscheduler.api.enums.Status.QUERY_TASK_LIST_PAGING_ERROR;
-
 import org.apache.dolphinscheduler.api.aspect.AccessLogAnnotation;
 import org.apache.dolphinscheduler.api.exceptions.ApiException;
 import org.apache.dolphinscheduler.api.service.TaskInstanceService;
@@ -29,6 +26,7 @@ import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
 import org.apache.dolphinscheduler.common.utils.ParameterUtils;
 import org.apache.dolphinscheduler.dao.entity.User;
 
+import java.io.IOException;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +46,8 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import springfox.documentation.annotations.ApiIgnore;
+
+import static org.apache.dolphinscheduler.api.enums.Status.*;
 
 /**
  * task instance controller
@@ -140,4 +140,26 @@ public class TaskInstanceController extends BaseController {
         return returnDataList(result);
     }
 
+//    /**
+//     * query task list by process instance id
+//     *
+//     * @param loginUser login user
+//     * @param projectCode project code
+//     * @param id process instance id
+//     * @return task list for the process instance
+//     */
+//    @ApiOperation(value = "queryTaskListByProcessId", notes = "QUERY_TASK_LIST_BY_PROCESS_INSTANCE_ID_NOTES")
+//    @ApiImplicitParams({
+//        @ApiImplicitParam(name = "id", value = "PROCESS_INSTANCE_ID", required = true, dataType = "Int", example = "100")
+//    })
+//    @GetMapping(value = "/{processId}")
+//    @ResponseStatus(HttpStatus.OK)
+//    @ApiException(QUERY_TASK_LIST_BY_PROCESS_INSTANCE_ID_ERROR)
+//    @AccessLogAnnotation(ignoreRequestArgs = "loginUser")
+//    public Result queryTaskListByProcessId(@ApiIgnore @RequestAttribute(value = Constants.SESSION_USER) User loginUser,
+//                                           @ApiParam(name = "projectCode", value = "PROJECT_CODE", required = true) @PathVariable long projectCode,
+//                                           @PathVariable("processId") Integer processId) throws IOException {
+//        Map<String, Object> result = processInstanceService.queryTaskListByProcessId(loginUser, projectCode, processId);
+//        return returnDataList(result);
+//    }
 }

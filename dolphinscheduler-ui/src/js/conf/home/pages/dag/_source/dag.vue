@@ -46,6 +46,19 @@
       <m-udp ref="mUdp" @onUdp="onSave" @close="cancelSave"></m-udp>
     </el-dialog>
     <el-dialog
+      :title="$t('Process Inst
+      ance')"
+      :visible.sync="instanceDialog"
+      width="auto"
+    >
+      <m-instance-list
+        :processInstanceData="processInstanceData"
+        :isInstance="type === 'instance'"
+        @mInstanceGetProcessInstancesPage="getProcessInstances"
+        @closeInstance="closeInstance"
+      ></m-instance-list>
+    </el-dialog>
+    <el-dialog
       :title="$t('Please set the parameters before starting')"
       :visible.sync="startDialog"
       width="auto"
@@ -91,6 +104,7 @@
   import { mapActions, mapState, mapMutations } from 'vuex'
   import mUdp from '../_source/udp/udp.vue'
   import mStart from '../../projects/pages/definition/pages/list/_source/start.vue'
+  import mInstanceList from '../../projects/pages/definition/pages/list/_source/instanceList.vue'
   import edgeEditModel from './canvas/edgeEditModel.vue'
   import mVersions from '../../projects/pages/definition/pages/list/_source/versions.vue'
   import mLog from './formModel/log.vue'
@@ -110,6 +124,7 @@
       mFormModel,
       mUdp,
       mStart,
+      mInstanceList,
       edgeEditModel,
       mVersions,
       mLog
@@ -134,6 +149,13 @@
         nodeData: { ...DEFAULT_NODE_DATA },
         // whether the save dialog is visible
         saveDialog: false,
+        instanceDialog: false,
+        processInstanceData: {
+          processInstances: [],
+          total: null,
+          pageNo: null,
+          pageSize: null
+        },
         // whether the start dialog is visible
         startDialog: false,
         startTaskName: '',
@@ -220,7 +242,8 @@
         'genTaskCodeList',
         'switchProcessDefinitionVersion',
         'getProcessDefinitionVersionsPage',
-        'deleteProcessDefinitionVersion'
+        'deleteProcessDefinitionVersion',
+        'getProcessInstancesPageByCode'
       ]),
       ...mapMutations('dag', [
         'addTask',
@@ -683,6 +706,49 @@
               pageSize: 10,
               processDefinitionCode: processDefinitionCode
             })
+          })
+          .catch((e) => {
+            this.$message.error(e.msg || '')
+          })
+      },
+      /**
+       * View historical workflow instances
+       */
+      showInstances () {
+        this.getProcessInstancesPageByCode({
+          pageNo: 1,
+          pageSize: 10,
+          code: this.definitionCode
+        }).then(res => {
+          let processInstances = res.data.totalList
+          let total = res.data.total
+          let pageSize = res.data.pageSize
+          let pageNo = res.data.currentPage
+          this.processInstanceData.processInstances =
+            processInstances
+          this.processInstanceData.processDefinitionCode = this.definitionCode
+          this.processInstanceData.total = total
+          this.processInstanceData.pageNo = pageNo
+          this.processInstanceData.pageSize = pageSize
+          this.instanceDialog = true
+        }).catch((e) => {
+          this.$message.error(e.msg || '')
+        })
+      },
+      closeInstance () {
+        this.instanceDialog = false
+      },
+      getProcessInstances ({ pageNo, pageSize, processDefinitionCode }) {
+        this.getProcessInstancesPageByCode({
+          pageNo: pageNo,
+          pageSize: pageSize,
+          code: processDefinitionCode
+        })
+          .then((res) => {
+            this.processInstanceData.processInstances = res.data.totalList
+            this.processInstanceData.total = res.data.total
+            this.processInstanceData.pageSize = res.data.pageSize
+            this.processInstanceData.pageNo = res.data.currentPage
           })
           .catch((e) => {
             this.$message.error(e.msg || '')

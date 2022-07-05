@@ -414,7 +414,7 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
             }
             // 用于对于工作流的操作权限设置
             ProcessUser processUser = processUserMapper.queryProcessRelation(pd.getId(), loginUser.getId());
-            if (pd.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER || processUser != null) {
+            if (project.getUserId() == loginUser.getId() || pd.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER || processUser != null) {
                 pd.setPerm(Constants.ALL_PERMISSIONS);
             } else {
                 pd.setPerm(Constants.READ_PERMISSION);
@@ -464,7 +464,7 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
             putMsg(result, Status.SUCCESS);
             // 用于对于工作流的操作权限设置
             ProcessUser processUser = processUserMapper.queryProcessRelation(processDefinition.getId(), loginUser.getId());
-            if (processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER || processUser != null) {
+            if (project.getUserId() == loginUser.getId() || processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER || processUser != null) {
                 processDefinition.setPerm(Constants.ALL_PERMISSIONS);
             } else {
                 processDefinition.setPerm(Constants.READ_PERMISSION);
@@ -718,6 +718,16 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
             putMsg(result, Status.DELETE_PROCESS_DEFINE_BY_CODE_ERROR);
             throw new ServiceException(Status.DELETE_PROCESS_DEFINE_BY_CODE_ERROR);
         }
+
+        List<ProcessTaskRelation> processTaskRelations = processTaskRelationMapper.queryByProcessCode(project.getCode(), processDefinition.getCode());
+        if (CollectionUtils.isNotEmpty(processTaskRelations)) {
+            List<Long> taskCodes = processTaskRelations.stream().map(ProcessTaskRelation::getPostTaskCode).collect(Collectors.toList());
+            int deleteTask = taskDefinitionMapper.deleteByCodes(taskCodes);
+            if (deleteTask == 0) {
+                logger.warn("The process definition has not task, it will be delete successfully");
+            }
+        }
+
         int deleteRelation = processTaskRelationMapper.deleteByCode(project.getCode(), processDefinition.getCode());
         if (deleteRelation == 0) {
             logger.warn("The process definition has not relation, it will be delete successfully");
@@ -1627,8 +1637,7 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
                 for (TaskDefinitionLog taskDefinitionLog : taskDefinitionLogs) {
                     if (TaskType.CONDITIONS.getDesc().equals(taskDefinitionLog.getTaskType())
                             || TaskType.SWITCH.getDesc().equals(taskDefinitionLog.getTaskType())
-                            || TaskType.SUB_PROCESS.getDesc().equals(taskDefinitionLog.getTaskType())
-                            || TaskType.DEPENDENT.getDesc().equals(taskDefinitionLog.getTaskType())) {
+                            || TaskType.SUB_PROCESS.getDesc().equals(taskDefinitionLog.getTaskType())) {
                         putMsg(result, Status.NOT_SUPPORT_COPY_TASK_TYPE, taskDefinitionLog.getTaskType());
                         return;
                     }

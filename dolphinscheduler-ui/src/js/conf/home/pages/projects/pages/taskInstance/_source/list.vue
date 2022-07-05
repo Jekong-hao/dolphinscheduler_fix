@@ -156,7 +156,7 @@
         this.$emit('on-update')
       },
       _go (item) {
-        this.$router.push({ path: `/projects/${this.projectCode}/instance/list/${item.processInstanceId}` })
+        this.$router.push({ path: `/projects/${this.projectCode}/instance/list/${item.processInstanceId}`, query: { taskName: item.name } })
       }
     },
     watch: {

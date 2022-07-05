@@ -199,6 +199,8 @@
 <script>
   import { findComponentDownward } from '@/module/util/'
   import { mapState, mapActions } from 'vuex'
+  import store from '@/conf/home/store'
+  import Affirm from '../jumpAffirm'
 
   export default {
     name: 'dag-toolbar',
@@ -218,7 +220,12 @@
 
       onSearch () {
         const canvas = this.getDagCanvasRef()
-        canvas.navigateTo(this.searchText)
+        if (this.$route.query.taskName == null) {
+          canvas.navigateTo(this.searchText)
+        } else {
+          canvas.navigateTo(this.$route.query.taskName)
+          this.$route.query.taskName = null
+        }
       },
       showSearchInput () {
         this.searchInputVisible = true
@@ -301,17 +308,21 @@
           ...item,
           releaseState: 'OFFLINE'
         })
-        this.releaseState = 'OFFLINE'
       },
       /**
        * online
        */
       _poponline (item) {
-        this._upProcessState({
-          ...item,
-          releaseState: 'ONLINE'
-        })
-        this.releaseState = 'ONLINE'
+        const dagStore = store.state.dag
+        if (dagStore.isEditDag) {
+          Affirm.isPop()
+        } else {
+          this._upProcessState({
+            ...item,
+            releaseState: 'ONLINE'
+          })
+        }
+        // this.$router.push({ name: 'projects-definition-details' })
       },
       /**
        * Edit state
@@ -324,6 +335,9 @@
           this.$message.error(e.msg || '')
         })
       }
+    },
+    mounted () {
+      setTimeout(() => { this.onSearch() }, 1000)
     }
   }
 </script>

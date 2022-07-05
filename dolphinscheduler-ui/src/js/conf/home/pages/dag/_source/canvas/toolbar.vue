@@ -152,7 +152,7 @@
         @click="_downline(dagChart.processDefinition)"
         icon="el-icon-bottom"
         v-if="dagChart.type === 'definition' && releaseState === 'ONLINE'"
-        :disabled="dagChart.perm != 7"
+        :disabled="dagChart.perm !== 7"
         >{{ $t("offline") }}</el-button
       >
       <el-button
@@ -162,15 +162,25 @@
         v-if="dagChart.type === 'definition'"
         @click="showVersions"
         icon="el-icon-info"
-        :disabled="dagChart.perm != 7"
+        :disabled="dagChart.perm !== 7"
         >{{ $t("Version Info") }}</el-button
       >
       <el-button
         class="toolbar-el-btn"
         type="primary"
         size="mini"
+        v-if="dagChart.type === 'definition'"
+        @click="showInstances"
+        icon="el-icon-s-help"
+        :disabled="dagChart.perm !== 7"
+        >{{ $t("Process Instance") }}</el-button
+      >
+      <el-button
+        class="toolbar-el-btn"
+        type="primary"
+        size="mini"
         @click="saveProcess"
-        :disabled="dagChart.perm != 7"
+        :disabled="dagChart.perm !== 7"
         >{{ $t("Save") }}</el-button
       >
       <el-button
@@ -299,6 +309,9 @@
       },
       showVersions () {
         this.dagChart.showVersions()
+      },
+      showInstances () {
+        this.dagChart.showInstances()
       },
       /**
        * Offline

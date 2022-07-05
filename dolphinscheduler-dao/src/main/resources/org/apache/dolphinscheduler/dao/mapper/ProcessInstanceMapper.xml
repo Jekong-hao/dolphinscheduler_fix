@@ -219,6 +219,15 @@
         where process_definition_code=#{processDefinitionCode}
         order by start_time desc limit #{size}
     </select>
+    <select id="queryProcessInstancesPageByCode" resultType="org.apache.dolphinscheduler.dao.entity.ProcessInstance">
+        select instance.id, instance.command_type, instance.executor_id, user.user_name executor_name, instance.process_definition_version,
+        instance.process_definition_code, instance.name, instance.state, instance.schedule_time, instance.start_time,
+        instance.end_time, instance.run_times, instance.recovery, instance.host, instance.dry_run, instance.restart_time
+        from t_ds_process_instance instance
+        left join t_ds_user user on user.id = instance.executor_id
+        where process_definition_code=#{processDefinitionCode}
+        order by start_time desc
+    </select>
     <select id="queryLastSchedulerProcess" resultType="org.apache.dolphinscheduler.dao.entity.ProcessInstance">
         select
         <include refid="baseSql"/>

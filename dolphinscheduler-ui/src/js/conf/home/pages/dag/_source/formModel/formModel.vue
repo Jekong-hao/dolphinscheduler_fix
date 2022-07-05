@@ -58,7 +58,7 @@
               type="text"
               v-model="name"
               size="small"
-              :disabled="isDetails || dagChart.perm != 7"
+              :disabled="isDetails || dagChart.perm !== 7"
               :placeholder="$t('Please enter name (required)')"
               maxlength="100"
               @blur="_verifName()"
@@ -72,10 +72,10 @@
           <div slot="text">{{ $t("Run flag") }}</div>
           <div slot="content">
             <el-radio-group v-model="runFlag" size="small">
-              <el-radio :label="'YES'" :disabled="isDetails || dagChart.perm != 7">{{
+              <el-radio :label="'YES'" :disabled="isDetails || dagChart.perm !== 7">{{
                 $t("Normal")
               }}</el-radio>
-              <el-radio :label="'NO'" :disabled="isDetails || dagChart.perm != 7">{{
+              <el-radio :label="'NO'" :disabled="isDetails || dagChart.perm !== 7">{{
                 $t("Prohibition execution")
               }}</el-radio>
             </el-radio-group>

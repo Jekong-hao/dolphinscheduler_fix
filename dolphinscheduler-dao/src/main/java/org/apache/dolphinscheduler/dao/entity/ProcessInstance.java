@@ -216,6 +216,14 @@ public class ProcessInstance {
     private String duration;
 
     /**
+     * process hasChildren
+     *
+     * @return
+     */
+    @TableField(exist = false)
+    private boolean hasChildren;
+
+    /**
      * process instance priority
      */
     private Priority processInstancePriority;
@@ -581,6 +589,16 @@ public class ProcessInstance {
         }
         return commandType;
     }
+
+
+    public boolean getHasChildren() {
+        return hasChildren;
+    }
+
+    public void setHasChildren(boolean hasChildren) {
+        this.hasChildren = hasChildren;
+    }
+
 
     public String getDependenceScheduleTimes() {
         return dependenceScheduleTimes;

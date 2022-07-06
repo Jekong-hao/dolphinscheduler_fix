@@ -68,7 +68,7 @@
             <span v-if="!scope.row.grayFlag">-</span>
           </template>
         </el-table-column>
-        <el-table-column :label="$t('Operation')" width="360" fixed="right">
+        <el-table-column :label="$t('Operation')" width="380" fixed="right">
           <template slot-scope="scope">
             <el-tooltip :content="$t('Edit')" placement="top" :enterable="false">
               <span><el-button type="primary" size="mini" icon="el-icon-edit-outline" :disabled="scope.row.perm != 7 || scope.row.releaseState === 'ONLINE'" @click="_edit(scope.row)" circle></el-button></span>
@@ -105,6 +105,9 @@
             </el-tooltip>
             <el-tooltip :content="$t('TreeView')" placement="top" :enterable="false">
               <span><el-button type="primary" size="mini" icon="el-icon-s-data" @click="_treeView(scope.row)" circle></el-button></span>
+            </el-tooltip>
+            <el-tooltip :content="$t('Process Instance')" placement="top" :enterable="false">
+              <span><el-button type="primary" size="mini" icon="el-icon-s-help" @click="_showInstances(scope.row)" circle></el-button></span>
             </el-tooltip>
             <el-tooltip :content="$t('Export')" placement="top" :enterable="false">
               <span><el-button type="primary" size="mini" icon="el-icon-s-unfold" :disabled="scope.row.perm != 7" @click="_export(scope.row)" circle></el-button></span>
@@ -160,6 +163,17 @@
       width="auto">
       <m-related-items :tmp="tmp" @onBatchCopy="onBatchCopy" @onBatchMove="onBatchMove" @closeRelatedItems="closeRelatedItems"></m-related-items>
     </el-dialog>
+    <el-dialog
+      :title="$t('Process Instance')"
+      :visible.sync="instanceDialog"
+      width="auto"
+    >
+      <m-instance-list
+        :processInstanceData="processInstanceData"
+        @mInstanceGetProcessInstancesPage="getProcessInstances"
+        @closeInstance="closeInstance"
+      ></m-instance-list>
+    </el-dialog>
   </div>
 </template>
 <script>
@@ -169,6 +183,7 @@
   import mRelatedItems from './relatedItems'
   import { mapActions, mapState } from 'vuex'
   import { publishStatus } from '@/conf/home/pages/dag/_source/config'
+  import mInstanceList from './instanceList'
   import mVersions from './versions'
 
   export default {
@@ -193,6 +208,13 @@
           item: {},
           type: ''
         },
+        instanceDialog: false,
+        processInstanceData: {
+          processInstances: [],
+          total: null,
+          pageNo: null,
+          pageSize: null
+        },
         relatedItemsDialog: false,
         tmp: false
       }
@@ -203,7 +225,7 @@
       pageSize: Number
     },
     methods: {
-      ...mapActions('dag', ['editProcessState', 'editGrayState', 'getStartCheck', 'deleteDefinition', 'batchDeleteDefinition', 'exportDefinition', 'getProcessDefinitionVersionsPage', 'copyProcess', 'switchProcessDefinitionVersion', 'deleteProcessDefinitionVersion', 'moveProcess']),
+      ...mapActions('dag', ['editProcessState', 'editGrayState', 'getStartCheck', 'deleteDefinition', 'batchDeleteDefinition', 'exportDefinition', 'getProcessDefinitionVersionsPage', 'copyProcess', 'switchProcessDefinitionVersion', 'deleteProcessDefinitionVersion', 'moveProcess', 'getProcessInstancesPageByCode']),
       ...mapActions('security', ['getWorkerGroupsAll']),
 
       selectable (row, index) {
@@ -219,6 +241,51 @@
       _treeView (item) {
         this.$router.push({ path: `/projects/${this.projectCode}/definition/tree/${item.code}` })
       },
+
+      /**
+       * View historical workflow instances
+       */
+      _showInstances (item) {
+        this.getProcessInstancesPageByCode({
+          pageNo: 1,
+          pageSize: 10,
+          code: item.code
+        }).then(res => {
+          let processInstances = res.data.totalList
+          let total = res.data.total
+          let pageSize = res.data.pageSize
+          let pageNo = res.data.currentPage
+          this.processInstanceData.processInstances =
+            processInstances
+          this.processInstanceData.processDefinitionCode = this.definitionCode
+          this.processInstanceData.total = total
+          this.processInstanceData.pageNo = pageNo
+          this.processInstanceData.pageSize = pageSize
+          this.instanceDialog = true
+        }).catch((e) => {
+          this.$message.error(e.msg || '')
+        })
+      },
+      closeInstance () {
+        this.instanceDialog = false
+      },
+      getProcessInstances ({ pageNo, pageSize, processDefinitionCode }) {
+        this.getProcessInstancesPageByCode({
+          pageNo: pageNo,
+          pageSize: pageSize,
+          code: processDefinitionCode
+        })
+          .then((res) => {
+            this.processInstanceData.processInstances = res.data.totalList
+            this.processInstanceData.total = res.data.total
+            this.processInstanceData.pageSize = res.data.pageSize
+            this.processInstanceData.pageNo = res.data.currentPage
+          })
+          .catch((e) => {
+            this.$message.error(e.msg || '')
+          })
+      },
+
       /**
        * Start
        */
@@ -566,7 +633,7 @@
     computed: {
       ...mapState('dag', ['projectCode'])
     },
-    components: { mVersions, mStart, mTiming, mRelatedItems }
+    components: { mVersions, mInstanceList, mStart, mTiming, mRelatedItems }
   }
 </script>
 

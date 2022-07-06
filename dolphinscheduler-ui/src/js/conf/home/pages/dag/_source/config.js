@@ -110,6 +110,10 @@ const grayFlag = [
  */
 const runningType = [
   {
+    desc: `${i18n.$t('All Run Type')}`,
+    code: ''
+  },
+  {
     desc: `${i18n.$t('Start Process')}`,
     code: 'START_PROCESS'
   },

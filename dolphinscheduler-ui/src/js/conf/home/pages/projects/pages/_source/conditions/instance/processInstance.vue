@@ -36,10 +36,20 @@
       <div class="list">
         <el-select style="width: 140px;" @change="_onChangeState" :value="searchParams.stateType" :placeholder="$t('State')" size="mini">
           <el-option
-                  v-for="city in stateTypeList"
-                  :key="city.label"
-                  :value="city.code"
-                  :label="city.label">
+            v-for="city in stateTypeList"
+            :key="city.label"
+            :value="city.code"
+            :label="city.label">
+          </el-option>
+        </el-select>
+      </div>
+      <div class="list">
+        <el-select style="width: 140px;" @change="_onChangeRunning" :value="searchParams.runningType" :placeholder="$t('Run Type')" size="mini">
+          <el-option
+            v-for="city in runningTypeList"
+            :key="city.desc"
+            :value="city.code"
+            :label="city.desc">
           </el-option>
         </el-select>
       </div>
@@ -58,6 +68,7 @@
 <script>
   import _ from 'lodash'
   import { stateType } from './common'
+  import { runningType } from '@/conf/home/pages/dag/_source/config'
   import mConditions from '@/module/components/conditions/conditions'
   export default {
     name: 'process-instance-conditions',
@@ -65,9 +76,12 @@
       return {
         // state(list)
         stateTypeList: stateType,
+        runningTypeList: runningType,
         searchParams: {
           // state
           stateType: '',
+          // run type
+          runningType: '',
           // start date
           startDate: '',
           // end date
@@ -95,6 +109,12 @@
         this.searchParams.endDate = val[1]
         this.dataTime[0] = val[0]
         this.dataTime[1] = val[1]
+      },
+      /**
+       * change run
+       */
+      _onChangeRunning (val) {
+        this.searchParams.runningType = val
       },
       /**
        * change state

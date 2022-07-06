@@ -19,6 +19,7 @@ package org.apache.dolphinscheduler.dao.mapper;
 
 import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
 import org.apache.dolphinscheduler.dao.entity.ExecuteStatusCount;
+import org.apache.dolphinscheduler.dao.entity.ProcessDefinitionLog;
 import org.apache.dolphinscheduler.dao.entity.ProcessInstance;
 
 import org.apache.ibatis.annotations.Param;
@@ -120,6 +121,7 @@ public interface ProcessInstanceMapper extends BaseMapper<ProcessInstance> {
                                                           @Param("searchVal") String searchVal,
                                                           @Param("executorId") Integer executorId,
                                                           @Param("states") int[] statusArray,
+                                                          @Param("commands") int[] runningArray,
                                                           @Param("host") String host,
                                                           @Param("startTime") Date startTime,
                                                           @Param("endTime") Date endTime);
@@ -278,6 +280,16 @@ public interface ProcessInstanceMapper extends BaseMapper<ProcessInstance> {
 
     List<ProcessInstance> queryByProcessDefineCodeAndStatus(@Param("processDefinitionCode") Long processDefinitionCode,
                                                             @Param("states") int[] states);
+
+    /**
+     * query the paging process instance list by pagination info
+     *
+     * @param page pagination info
+     * @param processDefinitionCode process definition code
+     * @param projectCode project code
+     * @return the paging process instance list
+     */
+    IPage<ProcessInstance> queryProcessInstancesPageByCode(Page<ProcessInstance> page, @Param("processDefinitionCode") long processDefinitionCode, @Param("projectCode") long projectCode);
 
     int updateGlobalParamsById(@Param("globalParams") String globalParams,
                                @Param("id") int id);

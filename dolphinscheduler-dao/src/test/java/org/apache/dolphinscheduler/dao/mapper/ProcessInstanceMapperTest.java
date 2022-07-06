@@ -17,6 +17,7 @@
 package org.apache.dolphinscheduler.dao.mapper;
 
 
+import org.apache.dolphinscheduler.common.enums.CommandType;
 import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
 import org.apache.dolphinscheduler.common.enums.Flag;
 import org.apache.dolphinscheduler.common.enums.ReleaseState;
@@ -171,6 +172,9 @@ public class ProcessInstanceMapperTest {
                 ExecutionStatus.RUNNING_EXECUTION.ordinal(),
                 ExecutionStatus.SUCCESS.ordinal()};
 
+        int[] runningArray = new int[]{
+            CommandType.START_PROCESS.ordinal()};
+
         ProcessDefinition processDefinition = new ProcessDefinition();
         processDefinition.setCode(1L);
         processDefinition.setProjectCode(1L);
@@ -197,6 +201,7 @@ public class ProcessInstanceMapperTest {
                 processInstance.getName(),
                 0,
                 stateArray,
+                runningArray,
                 processInstance.getHost(),
                 null,
                 null

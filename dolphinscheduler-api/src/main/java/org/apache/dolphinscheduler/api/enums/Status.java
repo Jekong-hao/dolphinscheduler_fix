@@ -142,6 +142,7 @@ public enum Status {
     ENCAPSULATION_TREEVIEW_STRUCTURE_ERROR(10111, "encapsulation treeview structure error", "查询工作流树形图数据错误"),
     GET_TASKS_LIST_BY_PROCESS_DEFINITION_ID_ERROR(10112, "get tasks list by process definition id error", "查询工作流定义节点信息错误"),
     QUERY_PROCESS_INSTANCE_LIST_PAGING_ERROR(10113, "query process instance list paging error", "分页查询工作流实例列表错误"),
+    QUERY_PROCESS_INSTANCE_LIST_BY_CODE_ERROR(10113, "query process instance list by code error", "按工作流定义code分页查询工作流实例列表错误"),
     QUERY_TASK_LIST_BY_PROCESS_INSTANCE_ID_ERROR(10114, "query task list by process instance id error", "查询任务实例列表错误"),
     UPDATE_PROCESS_INSTANCE_ERROR(10115, "update process instance error", "更新工作流实例错误"),
     QUERY_PROCESS_INSTANCE_BY_ID_ERROR(10116, "query process instance by id error", "查询工作流实例错误"),

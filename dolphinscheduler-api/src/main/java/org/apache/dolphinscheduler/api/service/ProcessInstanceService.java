@@ -19,6 +19,7 @@
 package org.apache.dolphinscheduler.api.service;
 
 import org.apache.dolphinscheduler.api.utils.Result;
+import org.apache.dolphinscheduler.common.enums.CommandType;
 import org.apache.dolphinscheduler.common.enums.DependResult;
 import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
 import org.apache.dolphinscheduler.dao.entity.ProcessInstance;
@@ -78,6 +79,7 @@ public interface ProcessInstanceService {
                                     String searchVal,
                                     String executorName,
                                     ExecutionStatus stateType,
+                                    CommandType runningType,
                                     String host,
                                     Integer pageNo,
                                     Integer pageSize);
@@ -199,4 +201,15 @@ public interface ProcessInstanceService {
      */
     List<ProcessInstance> queryByProcessDefineCode(Long processDefinitionCode,
                                                    int size);
+    /**
+     * query process instance by processDefinitionCode
+     *
+     * @param loginUser login user
+     * @param projectCode project code
+     * @param pageNo page number
+     * @param pageSize page size
+     * @param processDefinitionCode processDefinitionCode
+     * @return process instance list
+     */
+    Result queryProcessInstancesPageByCode(User loginUser, long projectCode, int pageNo, int pageSize, long processDefinitionCode);
 }

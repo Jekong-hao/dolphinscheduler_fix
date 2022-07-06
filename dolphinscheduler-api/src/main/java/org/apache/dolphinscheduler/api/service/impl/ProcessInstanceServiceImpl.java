@@ -240,7 +240,7 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
      */
     @Override
     public Result queryProcessInstanceList(User loginUser, long projectCode, long processDefineCode, String startDate, String endDate, String searchVal, String executorName,
-                                           ExecutionStatus stateType, String host, Integer pageNo, Integer pageSize) {
+                                           ExecutionStatus stateType, CommandType runningType, String host, Integer pageNo, Integer pageSize) {
 
         Result result = new Result();
         Project project = projectMapper.queryByCode(projectCode);
@@ -258,6 +258,11 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
             statusArray = new int[]{stateType.ordinal()};
         }
 
+        int[] runningArray = null;
+        if (runningType != null) {
+            runningArray = new int[]{runningType.ordinal()};
+        }
+
         Map<String, Object> checkAndParseDateResult = checkAndParseDateParameters(startDate, endDate);
         resultEnum = (Status) checkAndParseDateResult.get(Constants.STATUS);
         if (resultEnum != Status.SUCCESS) {
@@ -272,7 +277,7 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
         int executorId = usersService.getUserIdByName(executorName);
 
         IPage<ProcessInstance> processInstanceList = processInstanceMapper.queryProcessInstanceListPaging(page,
-                project.getCode(), processDefineCode, searchVal, executorId, statusArray, host, start, end);
+                project.getCode(), processDefineCode, searchVal, executorId, statusArray, runningArray, host, start, end);
 
         List<ProcessInstance> processInstances = processInstanceList.getRecords();
         List<Integer> userIds = Collections.emptyList();
@@ -352,7 +357,9 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
             }
 
         }
-
+        for (TaskInstance taskInstance : taskInstanceList ) {
+            taskInstance.setDuration(DateUtils.format2Duration(taskInstance.getStartTime(), taskInstance.getEndTime()));
+        }
         resultMap.put(TASK_LIST, taskInstanceList);
         result.put(DATA_LIST, resultMap);
 
@@ -748,6 +755,33 @@ public class ProcessInstanceServiceImpl extends BaseServiceImpl implements Proce
             }
         }
         return localUserDefParams;
+    }
+
+    @Override
+    public Result queryProcessInstancesPageByCode(User loginUser, long projectCode, int pageNo, int pageSize, long processDefinitionCode) {
+        Result result = new Result();
+        Project project = projectMapper.queryByCode(projectCode);
+        // check user access for project
+        Map<String, Object> checkResult = projectService.checkProjectAndAuth(loginUser, project, projectCode);
+        Status resultStatus = (Status) checkResult.get(Constants.STATUS);
+        if (resultStatus != Status.SUCCESS) {
+            putMsg(result, resultStatus);
+            return result;
+        }
+        PageInfo<ProcessInstance> pageInfo = new PageInfo<>(pageNo, pageSize);
+        Page<ProcessInstance> page = new Page<>(pageNo, pageSize);
+        IPage<ProcessInstance> processInstanceIPage = processInstanceMapper.queryProcessInstancesPageByCode(page, processDefinitionCode, projectCode);
+        List<ProcessInstance> processInstances = processInstanceIPage.getRecords();
+        for (ProcessInstance processInstance : processInstances) {
+            processInstance.setHasChildren(true);
+            processInstance.setDuration(DateUtils.format2Duration(processInstance.getStartTime(), processInstance.getEndTime()));
+        }
+
+        pageInfo.setTotalList(processInstances);
+        pageInfo.setTotal((int) processInstanceIPage.getTotal());
+        result.setData(pageInfo);
+        putMsg(result, Status.SUCCESS);
+        return result;
     }
 
     /**

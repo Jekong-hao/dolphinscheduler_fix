@@ -137,14 +137,19 @@ public class MasterServer implements IStoppable {
         NettyServerConfig serverConfig = new NettyServerConfig();
         serverConfig.setListenPort(masterConfig.getListenPort());
         this.nettyRemotingServer = new NettyRemotingServer(serverConfig);
+        // ack处理器
         TaskAckProcessor ackProcessor = new TaskAckProcessor();
         ackProcessor.init(processInstanceExecMaps);
+        // task相应处理器
         TaskResponseProcessor taskResponseProcessor = new TaskResponseProcessor();
         taskResponseProcessor.init(processInstanceExecMaps);
+        // taskkill相应处理器
         TaskKillResponseProcessor taskKillResponseProcessor = new TaskKillResponseProcessor();
         taskKillResponseProcessor.init(processInstanceExecMaps);
+
         StateEventProcessor stateEventProcessor = new StateEventProcessor();
         stateEventProcessor.init(processInstanceExecMaps);
+
         this.nettyRemotingServer.registerProcessor(CommandType.TASK_EXECUTE_RESPONSE, taskResponseProcessor);
         this.nettyRemotingServer.registerProcessor(CommandType.TASK_EXECUTE_ACK, ackProcessor);
         this.nettyRemotingServer.registerProcessor(CommandType.TASK_KILL_RESPONSE, taskKillResponseProcessor);
@@ -152,18 +157,19 @@ public class MasterServer implements IStoppable {
         this.nettyRemotingServer.registerProcessor(CommandType.CACHE_EXPIRE, new CacheProcessor());
         this.nettyRemotingServer.start();
 
-        // self tolerant
+        // self tolerant(zookeeper心跳)
         this.masterRegistryClient.init(this.processInstanceExecMaps);
         this.masterRegistryClient.setRegistryStoppable(this);
         this.masterRegistryClient.start();
 
+        // 启动event处理器
         this.eventExecuteService.init(this.processInstanceExecMaps);
         this.eventExecuteService.start();
-        // scheduler start
+        // scheduler start, 启动调度服务
         this.masterSchedulerService.init(this.processInstanceExecMaps);
-
         this.masterSchedulerService.start();
 
+        // 启动容灾执行线程
         this.failoverExecuteThread.start();
 
         // start QuartzExecutors

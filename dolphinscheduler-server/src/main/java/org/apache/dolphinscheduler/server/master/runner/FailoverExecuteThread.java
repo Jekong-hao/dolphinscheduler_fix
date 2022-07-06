@@ -67,6 +67,7 @@ public class FailoverExecuteThread extends Thread {
         while (Stopper.isRunning()) {
             logger.info("failover execute started");
             try {
+                // 查询需要容灾的master节点
                 List<String> hosts = getNeedFailoverMasterServers();
                 if (CollectionUtils.isEmpty(hosts)) {
                     continue;
@@ -77,6 +78,7 @@ public class FailoverExecuteThread extends Thread {
                     String failoverPath = masterRegistryClient.getFailoverLockPath(NodeType.MASTER, host);
                     try {
                         registryClient.getLock(failoverPath);
+                        // 对需要容灾的host进行容灾
                         masterRegistryClient.failoverMaster(host);
                     } catch (Exception e) {
                         logger.error("{} server failover failed, host:{}", NodeType.MASTER, host, e);
@@ -87,6 +89,7 @@ public class FailoverExecuteThread extends Thread {
             } catch (Exception e) {
                 logger.error("failover execute error", e);
             } finally {
+                // 每过10分钟进行一次容灾检测
                 ThreadUtils.sleep((long) Constants.SLEEP_TIME_MILLIS * masterConfig.getFailoverInterval() * 60);
             }
         }

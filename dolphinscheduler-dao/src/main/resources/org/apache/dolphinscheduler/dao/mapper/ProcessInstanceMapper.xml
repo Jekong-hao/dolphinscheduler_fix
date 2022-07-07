@@ -87,11 +87,18 @@
     </select>
     <select id="queryNeedFailoverProcessInstanceHost" resultType="String">
         select distinct host
-        from t_ds_process_instance
-        where state in
+        from t_ds_process_instance instance
+        left join t_ds_relation_gray_instance_log gray on instance.id = gray.element_id and gray.element_type = 1
+        where instance.state in
         <foreach collection="states" item="i" open="(" close=")" separator=",">
             #{i}
         </foreach>
+        <if test="grayFlag == 'prod'">
+            and gray.id is null
+        </if>
+        <if test="grayFlag == 'gray'">
+
+        </if>
     </select>
     <select id="queryTopNProcessInstance" resultType="org.apache.dolphinscheduler.dao.entity.ProcessInstance">
         select

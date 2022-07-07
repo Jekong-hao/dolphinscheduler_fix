@@ -1874,11 +1874,31 @@ public class ProcessService {
      * @return process instance list
      */
     public List<ProcessInstance> queryNeedFailoverProcessInstances(String host) {
-        return processInstanceMapper.queryByHostAndStatus(host, stateArray);
+        final List<ProcessInstance> processInstances = new ArrayList<>();
+
+        final List<ProcessInstance> processInstanceTmps = processInstanceMapper.queryByHostAndStatus(host, stateArray);
+
+        for (ProcessInstance processInstance : processInstanceTmps) {
+            final GrayRelationInstanceLog grayRelationInstanceLog = grayRelationInstanceLogMapper.queryInstanceLogByTypeAndIdAndCode(PROCESSINSTANCE, processInstance.getId(), null);
+            if (grayRelationInstanceLog != null) {
+                processInstance.setGrayFlag(GrayFlag.GRAY);
+            } else {
+                processInstance.setGrayFlag(GrayFlag.PROD);
+            }
+            processInstances.add(processInstance);
+        }
+
+        return processInstances;
     }
 
-    public List<String> queryNeedFailoverProcessInstanceHost() {
-        return processInstanceMapper.queryNeedFailoverProcessInstanceHost(stateArray);
+    public List<String> queryNeedFailoverProcessInstanceHost(String grayFlag) {
+        // 如果灰度标记值设置错误,抛出异常
+        if (!Constants.DOLPHINSCHEDULER_SERVER_GRAY_FLAG_PROD.equals(grayFlag)
+                && !Constants.DOLPHINSCHEDULER_SERVER_GRAY_FLAG_GRAY.equals(grayFlag)) {
+            logger.error("parameter job.gray error!");
+            throw new ServiceException("parameter job.gray error!");
+        }
+        return processInstanceMapper.queryNeedFailoverProcessInstanceHost(stateArray, grayFlag);
     }
 
     /**
@@ -1902,6 +1922,7 @@ public class ProcessService {
         cmd.setCommandParam(String.format("{\"%s\":%d}", Constants.CMD_PARAM_RECOVER_PROCESS_ID_STRING, processInstance.getId()));
         cmd.setExecutorId(processInstance.getExecutorId());
         cmd.setCommandType(CommandType.RECOVER_TOLERANCE_FAULT_PROCESS);
+        cmd.setGrayFlag(processInstance.getGrayFlag());
         createCommand(cmd);
 
         // 发送alert消息

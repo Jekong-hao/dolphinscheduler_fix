@@ -34,6 +34,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -49,6 +50,9 @@ public class FailoverExecuteThread extends Thread {
 
     @Autowired
     private MasterConfig masterConfig;
+
+    @Value("${dolphinscheduler.server.gray-flag:prod}")
+    private String grayFlag;
 
     /**
      * process service
@@ -97,7 +101,7 @@ public class FailoverExecuteThread extends Thread {
 
     private List<String> getNeedFailoverMasterServers() {
         // failover myself && failover dead masters
-        List<String> hosts = processService.queryNeedFailoverProcessInstanceHost();
+        List<String> hosts = processService.queryNeedFailoverProcessInstanceHost(grayFlag);
 
         Iterator<String> iterator = hosts.iterator();
         while (iterator.hasNext()) {

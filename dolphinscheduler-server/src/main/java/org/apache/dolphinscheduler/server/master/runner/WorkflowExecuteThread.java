@@ -444,7 +444,9 @@ public class WorkflowExecuteThread implements Runnable {
                     // 当 processInstance.getFailureStrategy() == FailureStrategy.END 时，会有消息重复
                     // 需要过滤已经处理的event，或者在event源头控制
                     // send alert message
-                    this.processAlertManager.sendTaskFailureAlert(processInstance, task);
+                    if (CommandType.COMPLEMENT_DATA == processInstance.getCommandType() || CommandType.SCHEDULER == processInstance.getCommandType()) {
+                        this.processAlertManager.sendTaskFailureAlert(processInstance, task);
+                    }
                     errorTaskList.put(Long.toString(task.getTaskCode()), task);
                     if (processInstance.getFailureStrategy() == FailureStrategy.END) {
                         logger.info("[process instance {}] process failure strategy {} , will kill all tasks.",

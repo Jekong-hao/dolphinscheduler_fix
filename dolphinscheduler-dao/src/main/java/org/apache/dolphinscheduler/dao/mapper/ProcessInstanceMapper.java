@@ -57,7 +57,8 @@ public interface ProcessInstanceMapper extends BaseMapper<ProcessInstance> {
      * @param stateArray
      * @return
      */
-    List<String> queryNeedFailoverProcessInstanceHost(@Param("states") int[] stateArray);
+    List<String> queryNeedFailoverProcessInstanceHost(@Param("states") int[] stateArray,
+                                                      @Param("grayFlag") String grayFlag);
 
     /**
      * query process instance by host and stateArray

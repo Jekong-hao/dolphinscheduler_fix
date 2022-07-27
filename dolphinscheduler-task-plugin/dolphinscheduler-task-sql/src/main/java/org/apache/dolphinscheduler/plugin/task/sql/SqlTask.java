@@ -122,7 +122,7 @@ public class SqlTask extends AbstractTaskExecutor {
      */
     private static final String DEFAULT_SQL_SPLIT_CHAR = ";";
 
-    private static final String DEFAULT_SQL_RGEX = "\\$\\{(.*?)\\}";
+    private static final String DEFAULT_SQL_RGEX = "\\$\\{((?!hiveconf:).*?)\\}";
 
     /**
      * Abstract Yarn Task
@@ -600,19 +600,18 @@ public class SqlTask extends AbstractTaskExecutor {
     }
 
     private String replaceOriginalValue(String content, String rgex, Map<String, Property> sqlParamsMap) {
+        StringBuffer sb = new StringBuffer();
         Pattern pattern = Pattern.compile(rgex);
         Matcher m = pattern.matcher(content);
-        while (true) {
-            if (!m.find()) {
-                break;
-            }
+        while (m.find()) {
             String paramName = m.group(1);
             if (sqlParamsMap.containsKey(paramName)) {
                 String paramValue = sqlParamsMap.get(paramName).getValue();
-                content = m.replaceFirst(paramValue);
+                m.appendReplacement(sb, paramValue);
             }
         }
-        return content;
+        m.appendTail(sb);
+        return sb.toString();
     }
 
     /**

@@ -1108,4 +1108,26 @@ public final class Constants {
     public static final String DOLPHINSCHEDULER_SERVER_GRAY_FLAG_PROD = "prod";
     public static final String DOLPHINSCHEDULER_SERVER_GRAY_FLAG_GRAY = "gray";
 
+    /**
+     * 依赖补数任务中,用到的常量
+     */
+    public static final String CMDPARAM_COMPLEMENT_DATA_DEPEND_JSON_STR = "dependComplementProcessJsonStr";
+    public static final String CMDPARAM_COMPLEMENT_DATA_DEPEND_UNIQUE_CODE = "dependcomplementUniqueCode";
+    public static final String LEVEL = "level";
+    public static final String PROCESS_CODE = "processCode";
+    public static final String PROCESS_NAME = "processName";
+    public static final String DEPEND_COMPLEMENT_ID = "depend_complement_id";
+    public static final String DEPEND_COMPLEMENT_DETAIL_ID = "depend_complement_detail_id";
+    public static final String DEPEND_COMPLEMENT_DETAIL_PROCESS_ID = "depend_complement_detail_process_id";
+    public static final String COMMAND_TYPE = "command_type";
+    public static final String DEPEND = "depend";
+    public static final String PROCESS = "process";
+    public static final String DEPEND_DETAIL = "depend-complement-detail";
+    public static final String DEPEND_DETAIL_PROCESS = "depend-complement-detail-process";
+    public static final String DEPEND_COMPLEMENT_RUN_TYPE = "depend_complement_run_type";
+    public static final String DEPEND_COMPLEMENT_RUN_TYPE_NORMAL = "normal";
+    public static final String DEPEND_COMPLEMENT_RUN_TYPE_FAILOVER = "failover";
+    public static final String DEPEND_COMPLEMENT_STOP = "dependComplementStop";
+    public static final String DEPEND_COMPLEMENT_DETAIL_STOP = "dependComplementDetailStop";
+
 }

@@ -33,10 +33,7 @@ import org.apache.dolphinscheduler.server.master.processor.TaskAckProcessor;
 import org.apache.dolphinscheduler.server.master.processor.TaskKillResponseProcessor;
 import org.apache.dolphinscheduler.server.master.processor.TaskResponseProcessor;
 import org.apache.dolphinscheduler.server.master.registry.MasterRegistryClient;
-import org.apache.dolphinscheduler.server.master.runner.EventExecuteService;
-import org.apache.dolphinscheduler.server.master.runner.FailoverExecuteThread;
-import org.apache.dolphinscheduler.server.master.runner.MasterSchedulerService;
-import org.apache.dolphinscheduler.server.master.runner.WorkflowExecuteThread;
+import org.apache.dolphinscheduler.server.master.runner.*;
 import org.apache.dolphinscheduler.service.bean.SpringApplicationContext;
 import org.apache.dolphinscheduler.service.quartz.QuartzExecutors;
 
@@ -111,6 +108,9 @@ public class MasterServer implements IStoppable {
     @Autowired
     private FailoverExecuteThread failoverExecuteThread;
 
+    @Autowired
+    private DependComplementThread dependComplementThread;
+
     @Value("${spring.datasource.driver-class-name}")
     private String driverClassName;
 
@@ -165,9 +165,14 @@ public class MasterServer implements IStoppable {
         // 启动event处理器
         this.eventExecuteService.init(this.processInstanceExecMaps);
         this.eventExecuteService.start();
+
         // scheduler start, 启动调度服务
         this.masterSchedulerService.init(this.processInstanceExecMaps);
         this.masterSchedulerService.start();
+
+        // 进行依赖补数
+        this.dependComplementThread.init();
+        this.dependComplementThread.start();
 
         // 启动容灾执行线程
         this.failoverExecuteThread.start();

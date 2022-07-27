@@ -787,5 +787,19 @@ export default {
   scheduleEndTime: '定时结束时间',
   crontabExpression: 'Crontab',
   workflowPublishStatus: '工作流上线状态',
-  schedulePublishStatus: '定时状态'
+  schedulePublishStatus: '定时状态',
+  'Depend complement': '依赖补数',
+  'Depend Complement Manager': '依赖补数管理',
+  'Depend Complement Definition': '依赖补数定义',
+  'Depend Complement Instance': '依赖补数实例',
+  'Depend Complement Operation': '依赖补数操作',
+  'Depend Complement Instance Detail': '依赖补数实例详情',
+  'Complement Relation List': '补数关系列表',
+  'Complement settings': '补数设置',
+  Level: '层级',
+  'Start Process Name': '依赖补数起始工作流名称',
+  'Execution User': '执行用户',
+  'Schedule Start Date': '调度开始日期',
+  'Schedule End Date': '调度结束日期',
+  Refresh: '刷新'
 }

@@ -102,6 +102,30 @@ const menu = {
           enabled: true
         }
       ]
+    },
+    {
+      name: `${i18n.$t('Depend Complement Manager')}`,
+      id: 4,
+      path: 'depend-complement-manager',
+      isOpen: true,
+      enabled: true,
+      icon: 'el-icon-tickets',
+      children: [
+        {
+          name: `${i18n.$t('Depend Complement Definition')}`,
+          path: 'depend-complement-definition',
+          id: 0,
+          flag: 'definition',
+          enabled: true
+        },
+        {
+          name: `${i18n.$t('Depend Complement Instance')}`,
+          path: 'depend-complement-instance',
+          id: 1,
+          flag: 'instance',
+          enabled: true
+        }
+      ]
     }
   ],
 

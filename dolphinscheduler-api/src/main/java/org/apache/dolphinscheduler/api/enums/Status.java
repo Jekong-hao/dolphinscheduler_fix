@@ -217,8 +217,15 @@ public enum Status {
     QUERY_AUTHORIZED_USER(10183, "query authorized user error", "查询拥有项目权限的用户错误"),
     GRAY_TEST_PROCESS_DEFINITION_SET_ERROR(10184, "gray test process definition error", "工作流设置灰度测试标记发生错误"),
     GRAY_TEST_SCHEDULE_SET_ERROR(10185, "gray test schedule set error", "调度设置灰度测试标记发生错误"),
-    PROCESS_DEFINITION_CODES_HAVE_ERROR(10158, "process definition codes have error", "前端拼接的字符串有错误"),
-    GRAY_RELATION_DEFINITION_CODES_HAVE_ERROR(10159, "", "灰度关系表和工作流定义表数据不重合"),
+    PROCESS_DEFINITION_CODES_HAVE_ERROR(10186, "process definition codes have error", "前端拼接的字符串有错误"),
+    GRAY_RELATION_DEFINITION_CODES_HAVE_ERROR(10187, "", "灰度关系表和工作流定义表数据不重合"),
+    DEPEND_COMPLEMENT_PARAMS_EMPTY_ERROR(10188, "", "依赖补数任务下,依赖补数JSON参数不能为空"),
+    QUERY_DEPEMD_COMPLEMENT_ERROR(10189, "", "查询依赖补数错误"),
+    QUERY_DEPEMD_COMPLEMENT_LIST_PAGING_ERROR(10190, "query depend complement list paging error", "分页查询依赖补数列表错误"),
+    QUERY_DEPEMD_COMPLEMENT_DETAIL_LIST_PAGING_ERROR(10191, "query depend complement detail list paging error", "分页查询依赖补数详情列表错误"),
+    STOP_DEPEND_COMPLEMENT_OR_DETAIL_ERROR(10192, "stop depend complement or detail error", "停止依赖补数或者依赖补数详情任务错误"),
+    DEPEND_COMPLEMENT_JSON_PARAMS_ERROR(10193, "", "依赖补数任务下,依赖补数json参数不能解析异常"),
+    DEPEND_COMPLEMENT_PARAMS_SCHEDULE_EMPTY_ERROR(10194, "", "依赖补数任务下,依赖补数时间参数不能为空"),
 
     UDF_FUNCTION_NOT_EXIST(20001, "UDF function not found", "UDF函数不存在"),
     UDF_FUNCTION_EXISTS(20002, "UDF function already exists", "UDF函数已存在"),
@@ -302,6 +309,14 @@ public enum Status {
     NOT_SUPPORT_COPY_TASK_TYPE(50057, "task type [{0}] does not support copy", "不支持复制的任务类型[{0}]"),
     GRAY_RELATION_SHOULD_NOT_EXIST(50058, "relation gray {0} shoule not exist", "灰度关系[{0}]不应该存在"),
     GRAY_RELATION_SHOULD_EXIST(50059, "relation gray shoule exist", "灰度关系应该存在"),
+    START_DEPEND_COMPLEMENT_ERROR(50060, "start depend complement error", "运行依赖补数错误"),
+    EXECUTE_DEPEND_COMPLEMENT_ERROR(50061, "execute depend complement error", "操作依赖补数错误"),
+    EXECUTE_DEPEND_COMPLEMENT_DEPENDCOMPLEMENTID_IS_NULL_ERROR(50062, "execute depend complement dependComplementId is null error", "操作依赖补数dependComplementId为空错误"),
+    EXECUTE_DEPEND_COMPLEMENT_DEPENDCOMPLEMENTDETAILID_IS_NULL_ERROR(50062, "execute depend complement dependComplementDetailId is null error", "操作依赖补数dependComplementDetailId为空错误"),
+    DEPEND_COMPLEMENT_NOT_EXIST(50062, "depend complement {0} does not exist", "依赖补数[{0}]不存在"),
+    EXECUTE_DEPEND_COMPLEMENT_DETAIL_ERROR(50063, "execute depend complement detail error", "操作依赖补数详情错误"),
+    DEPEND_COMPLEMENT_DETAIL_NOT_EXIST(50062, "depend complement detail {0} does not exist", "依赖补数详情[{0}]不存在"),
+
     HDFS_NOT_STARTUP(60001, "hdfs not startup", "hdfs未启用"),
 
 

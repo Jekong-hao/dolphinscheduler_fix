@@ -1,0 +1,174 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+<template>
+  <div class="wrap-definition">
+    <m-list-construction :title="$t('Depend Complement Instance')">
+      <template slot="conditions">
+        <m-conditions @on-conditions="_onConditions">
+        </m-conditions>
+      </template>
+      <template slot="content">
+        <template v-if="dependComplementListP.length || total > 0">
+          <m-list :depend-complement-list="dependComplementListP" @on-update="_onUpdate" :page-no="searchParams.pageNo" :page-size="searchParams.pageSize"></m-list>
+          <div class="page-box">
+            <el-pagination
+              background
+              @current-change="_page"
+              @size-change="_pageSize"
+              :page-size="searchParams.pageSize"
+              :current-page.sync="searchParams.pageNo"
+              :page-sizes="[10, 30, 50]"
+              layout="sizes, prev, pager, next, jumper"
+              :total="total">
+            </el-pagination>
+          </div>
+        </template>
+        <template v-if="!dependComplementListP.length && total<=0">
+          <m-no-data></m-no-data>
+        </template>
+        <m-spin :is-spin="isLoading" :is-left="isLeft"></m-spin>
+      </template>
+    </m-list-construction>
+  </div>
+</template>
+<script>
+  import _ from 'lodash'
+  import { mapActions } from 'vuex'
+  import mList from './_source/list'
+  import mSpin from '@/module/components/spin/spin'
+  import localStore from '@/module/util/localStorage'
+  import mNoData from '@/module/components/noData/noData'
+  import listUrlParamHandle from '@/module/mixin/listUrlParamHandle'
+  import mConditions from '@/module/components/conditions/conditions'
+  import mListConstruction from '@/module/components/listConstruction/listConstruction'
+
+  export default {
+    name: 'depend-complement-instance-index',
+    data () {
+      return {
+        total: null,
+        dependComplementListP: [],
+        isLoading: true,
+        searchParams: {
+          pageSize: 10,
+          pageNo: 1,
+          searchVal: '',
+          userId: ''
+        },
+        isLeft: true
+      }
+    },
+    mixins: [listUrlParamHandle],
+    props: {
+    },
+    methods: {
+      ...mapActions('dag', ['getDependComplementListP']),
+      /**
+       * page
+       */
+      _page (val) {
+        this.searchParams.pageNo = val
+      },
+      _pageSize (val) {
+        this.searchParams.pageSize = val
+      },
+      /**
+       * conditions
+       */
+      _onConditions (o) {
+        this.searchParams.searchVal = o.searchVal
+        this.searchParams.pageNo = 1
+      },
+      /**
+       * get data list
+       */
+      _getList (flag) {
+        if (sessionStorage.getItem('isLeft') === 0) {
+          this.isLeft = false
+        } else {
+          this.isLeft = true
+        }
+        this.isLoading = !flag
+        this.getDependComplementListP(this.searchParams).then(res => {
+          if (this.searchParams.pageNo > 1 && res.totalList.length === 0) {
+            this.searchParams.pageNo = this.searchParams.pageNo - 1
+          } else {
+            this.dependComplementListP = []
+            this.dependComplementListP = res.totalList
+            this.total = res.total
+            this.isLoading = false
+          }
+        }).catch(e => {
+          this.isLoading = false
+        })
+      },
+      _onUpdate () {
+        this._debounceGET('false')
+      },
+      _updateList () {
+        this.searchParams.pageNo = 1
+        this.searchParams.searchVal = ''
+        this._debounceGET()
+      }
+    },
+    watch: {
+      '$route' (a) {
+        this.searchParams.pageNo = _.isEmpty(a.query) ? 1 : a.query.pageNo
+      }
+    },
+    created () {
+      localStore.removeItem('subProcessId')
+    },
+    mounted () {
+    },
+    beforeDestroy () {
+      sessionStorage.setItem('isLeft', 1)
+    },
+    components: { mList, mConditions, mSpin, mListConstruction, mNoData }
+  }
+</script>
+
+<style lang="scss" rel="stylesheet/scss">
+  .wrap-definition {
+    .table-box {
+      overflow-y: scroll;
+    }
+    .table-box {
+      .fixed {
+        table-layout: auto;
+        tr {
+          th:last-child,td:last-child {
+            background: inherit;
+            width: 300px;
+            height: 40px;
+            line-height: 40px;
+            border-left:1px solid #ecf3ff;
+            position: absolute;
+            right: 0;
+            z-index: 2;
+          }
+          td:last-child {
+            border-bottom:1px solid #ecf3ff;
+          }
+          th:nth-last-child(2) {
+            padding-right: 330px;
+          }
+        }
+      }
+    }
+  }
+</style>

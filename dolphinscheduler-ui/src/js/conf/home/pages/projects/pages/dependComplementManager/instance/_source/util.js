@@ -15,24 +15,27 @@
  * limitations under the License.
  */
 
-package org.apache.dolphinscheduler.api.service;
+import i18n from '@/module/i18n'
 
-import org.apache.dolphinscheduler.dao.entity.User;
-import java.util.Map;
+const warningTypeList = [
+  {
+    id: 'NONE',
+    code: `${i18n.$t('none_1')}`
+  },
+  {
+    id: 'SUCCESS',
+    code: `${i18n.$t('success_1')}`
+  },
+  {
+    id: 'FAILURE',
+    code: `${i18n.$t('failure_1')}`
+  },
+  {
+    id: 'ALL',
+    code: `${i18n.$t('All_1')}`
+  }
+]
 
-/**
- * work flow lineage service
- */
-public interface WorkFlowLineageService {
-
-    Map<String, Object> queryWorkFlowLineageByName(long projectCode, String workFlowName);
-
-    Map<String, Object> queryWorkFlowLineageByCode(long projectCode, long workFlowCode);
-
-    Map<String, Object> queryWorkFlowLineage(long projectCode);
-
-    Map<String, Object> queryWorkFlowLineageBeyondByCode(long projectCode, long workFlowCode);
-
-    Map<String, Object> queryDependComplementLineageByCode(User loginUser, long projectCode, long workFlowCode);
-
+export {
+  warningTypeList
 }

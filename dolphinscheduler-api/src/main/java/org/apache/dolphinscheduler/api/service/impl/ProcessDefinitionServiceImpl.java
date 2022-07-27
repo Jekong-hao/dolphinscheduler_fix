@@ -462,6 +462,13 @@ public class ProcessDefinitionServiceImpl extends BaseServiceImpl implements Pro
             DagData dagData = processService.genDagData(processDefinition);
             result.put(Constants.DATA_LIST, dagData);
             putMsg(result, Status.SUCCESS);
+            // 用于查询灰度关系,在页面展示
+            GrayRelation grayRelationProcessDefinition = grayRelationMapper.queryByTypeAndIdAndCode(PROCESSDEFINITION, processDefinition.getId(), processDefinition.getCode());
+            if(grayRelationProcessDefinition != null && grayRelationProcessDefinition.getGrayFlag() == GrayFlag.GRAY) {
+                processDefinition.setGrayFlag(GrayFlag.GRAY);
+            } else {
+                processDefinition.setGrayFlag(GrayFlag.PROD);
+            }
             // 用于对于工作流的操作权限设置
             ProcessUser processUser = processUserMapper.queryProcessRelation(processDefinition.getId(), loginUser.getId());
             if (project.getUserId() == loginUser.getId() || processDefinition.getUserId() == loginUser.getId() || loginUser.getUserType() == UserType.ADMIN_USER || processUser != null) {

@@ -14,25 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.apache.dolphinscheduler.api.service;
-
-import org.apache.dolphinscheduler.dao.entity.User;
-import java.util.Map;
-
-/**
- * work flow lineage service
- */
-public interface WorkFlowLineageService {
-
-    Map<String, Object> queryWorkFlowLineageByName(long projectCode, String workFlowName);
-
-    Map<String, Object> queryWorkFlowLineageByCode(long projectCode, long workFlowCode);
-
-    Map<String, Object> queryWorkFlowLineage(long projectCode);
-
-    Map<String, Object> queryWorkFlowLineageBeyondByCode(long projectCode, long workFlowCode);
-
-    Map<String, Object> queryDependComplementLineageByCode(User loginUser, long projectCode, long workFlowCode);
-
-}
+<template>
+  <router-view></router-view>
+</template>
+<script>
+  export default {
+    name: 'depend-complement-index'
+  }
+</script>

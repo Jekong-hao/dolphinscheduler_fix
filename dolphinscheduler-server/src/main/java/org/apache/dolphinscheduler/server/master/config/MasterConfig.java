@@ -69,6 +69,21 @@ public class MasterConfig {
     @Value("${master.persist.event.state.threads:10}")
     private int masterPersistEventStateThreads;
 
+    @Value("${master.depend.complement.state.check.interval:5}")
+    private int masterDependComplementStateCheckInterval;
+
+    @Value("${master.depend.complement.check.interval:20}")
+    private int masterDependComplementCheckInterval;
+
+    @Value("${master.depend.complement.command.check.interval:60}")
+    private int masterDependComplementCommandCheckInterval;
+
+    @Value("${master.depend.complement.detail.check.interval:60}")
+    private int masterDependComplementDetailCheckInterval;
+
+    @Value("${master.depend.complement.command.check.timeout:1800}")
+    private int masterDependComplementCommandCheckTimeout;
+
     public int getListenPort() {
         return listenPort;
     }
@@ -182,5 +197,45 @@ public class MasterConfig {
 
     public void setMasterPersistEventStateThreads(int masterPersistEventStateThreads) {
         this.masterPersistEventStateThreads = masterPersistEventStateThreads;
+    }
+
+    public int getMasterDependComplementStateCheckInterval() {
+        return masterDependComplementStateCheckInterval;
+    }
+
+    public void setMasterDependComplementStateCheckInterval(int masterDependComplementStateCheckInterval) {
+        this.masterDependComplementStateCheckInterval = masterDependComplementStateCheckInterval;
+    }
+
+    public int getMasterDependComplementCheckInterval() {
+        return masterDependComplementCheckInterval;
+    }
+
+    public void setMasterDependComplementCheckInterval(int masterDependComplementCheckInterval) {
+        this.masterDependComplementCheckInterval = masterDependComplementCheckInterval;
+    }
+
+    public int getMasterDependComplementCommandCheckInterval() {
+        return masterDependComplementCommandCheckInterval;
+    }
+
+    public int getMasterDependComplementDetailCheckInterval() {
+        return masterDependComplementDetailCheckInterval;
+    }
+
+    public void setMasterDependComplementDetailCheckInterval(int masterDependComplementDetailCheckInterval) {
+        this.masterDependComplementDetailCheckInterval = masterDependComplementDetailCheckInterval;
+    }
+
+    public void setMasterDependComplementCommandCheckInterval(int masterDependComplementCommandCheckInterval) {
+        this.masterDependComplementCommandCheckInterval = masterDependComplementCommandCheckInterval;
+    }
+
+    public int getMasterDependComplementCommandCheckTimeout() {
+        return masterDependComplementCommandCheckTimeout;
+    }
+
+    public void setMasterDependComplementCommandCheckTimeout(int masterDependComplementCommandCheckTimeout) {
+        this.masterDependComplementCommandCheckTimeout = masterDependComplementCommandCheckTimeout;
     }
 }

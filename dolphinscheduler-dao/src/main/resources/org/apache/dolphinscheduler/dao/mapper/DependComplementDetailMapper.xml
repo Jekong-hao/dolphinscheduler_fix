@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one or more
+  ~ contributor license agreements.  See the NOTICE file distributed with
+  ~ this work for additional information regarding copyright ownership.
+  ~ The ASF licenses this file to You under the Apache License, Version 2.0
+  ~ (the "License"); you may not use this file except in compliance with
+  ~ the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="org.apache.dolphinscheduler.dao.mapper.DependComplementDetailMapper">
+
+    <select id="queryDetailById" resultType="org.apache.dolphinscheduler.dao.entity.DependComplementDetail">
+        select *
+        from
+            t_ds_depend_complement_detail
+        where active = 1 and id = #{dependComplementDetailId}
+    </select>
+
+    <select id="queryDependComplementDetailListByDependComplementIdPaging" resultType="org.apache.dolphinscheduler.dao.entity.DependComplementDetail">
+        select td.id, td.depend_complement_id, td.schedule_start_date, td.schedule_end_date, td.state,
+        td.create_time, td.update_time, tu.user_name
+        from
+        t_ds_depend_complement_detail td
+        left join t_ds_depend_complement tdd on td.depend_complement_id = tdd.id
+        left join t_ds_user tu on tdd.executor_id = tu.id
+        where td.active = 1 and tdd.project_code = #{projectCode}
+        <if test=" dependComplementId != null and dependComplementId != ''">
+            and td.depend_complement_id = #{dependComplementId}
+        </if>
+        order by td.id asc
+    </select>
+
+    <select id="queryDependComplementSubmitSucess" resultType="org.apache.dolphinscheduler.dao.entity.DependComplementDetail">
+        select *
+        from t_ds_depend_complement
+        where active = 1 and state = 0
+        order by id asc
+            limit #{parallismNumber}
+    </select>
+
+    <select id="queryDependComplementSubmitSucessByUniqueCode" resultType="org.apache.dolphinscheduler.dao.entity.DependComplementDetail">
+        select *
+        from t_ds_depend_complement
+        where active = 1
+        <if test=" complementUniqueCode != null and complementUniqueCode != ''">
+              and complement_unique_code = #{complementUniqueCode}
+        </if>
+        order by id asc
+    </select>
+
+    <select id="queryDependComplementDetailByDependComplementId" resultType="org.apache.dolphinscheduler.dao.entity.DependComplementDetail">
+        select *
+        from t_ds_depend_complement_detail
+        where active = 1
+        <if test=" dependComplementId != null and dependComplementId != ''">
+              and depend_complement_id = #{dependComplementId}
+        </if>
+        order by id asc
+    </select>
+
+    <select id="queryNonfinalStateDependComplementDetailByDependComplementId" resultType="org.apache.dolphinscheduler.dao.entity.DependComplementDetail">
+        select *
+        from t_ds_depend_complement_detail
+        where active = 1
+        <if test=" dependComplementId != null and dependComplementId != ''">
+            and depend_complement_id = #{dependComplementId}
+        </if>
+        <if test="states != null and states.length != 0">
+            and state in
+            <foreach collection="states" index="index" item="i" open="(" separator="," close=")">
+                #{i}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="queryStateDependComplementDetailByDependComplementId" resultType="org.apache.dolphinscheduler.dao.entity.DependComplementDetail">
+        select *
+        from t_ds_depend_complement_detail
+        where active = 1
+        <if test=" dependComplementId != null and dependComplementId != ''">
+            and depend_complement_id = #{dependComplementId}
+        </if>
+        <if test="states != null and states.length != 0">
+            and state in
+            <foreach collection="states" index="index" item="i" open="(" separator="," close=")">
+                #{i}
+            </foreach>
+        </if>
+    </select>
+
+    <update id="updateStateById">
+        update t_ds_depend_complement_detail
+        set state = #{state}
+        where id = #{dependComplementDetailId}
+    </update>
+
+    <select id="queryAllStateDependComplementDetailByDependComplementId" resultType="org.apache.dolphinscheduler.dao.entity.DependComplementDetail">
+        select *
+        from t_ds_depend_complement_detail
+        where active = 1
+        <if test=" dependComplementId != null and dependComplementId != ''">
+            and depend_complement_id = #{dependComplementId}
+        </if>
+    </select>
+
+</mapper>

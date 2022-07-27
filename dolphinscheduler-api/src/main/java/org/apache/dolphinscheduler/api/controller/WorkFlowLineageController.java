@@ -106,4 +106,21 @@ public class WorkFlowLineageController extends BaseController {
             return error(QUERY_WORKFLOW_LINEAGE_ERROR.getCode(), QUERY_WORKFLOW_LINEAGE_ERROR.getMsg());
         }
     }
+
+    @ApiOperation(value = "queryWorkFlowLineageBeyondByCode", notes = "QUERY_WORKFLOW_LINEAGE_BEYOND_BY_CODES_NOTES")
+    @GetMapping(value = "/beyond/{workFlowCode}")
+    @ResponseStatus(HttpStatus.OK)
+    @AccessLogAnnotation(ignoreRequestArgs = "loginUser")
+    public Result<Map<String, Object>> queryWorkFlowLineageBeyondByCode(@ApiIgnore @RequestAttribute(value = SESSION_USER) User loginUser,
+                                                                  @ApiParam(name = "projectCode", value = "PROJECT_CODE", required = true) @PathVariable long projectCode,
+                                                                  @PathVariable(value = "workFlowCode", required = true) long workFlowCode) {
+        try {
+            Map<String, Object> result = workFlowLineageService.queryWorkFlowLineageBeyondByCode(projectCode, workFlowCode);
+            return returnDataList(result);
+        } catch (Exception e) {
+            logger.error(QUERY_WORKFLOW_LINEAGE_ERROR.getMsg(), e);
+            return error(QUERY_WORKFLOW_LINEAGE_ERROR.getCode(), QUERY_WORKFLOW_LINEAGE_ERROR.getMsg());
+        }
+    }
+
 }

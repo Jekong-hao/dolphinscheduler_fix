@@ -14,25 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.dolphinscheduler.dao.mapper;
 
-package org.apache.dolphinscheduler.api.service;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.dolphinscheduler.dao.entity.DependComplementDetailProcess;
+import org.apache.ibatis.annotations.Param;
 
-import org.apache.dolphinscheduler.dao.entity.User;
-import java.util.Map;
+import java.util.List;
 
 /**
- * work flow lineage service
+ * depend complement detail process mapper interface
  */
-public interface WorkFlowLineageService {
+public interface DependComplementDetailProcessMapper extends BaseMapper<DependComplementDetailProcess> {
 
-    Map<String, Object> queryWorkFlowLineageByName(long projectCode, String workFlowName);
+    List<DependComplementDetailProcess> queryDependComplementDetailProcessListByTwoId(@Param("dependComplementId") int dependComplementId, @Param("dependComplementDetailId") int dependComplementDetailId);
 
-    Map<String, Object> queryWorkFlowLineageByCode(long projectCode, long workFlowCode);
-
-    Map<String, Object> queryWorkFlowLineage(long projectCode);
-
-    Map<String, Object> queryWorkFlowLineageBeyondByCode(long projectCode, long workFlowCode);
-
-    Map<String, Object> queryDependComplementLineageByCode(User loginUser, long projectCode, long workFlowCode);
+    int updateProcessInstanceIdById(@Param("dependComplementDetailProcessId") int dependComplementDetailProcessId, @Param("processInstanceId") int processInstanceId);
 
 }

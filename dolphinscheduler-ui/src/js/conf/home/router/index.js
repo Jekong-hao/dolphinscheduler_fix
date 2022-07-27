@@ -205,14 +205,12 @@ const router = new Router({
             title: `${i18n.$t('Task Instance')}`,
             refreshInSwitchedTab: config.refreshInSwitchedTab
           }
-
         },
         {
           path: '/projects/:projectCode/grayManager/:grayFlag',
           name: 'prod-process',
           component: resolve => require(['../pages/projects/pages/grayManager/index'], resolve),
           meta: {
-            title: `${i18n.$t('Process definition')}`,
             refreshInSwitchedTab: config.refreshInSwitchedTab
           }
         },
@@ -221,9 +219,37 @@ const router = new Router({
           name: 'gray-process',
           component: resolve => require(['../pages/projects/pages/grayManager/index'], resolve),
           meta: {
-            title: `${i18n.$t('Process definition')}`,
             refreshInSwitchedTab: config.refreshInSwitchedTab
           }
+        },
+        {
+          path: '/projects/:projectCode/depend-complement',
+          name: 'complement',
+          component: resolve => require(['../pages/projects/pages/dependComplementManager/index'], resolve),
+          meta: {
+            refreshInSwitchedTab: config.refreshInSwitchedTab
+          },
+          redirect: {
+            name: 'depend-complement-definition'
+          },
+          children: [
+            {
+              path: '/projects/:projectCode/depend-complement/definition',
+              name: 'depend-complement-definition',
+              component: resolve => require(['../pages/projects/pages/dependComplementManager/definition/index'], resolve),
+              meta: {
+                refreshInSwitchedTab: config.refreshInSwitchedTab
+              }
+            },
+            {
+              path: '/projects/:projectCode/depend-complement/instance',
+              name: 'depend-complement-instance',
+              component: resolve => require(['../pages/projects/pages/dependComplementManager/instance/index'], resolve),
+              meta: {
+                refreshInSwitchedTab: config.refreshInSwitchedTab
+              }
+            }
+          ]
         },
         {
           path: '/projects/:projectCode/task-record',

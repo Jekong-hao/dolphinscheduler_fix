@@ -109,6 +109,19 @@ export default {
   },
 
   /**
+   * 依赖补数获取执行列表,有序的
+   */
+  queryDependComplementLineageByCode ({ state }, payload) {
+    return new Promise((resolve, reject) => {
+      io.get(`projects/${state.projectCode}/depend-complement/lineage/${payload.code}`, payload, res => {
+        resolve(res)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+
+  /**
    * switch process definition version
    */
   switchProcessDefinitionVersion ({ state }, payload) {
@@ -544,6 +557,70 @@ export default {
   processStart ({ state }, payload) {
     return new Promise((resolve, reject) => {
       io.post(`projects/${state.projectCode}/executors/start-process-instance`, payload, res => {
+        resolve(res)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+  /**
+   * depend complement startup interface
+   */
+  startDependComplement ({ state }, payload) {
+    return new Promise((resolve, reject) => {
+      io.post(`projects/${state.projectCode}/depend-complement/start-depend-complement`, payload, res => {
+        resolve(res)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+  editDependComplementState ({ state }, payload) {
+    return new Promise((resolve, reject) => {
+      io.post(`projects/${state.projectCode}/depend-complement/execute`, {
+        dependComplementId: payload.dependComplementId,
+        dependComplementDetailId: payload.dependComplementDetailId,
+        processInstanceId: payload.processInstanceId,
+        dependComplementExecuteTarget: payload.dependComplementExecuteTarget,
+        executeType: payload.executeType
+      }, res => {
+        resolve(res)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+  /**
+   * 查询所有依赖补数主任务 (分页查询)
+   */
+  getDependComplementListP ({ state }, payload) {
+    return new Promise((resolve, reject) => {
+      io.get(`projects/${state.projectCode}/depend-complement`, payload, res => {
+        resolve(res.data)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+  /**
+   * 查询补数详情
+   */
+  getDependComplementDetailListByDependComplementIdP ({ state }, payload) {
+    return new Promise((resolve, reject) => {
+      io.get(`projects/${state.projectCode}/depend-complement/detail`, payload, res => {
+        resolve(res)
+      }).catch(e => {
+        reject(e)
+      })
+    })
+  },
+
+  /**
+   * 查询补数详情工作流清单
+   */
+  getDependComplementDetailProcessListByTwoId ({ state }, payload) {
+    return new Promise((resolve, reject) => {
+      io.get(`projects/${state.projectCode}/depend-complement/detail/process`, payload, res => {
         resolve(res)
       }).catch(e => {
         reject(e)

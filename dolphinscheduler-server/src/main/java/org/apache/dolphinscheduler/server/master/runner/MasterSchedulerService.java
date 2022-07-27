@@ -18,16 +18,13 @@
 package org.apache.dolphinscheduler.server.master.runner;
 
 import org.apache.dolphinscheduler.common.Constants;
-import org.apache.dolphinscheduler.common.enums.ExecutionStatus;
-import org.apache.dolphinscheduler.common.enums.StateEvent;
-import org.apache.dolphinscheduler.common.enums.StateEventType;
-import org.apache.dolphinscheduler.common.enums.TaskType;
+import org.apache.dolphinscheduler.common.enums.*;
 import org.apache.dolphinscheduler.common.thread.Stopper;
 import org.apache.dolphinscheduler.common.thread.ThreadUtils;
+import org.apache.dolphinscheduler.common.utils.JSONUtils;
 import org.apache.dolphinscheduler.common.utils.NetUtils;
 import org.apache.dolphinscheduler.common.utils.OSUtils;
 import org.apache.dolphinscheduler.dao.entity.Command;
-import org.apache.dolphinscheduler.dao.entity.ProcessDefinition;
 import org.apache.dolphinscheduler.dao.entity.ProcessInstance;
 import org.apache.dolphinscheduler.dao.entity.TaskInstance;
 import org.apache.dolphinscheduler.remote.NettyRemotingClient;
@@ -40,20 +37,22 @@ import org.apache.dolphinscheduler.server.master.registry.ServerNodeManager;
 import org.apache.dolphinscheduler.service.alert.ProcessAlertManager;
 import org.apache.dolphinscheduler.service.process.ProcessService;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.apache.dolphinscheduler.spi.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import static org.apache.dolphinscheduler.common.Constants.COMMAND_TYPE;
+import static org.apache.dolphinscheduler.common.Constants.DEPEND_COMPLEMENT_DETAIL_PROCESS_ID;
 
 /**
  * master scheduler thread
@@ -267,6 +266,24 @@ public class MasterSchedulerService extends Thread {
                     command.getProcessInstanceId());
             try {
                 ProcessInstance processInstance = processService.handleCommand(logger, getLocalAddress(), command);
+
+                // 解析command数据,判断是否为依赖补数,如果是依赖补数,需要在此位置(processInstance已经形成)
+                // 向依赖补数表的process表返回processInstance的id
+                try {
+                    final String commandParam = command.getCommandParam();
+                    final Map<String, String> map = JSONUtils.toMap(commandParam);
+                    if (map != null) {
+                        final String s = map.get(COMMAND_TYPE);
+                        if (!StringUtils.isEmpty(s)) {
+                            if (CommandType.of(Integer.parseInt(map.get(COMMAND_TYPE))) == CommandType.DEPEND_COMPLEMENT_DATA) {
+                                final int dependComplementDetailProcessId = Integer.parseInt(map.get(DEPEND_COMPLEMENT_DETAIL_PROCESS_ID));
+                                processService.updateDependComplementDetailProcessProcesssInstanceId(dependComplementDetailProcessId, processInstance.getId());
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("depend complement error: " + e.getMessage());
+                }
 
                 if (processInstance != null) {
                     logger.info("[process instance {}] master start at {} for schedule_time {}. with command type {}",

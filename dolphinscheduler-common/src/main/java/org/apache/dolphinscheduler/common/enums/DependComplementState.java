@@ -14,25 +14,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.dolphinscheduler.common.enums;
 
-package org.apache.dolphinscheduler.api.service;
-
-import org.apache.dolphinscheduler.dao.entity.User;
-import java.util.Map;
+import com.baomidou.mybatisplus.annotation.EnumValue;
 
 /**
- * work flow lineage service
+ * dependComplement state
  */
-public interface WorkFlowLineageService {
+public enum DependComplementState {
 
-    Map<String, Object> queryWorkFlowLineageByName(long projectCode, String workFlowName);
+    SUBMITTED_SUCCESS(0, "submit success"),
+    RUNNING_EXECUTION(1, "running"),
+    READY_STOP(2, "ready stop"),
+    STOP(3, "stop"),
+    FAILURE(4, "depend complement state is failure"),
+    SUCCESS(5, "depend complement state is success");
 
-    Map<String, Object> queryWorkFlowLineageByCode(long projectCode, long workFlowCode);
+    DependComplementState(int code, String descp){
+        this.code = code;
+        this.descp = descp;
+    }
 
-    Map<String, Object> queryWorkFlowLineage(long projectCode);
+    @EnumValue
+    private final int code;
+    private final String descp;
 
-    Map<String, Object> queryWorkFlowLineageBeyondByCode(long projectCode, long workFlowCode);
+    public int getCode() {
+        return code;
+    }
 
-    Map<String, Object> queryDependComplementLineageByCode(User loginUser, long projectCode, long workFlowCode);
+    public String getDescp() {
+        return descp;
+    }
 
 }

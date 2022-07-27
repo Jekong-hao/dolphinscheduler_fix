@@ -778,5 +778,19 @@ export default {
   scheduleEndTime: 'Schedule End Time',
   crontabExpression: 'Crontab',
   workflowPublishStatus: 'Workflow Publish Status',
-  schedulePublishStatus: 'Schedule Publish Status'
+  schedulePublishStatus: 'Schedule Publish Status',
+  'Depend complement': 'Depend complement',
+  'Depend Complement Manager': 'Depend Complement Manager',
+  'Depend Complement Definition': 'Depend Complement Definition',
+  'Depend Complement Instance': 'Depend Complement Instance',
+  'Depend Complement Operation': 'Depend Complement Operation',
+  'Depend Complement Instance Detail': 'Depend Complement Instance Detail',
+  'Complement Relation List': 'Complement Relation List',
+  'Complement settings': 'Complement settings',
+  Level: 'Level',
+  'Start Process Name': 'Start Process Name',
+  'Execution User': 'Execution User',
+  'Schedule Start Date': 'Schedule Start Date',
+  'Schedule End Date': 'Schedule End Date',
+  Refresh: '刷新'
 }

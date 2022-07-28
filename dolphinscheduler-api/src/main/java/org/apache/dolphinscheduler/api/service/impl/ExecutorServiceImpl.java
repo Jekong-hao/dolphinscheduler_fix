@@ -32,10 +32,7 @@ import org.apache.dolphinscheduler.common.model.Server;
 import org.apache.dolphinscheduler.common.utils.DateUtils;
 import org.apache.dolphinscheduler.common.utils.JSONUtils;
 import org.apache.dolphinscheduler.dao.entity.*;
-import org.apache.dolphinscheduler.dao.mapper.GrayRelationMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProcessDefinitionMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProcessInstanceMapper;
-import org.apache.dolphinscheduler.dao.mapper.ProjectMapper;
+import org.apache.dolphinscheduler.dao.mapper.*;
 import org.apache.dolphinscheduler.remote.command.StateEventChangeCommand;
 import org.apache.dolphinscheduler.remote.processor.StateEventCallbackService;
 import org.apache.dolphinscheduler.service.process.ProcessService;
@@ -59,6 +56,8 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
 
     private static final ElementType PROCESSDEFINITION = ElementType.PROCESSDEFINITION;
 
+    private static final ElementType PROCESSINSTANCE = ElementType.PROCESSINSTANCE;
+
     @Autowired
     private ProjectMapper projectMapper;
 
@@ -72,8 +71,10 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
     private GrayRelationMapper grayRelationMapper;
 
     @Autowired
-    private MonitorService monitorService;
+    private GrayRelationInstanceLogMapper grayRelationInstanceLogMapper;
 
+    @Autowired
+    private MonitorService monitorService;
 
     @Autowired
     private ProcessInstanceMapper processInstanceMapper;
@@ -421,6 +422,13 @@ public class ExecutorServiceImpl extends BaseServiceImpl implements ExecutorServ
         command.setExecutorId(loginUser.getId());
         command.setProcessDefinitionVersion(processVersion);
         command.setProcessInstanceId(instanceId);
+
+        GrayRelationInstanceLog grayRelationProcessInstanceLog = grayRelationInstanceLogMapper.queryInstanceLogByTypeAndIdAndCode(PROCESSINSTANCE, instanceId, null);
+        if (grayRelationProcessInstanceLog != null) {
+            command.setGrayFlag(GrayFlag.GRAY);
+        } else {
+            command.setGrayFlag(GrayFlag.PROD);
+        }
 
         if (!processService.verifyIsNeedCreateCommand(command)) {
             putMsg(result, Status.PROCESS_INSTANCE_EXECUTING_COMMAND, processDefinitionCode);

@@ -114,7 +114,8 @@ public interface ProcessDefinitionMapper extends BaseMapper<ProcessDefinition> {
                                                    @Param("searchVal") String searchVal,
                                                    @Param("userId") int userId,
                                                    @Param("projectCode") long projectCode,
-                                                   @Param("isAdmin") boolean isAdmin);
+                                                   @Param("isAdmin") boolean isAdmin,
+                                                   @Param("grayFlag") String grayFlag);
 
     /**
      * query all process definition list

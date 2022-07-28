@@ -78,7 +78,7 @@ public class ProcessAuthorityServiceImpl extends BaseServiceImpl implements Proc
 
         Page<ProcessDefinition> page = new Page<>(pageNo, pageSize);
         IPage<ProcessDefinition> processDefinitionIPage = processDefinitionMapper.queryDefineListPaging(
-            page, searchVal, userId, project.getCode(), isAdmin(loginUser));
+            page, searchVal, userId, project.getCode(), isAdmin(loginUser), null);
 
         PageInfo<ProcessDefinition> pageInfo = new PageInfo<>(pageNo, pageSize);
         pageInfo.setTotal((int) processDefinitionIPage.getTotal());

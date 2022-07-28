@@ -114,6 +114,9 @@ public class MasterServer implements IStoppable {
     @Value("${spring.datasource.driver-class-name}")
     private String driverClassName;
 
+    @Value("${dolphinscheduler.server.gray-flag:prod}")
+    private String grayFlag;
+
     private ConcurrentHashMap<Integer, WorkflowExecuteThread> processInstanceExecMaps = new ConcurrentHashMap<>();
 
     /**
@@ -171,8 +174,11 @@ public class MasterServer implements IStoppable {
         this.masterSchedulerService.start();
 
         // 进行依赖补数
-        this.dependComplementThread.init();
-        this.dependComplementThread.start();
+        // 只有生产集群才启动依赖补数线程
+        if (Constants.DOLPHINSCHEDULER_SERVER_GRAY_FLAG_PROD.equals(grayFlag)) {
+            this.dependComplementThread.init();
+            this.dependComplementThread.start();
+        }
 
         // 启动容灾执行线程
         this.failoverExecuteThread.start();

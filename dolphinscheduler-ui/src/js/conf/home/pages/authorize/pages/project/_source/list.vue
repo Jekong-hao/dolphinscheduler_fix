@@ -97,7 +97,6 @@
               name: v.userName
             }
           })
-          console.log('____________' + sourceListPrs.name)
           let targetListPrs = _.map(data[1], v => {
             return {
               id: v.id,

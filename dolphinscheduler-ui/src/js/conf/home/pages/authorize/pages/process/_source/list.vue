@@ -133,7 +133,7 @@
         this.authProcessDialog = false
       },
 
-      closeAuthProjectPermissions () {
+      closeAuthProcessPermissions () {
         this.authProcessDialog = false
       },
 

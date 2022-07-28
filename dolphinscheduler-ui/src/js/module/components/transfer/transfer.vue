@@ -15,12 +15,13 @@
  * limitations under the License.
  */
 <template>
-  <m-popup :ok-text="$t('Submit')" :nameText="$t('Authorize')" @ok="_ok" @close="close" ref="popup">
+  <m-popup :ok-text="$t('Submit')" :nameText="transferData.type.name + $t('Authorize')" @ok="_ok" @close="close" ref="popup">
     <template slot="content">
       <div class="clearfix transfer-model">
         <div class="select-list-box">
           <div class="tf-header">
-            <div class="title">{{$t('User')}}{{$t('List')}}</div>
+            <div class="title" v-if="transferData.type.name === $t('Project Perm') || transferData.type.name === $t('Process Perm')">{{$t('User')}}{{$t('List')}}</div>
+            <div class="title" v-else>{{transferData.type.name}}{{$t('List')}}</div>
             <div class="count">（{{cacheSourceList.length}}）</div>
           </div>
           <div class="scrollbar tf-content">
@@ -35,7 +36,8 @@
         <div class="select-oper-box">&nbsp;</div>
         <div class="select-list-box">
           <div class="tf-header">
-            <div class="title">{{$t('Selected')}}{{$t('User')}}</div>
+            <div class="title" v-if="transferData.type.name === $t('Project Perm') || transferData.type.name === $t('Process Perm')">{{$t('Selected')}}{{$t('User')}}</div>
+            <div class="title" v-else>{{$t('Selected')}}{{transferData.type.name}}</div>
             <div class="count">（{{cacheTargetList.length}}）</div>
           </div>
           <div class="scrollbar tf-content">
@@ -127,7 +129,7 @@
           this.$emit('closeAuthUdfFunc')
         } else if (this.transferData.type.name === `${i18n.$t('Project Perm')}`) {
           this.$emit('closeAuthProjectPermissions')
-        } else if (this.transferData.type.name === `${i18n.$t('Project Perm')}`) {
+        } else if (this.transferData.type.name === `${i18n.$t('Process Perm')}`) {
           this.$emit('closeAuthProcessPermissions')
         }
       }

@@ -68,7 +68,7 @@ CREATE TABLE `t_ds_depend_complement` (
     `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT 'create time',
     `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'update time',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT '依赖补数主表';
 
 -- ----------------------------
 -- Table structure for t_ds_depend_complement_detail
@@ -77,13 +77,13 @@ CREATE TABLE `t_ds_depend_complement_detail` (
     `id` int NOT NULL AUTO_INCREMENT COMMENT 'key',
     `depend_complement_id` int NOT NULL COMMENT '批次id',
     `schedule_start_date` date DEFAULT NULL COMMENT '依赖补数调度任务开始日期',
-    `schedule_end_date` date DEFAULT NULL,
+    `schedule_end_date` date DEFAULT NULL COMMENT '依赖补数调度任务结束日期',
     `state` tinyint DEFAULT NULL COMMENT '执行者',
     `active` tinyint DEFAULT '1' COMMENT '此条数据是否生效',
     `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT 'create time',
     `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'update time',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT '依赖补数detail表';
 
 -- ----------------------------
 -- Table structure for t_ds_depend_complement_detail_process
@@ -106,4 +106,4 @@ CREATE TABLE `t_ds_depend_complement_detail_process` (
     `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT 'create time',
     `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'update time',
     PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COMMENT '依赖补数detailprocess表';

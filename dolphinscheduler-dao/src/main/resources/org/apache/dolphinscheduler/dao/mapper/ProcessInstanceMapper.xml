@@ -93,11 +93,11 @@
         <foreach collection="states" item="i" open="(" close=")" separator=",">
             #{i}
         </foreach>
-        <if test="grayFlag == 'prod'">
-            and gray.id is null
-        </if>
         <if test="grayFlag == 'gray'">
-
+            and gray.gray_flag = 1
+        </if>
+        <if test="grayFlag == 'prod'">
+            and gray.gray_flag is null
         </if>
     </select>
     <select id="queryTopNProcessInstance" resultType="org.apache.dolphinscheduler.dao.entity.ProcessInstance">

@@ -85,10 +85,10 @@
         <if test=" userId != 0">
             and td.user_id = #{userId}
         </if>
-        <if test="grayFlag != null and grayFlag == 'gray'">
+        <if test="grayFlag == 'gray'">
             and rg.gray_flag = 1
         </if>
-        <if test="grayFlag != null and grayFlag == 'prod'">
+        <if test="grayFlag == 'prod'">
             and rg.gray_flag is null
         </if>
         order by sc.schedule_release_state desc,td.update_time desc,td.id asc

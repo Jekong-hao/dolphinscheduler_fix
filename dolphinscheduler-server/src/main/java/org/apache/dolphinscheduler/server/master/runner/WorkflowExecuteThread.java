@@ -28,16 +28,7 @@ import org.apache.dolphinscheduler.common.utils.DateUtils;
 import org.apache.dolphinscheduler.common.utils.JSONUtils;
 import org.apache.dolphinscheduler.common.utils.NetUtils;
 import org.apache.dolphinscheduler.common.utils.ParameterUtils;
-import org.apache.dolphinscheduler.dao.entity.Command;
-import org.apache.dolphinscheduler.dao.entity.Environment;
-import org.apache.dolphinscheduler.dao.entity.ProcessDefinition;
-import org.apache.dolphinscheduler.dao.entity.ProcessInstance;
-import org.apache.dolphinscheduler.dao.entity.ProcessTaskRelation;
-import org.apache.dolphinscheduler.dao.entity.ProjectUser;
-import org.apache.dolphinscheduler.dao.entity.Schedule;
-import org.apache.dolphinscheduler.dao.entity.TaskDefinition;
-import org.apache.dolphinscheduler.dao.entity.TaskDefinitionLog;
-import org.apache.dolphinscheduler.dao.entity.TaskInstance;
+import org.apache.dolphinscheduler.dao.entity.*;
 import org.apache.dolphinscheduler.dao.utils.DagHelper;
 import org.apache.dolphinscheduler.remote.command.HostUpdateCommand;
 import org.apache.dolphinscheduler.remote.utils.Host;
@@ -473,6 +464,14 @@ public class WorkflowExecuteThread implements Runnable {
                     stateEvent.getExecutionStatus());
 
             processInstance = processService.findProcessInstanceById(this.processInstance.getId());
+            // 查询灰度标记
+            final GrayRelationInstanceLog grayRelationProcessInstanceLog
+                    = processService.queryGrayRelationInstanceByProcessInstanceId(this.processInstance.getId());
+            if (grayRelationProcessInstanceLog != null && grayRelationProcessInstanceLog.getGrayFlag() == GrayFlag.GRAY) {
+                processInstance.setGrayFlag(GrayFlag.GRAY);
+            } else {
+                processInstance.setGrayFlag(GrayFlag.PROD);
+            }
 
             if (stateEvent.getExecutionStatus() == ExecutionStatus.STOP) {
                 this.updateProcessInstanceState(stateEvent);
@@ -564,6 +563,7 @@ public class WorkflowExecuteThread implements Runnable {
         command.setDryRun(processInstance.getDryRun());
         command.setProcessInstanceId(0);
         command.setProcessDefinitionVersion(processInstance.getProcessDefinitionVersion());
+        command.setGrayFlag(processInstance.getGrayFlag());
         return processService.createCommand(command);
     }
 

@@ -20,7 +20,6 @@ package org.apache.dolphinscheduler.service.process;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.dolphinscheduler.common.Constants.*;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.dolphinscheduler.common.Constants;
@@ -267,21 +266,7 @@ public class ProcessService {
      */
     public List<Command> findCommandPage(int pageSize, int pageNumber, String grayFlag) {
 
-        List<Command> commands = commandMapper.queryCommandPage(pageSize, pageNumber * pageSize);
-        final Map<Integer, GrayFlag> idAndGrayFlag =
-                grayRelationMapper.selectList(new QueryWrapper<GrayRelation>().eq("element_type", COMMAND))
-                .stream().collect(Collectors.toMap(GrayRelation::getElementId, GrayRelation::getGrayFlag));
-        if (Constants.DOLPHINSCHEDULER_SERVER_GRAY_FLAG_GRAY.equals(grayFlag)) {  // gray
-            commands =
-                    commands.stream().filter(item -> idAndGrayFlag.containsKey(item.getId())).collect(Collectors.toList());
-        } else if (Constants.DOLPHINSCHEDULER_SERVER_GRAY_FLAG_PROD.equals(grayFlag)) {  // prod
-            commands =
-                    commands.stream().filter(item -> !idAndGrayFlag.containsKey(item.getId())).collect(Collectors.toList());
-        } else {
-            logger.error("parameter job.gray error!");
-            throw new ServiceException("parameter job.gray error!");
-        }
-
+        List<Command> commands = commandMapper.queryCommandPage(pageSize, pageNumber * pageSize, grayFlag);
         for (Command command : commands) {
             final GrayRelation grayRelationCommand = grayRelationMapper.queryByTypeAndIdAndCode(COMMAND, command.getId(), null);
             if (grayRelationCommand != null && grayRelationCommand.getGrayFlag() == GrayFlag.GRAY) {
@@ -2713,9 +2698,17 @@ public class ProcessService {
         }
     }
 
+    /////////////////////////////// 灰度功能(上界) ////////////////////////
+    // 查找指定的工作流实例,在灰度实例表中的记录
+    public GrayRelationInstanceLog queryGrayRelationInstanceByProcessInstanceId(Integer processInstanceId) {
+        // 用于查询工作流实例的灰度性质
+        return grayRelationInstanceLogMapper.queryInstanceLogByTypeAndIdAndCode(PROCESSINSTANCE, processInstanceId, null);
+    }
+
+
+    /////////////////////////////// 灰度功能(上界) ////////////////////////
 
     /////////////////////////////// 实现依赖补数锁增加的代码(上界) ////////////////////////
-
     // 查找指定dependComplementId下的所有detail清单
     public List<DependComplementDetail> queryDependComplementDetailListByDependComplementId(int dependComplementId) {
         return dependComplementDetailMapper.queryDependComplementDetailByDependComplementId(dependComplementId);
@@ -2781,8 +2774,11 @@ public class ProcessService {
 
         final List<DependComplementDetail> dependComplementDetails =
                 dependComplementDetailMapper.queryDependComplementDetailByDependComplementId(dependComplement.getId());
-        // 如果没有需要处理的,直接返回
+        // 如果没有需要处理的,标记为失败,并直接返回
         if (dependComplementDetails == null || dependComplementDetails.size() == 0) {
+            // 标记为失败
+            dependComplement.setState(ExecutionStatus.FAILURE);
+            dependComplementMapper.updateById(dependComplement);
             return ;
         }
 
@@ -2792,6 +2788,9 @@ public class ProcessService {
             if (DEPEND_COMPLEMENT_DETAIL_STOP.equals(checkDetailStopResult)) {
                 continue;
             }
+            if (DEPEND_COMPLEMENT_STOP.equals(checkDetailStopResult)) {
+                return;
+            }
             // 对于未提交的任务,是否容错处理方法是一致的
             if (dependComplementDetail.getState() == ExecutionStatus.SUBMITTED_SUCCESS) {
                 // 变更维持dependComplement的状态
@@ -2800,27 +2799,32 @@ public class ProcessService {
                 // 变更detail的状态
                 dependComplementDetail.setState(ExecutionStatus.RUNNING_EXECUTION);
                 updateDependComplementDetailStateById(dependComplementDetail.getId(), dependComplementDetail.getState());
-
                 for (JsonNode jsonNode : jsonNodes) {
                     // 检查是否有被置为准备停止状态
                     final String checkAllStopResult = checkStopState(dependComplement, dependComplementDetail, dependComplementStateMaps, dependComplementDetailStateMaps);
+                    if (DEPEND_COMPLEMENT_DETAIL_STOP.equals(checkAllStopResult)) {
+                        break;
+                    }
                     if (DEPEND_COMPLEMENT_STOP.equals(checkAllStopResult)) {
                         return ;
-                    } else if (DEPEND_COMPLEMENT_DETAIL_STOP.equals(checkAllStopResult)) {
-                        break;
                     }
 
                     // 创建Process,生成DependComplementDetailProcess到数据库中,写入到t_ds_depend_complement_detail_process表中
                     final DependComplementDetailProcess dependComplementDetailProcess
                             = createDependComplementProcess(dependComplement, dependComplementDetail, jsonNode);
+
+                    DependComplementState dependComplementState = DependComplementState.FAILURE;
                     if (dependComplementDetailProcess != null) {
                         // 创建Command,生成Command到数据库中,写入到t_ds_command表中,并且已经判断是否已经从command表中成功消费,并返回结果枚举
-                        final DependComplementState dependComplementState = createDependComplementCommand(
-                                dependComplement,
-                                dependComplementDetail,
-                                dependComplementDetailProcess,
-                                masterDependComplementCommandCheckInterval,
-                                masterDependComplementCommandCheckTimeout);
+                        if (DependComplementState.SUCCESS
+                                == createDependComplementCommand(
+                                        dependComplement, dependComplementDetail, dependComplementDetailProcess)) {
+                            // 等待结果返回,如果长时间没有返回结果,直接报超时错误
+                            dependComplementState = waitDependComplementCommandResult(
+                                    dependComplementDetailProcess,
+                                    masterDependComplementCommandCheckInterval,
+                                    masterDependComplementCommandCheckTimeout);
+                        }
 
                         if (dependComplementState == DependComplementState.FAILURE) {
                             // 如果有一个process执行状态异常,则整个Detail标记为执行失败
@@ -2830,6 +2834,9 @@ public class ProcessService {
                             // 直接停止掉此dependComplement任务
                             return;
                         }
+                    } else {
+                        // 创建process没有成功,过掉此detail,执行下一个detail
+                        break;
                     }
                 }
             }
@@ -2867,22 +2874,29 @@ public class ProcessService {
                                 // 创建Process,生成DependComplementDetailProcess到数据库中,写入到t_ds_depend_complement_detail_process表中
                                 final DependComplementDetailProcess dependComplementDetailProcess
                                         = createDependComplementProcess(dependComplement, dependComplementDetail, jsonNode);
+
+                                DependComplementState dependComplementState = DependComplementState.FAILURE;
                                 if (dependComplementDetailProcess != null) {
                                     // 创建Command,生成Command到数据库中,写入到t_ds_command表中,并且已经判断是否已经从command表中成功消费,并返回结果枚举
-                                    final DependComplementState dependComplementState = createDependComplementCommand(
-                                            dependComplement,
-                                            dependComplementDetail,
-                                            dependComplementDetailProcess,
-                                            masterDependComplementCommandCheckInterval,
-                                            masterDependComplementCommandCheckTimeout);
+                                    if (DependComplementState.SUCCESS
+                                            == createDependComplementCommand(
+                                                    dependComplement, dependComplementDetail, dependComplementDetailProcess)) {
+                                        dependComplementState = waitDependComplementCommandResult(
+                                                dependComplementDetailProcess,
+                                                masterDependComplementCommandCheckInterval,
+                                                masterDependComplementCommandCheckTimeout);
+                                    }
 
                                     if (dependComplementState == DependComplementState.FAILURE) {
                                         // 如果有一个process执行状态异常,则整个Detail标记为执行失败
                                         dependComplementDetail.setState(ExecutionStatus.FAILURE);
                                         updateDependComplementDetailStateById(dependComplementDetail.getId(), dependComplementDetail.getState());
                                         // 直接停止掉此dependComplement任务
-                                        return;
+                                        break;
                                     }
+                                } else {
+                                    // 创建process没有成功,过掉此detail,执行下一个detail
+                                    break;
                                 }
                             }
                         }
@@ -2897,6 +2911,30 @@ public class ProcessService {
                 return ;
             }
         }
+    }
+
+    private DependComplementState waitDependComplementCommandResult(DependComplementDetailProcess dependComplementDetailProcess,
+                                                                    int masterDependComplementCommandCheckInterval,
+                                                                    int masterDependComplementCommandCheckTimeout) {
+        // 如果没有成功提交,阻塞状态
+        // 设置创建command,并返回结果的超时时间
+        final long DependComplementCommandCheckTimeout = System.currentTimeMillis() + (long) SLEEP_TIME_MILLIS * masterDependComplementCommandCheckTimeout;
+        while (true) {
+            // 查看是否已经提交
+            final int dependComplementDetailProcessId = dependComplementDetailProcess.getId();
+            final DependComplementDetailProcess dependComplementDetailProcessTmp =
+                    dependComplementDetailProcessMapper.selectById(dependComplementDetailProcessId);
+            if (dependComplementDetailProcessTmp.getProcessInstanceId() != 0) {
+                break;
+            }
+            // 设置超时时间
+            if (DependComplementCommandCheckTimeout < System.currentTimeMillis()) {
+                // 超时跳出
+                return DependComplementState.FAILURE;
+            }
+            ThreadUtils.sleep((long) SLEEP_TIME_MILLIS * masterDependComplementCommandCheckInterval);
+        }
+        return DependComplementState.SUCCESS;
     }
 
     /**
@@ -2938,9 +2976,7 @@ public class ProcessService {
 
     private DependComplementState createDependComplementCommand(DependComplement dependComplement,
                                                                 DependComplementDetail dependComplementDetail,
-                                                                DependComplementDetailProcess dependComplementDetailProcess,
-                                                                int masterDependComplementCommandCheckInterval,
-                                                                int masterDependComplementCommandCheckTimeout) {
+                                                                DependComplementDetailProcess dependComplementDetailProcess) {
         try {
             final Command command = new Command();
 
@@ -2972,25 +3008,6 @@ public class ProcessService {
             command.setProcessInstancePriority(Priority.MEDIUM);
 
             createCommand(command);
-
-            // 如果没有成功提交,阻塞状态
-            // 设置创建command,并返回结果的超时时间
-            final long DependComplementCommandCheckTimeout = System.currentTimeMillis() + (long) SLEEP_TIME_MILLIS * masterDependComplementCommandCheckTimeout;
-            while (true) {
-                // 查看是否已经提交
-                final int dependComplementDetailProcessId = dependComplementDetailProcess.getId();
-                final DependComplementDetailProcess dependComplementDetailProcessTmp =
-                        dependComplementDetailProcessMapper.selectById(dependComplementDetailProcessId);
-                if (dependComplementDetailProcessTmp.getProcessInstanceId() != 0) {
-                    break;
-                }
-                // 设置超时时间
-                if (DependComplementCommandCheckTimeout < System.currentTimeMillis()) {
-                    // 超时跳出
-                    return DependComplementState.FAILURE;
-                }
-                ThreadUtils.sleep((long) SLEEP_TIME_MILLIS * masterDependComplementCommandCheckInterval);
-            }
         } catch (Exception e) {
             return DependComplementState.FAILURE;
         }
@@ -3019,7 +3036,7 @@ public class ProcessService {
                 // 继续执行下一个detail
                 return null;
             }
-            ThreadUtils.sleep((long) Constants.SLEEP_TIME_MILLIS  * 2);
+            ThreadUtils.sleep((long) Constants.SLEEP_TIME_MILLIS  * masterDependComplementDetailCheckInterval);
         }
     }
 

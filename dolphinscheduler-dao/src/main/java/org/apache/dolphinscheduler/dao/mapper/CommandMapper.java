@@ -49,7 +49,7 @@ public interface CommandMapper extends BaseMapper<Command> {
      * query command page
      * @return
      */
-    List<Command> queryCommandPage(@Param("limit") int limit, @Param("offset") int offset);
+    List<Command> queryCommandPage(@Param("limit") int limit, @Param("offset") int offset, @Param("grayFlag") String grayFlag);
 
     /**
      * 插入数据,返回自增id

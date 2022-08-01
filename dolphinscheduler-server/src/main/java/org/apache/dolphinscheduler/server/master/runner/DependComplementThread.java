@@ -82,6 +82,8 @@ public class DependComplementThread extends Thread {
 
     @Override
     public void run() {
+        // 休眠两分钟后启动补数作业,等待master注册完成
+        ThreadUtils.sleep((long) Constants.SLEEP_TIME_MILLIS * 60 * 2);
         while (Stopper.isRunning()) {
             logger.info("depend complement execute started");
             try {
@@ -126,7 +128,7 @@ public class DependComplementThread extends Thread {
             if (ServerNodeManager.MASTER_SIZE == 0) {
                 return null;
             }
-            logger.debug("master size:{}", ServerNodeManager.MASTER_SIZE);
+            logger.info("master size:{}", ServerNodeManager.MASTER_SIZE);
             // 获取需要依赖补数的任务(这里是提交作业的地方,不涉及容错相关,所以只获取提交成功的任务,后面会对状态进行变更)
             final List<DependComplement> dependComplementList = processService.queryDependComplementWithState(ServerNodeManager.MASTER_SIZE, pageNumber);
             if (dependComplementList.size() == 0) {
@@ -134,8 +136,10 @@ public class DependComplementThread extends Thread {
             }
             for (DependComplement dependComplement : dependComplementList) {
                 final Integer slot = ServerNodeManager.getSlot();
+                logger.info("master slot: {}", slot);
                 if (ServerNodeManager.MASTER_SIZE != 0 && dependComplement.getId() % ServerNodeManager.MASTER_SIZE == slot) {
                     result.add(dependComplement);
+                    break;
                 }
             }
             if (result.size() > 0) {

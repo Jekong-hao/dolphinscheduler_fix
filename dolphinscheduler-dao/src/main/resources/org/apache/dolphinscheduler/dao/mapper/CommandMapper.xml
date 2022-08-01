@@ -58,8 +58,16 @@
         group by cmd.command_type
     </select>
     <select id="queryCommandPage" resultType="org.apache.dolphinscheduler.dao.entity.Command">
-        select *
-        from t_ds_command
+        select command.*
+        from t_ds_command command
+        left join t_ds_relation_gray rg on command.id = rg.element_id and rg.element_type = 5
+        where 1 = 1
+        <if test="grayFlag == 'gray'">
+            and rg.gray_flag = 1
+        </if>
+        <if test="grayFlag == 'prod'">
+            and rg.gray_flag is null
+        </if>
         order by process_instance_priority, id asc
         limit #{limit} offset #{offset}
     </select>

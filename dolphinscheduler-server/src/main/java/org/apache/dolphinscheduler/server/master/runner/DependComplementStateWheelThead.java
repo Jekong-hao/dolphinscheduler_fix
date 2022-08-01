@@ -97,7 +97,6 @@ public class DependComplementStateWheelThead extends Thread {
                     for (DependComplementDetail dependComplementDetail : dependComplementDetailAll) {
                         dependComplementDetailStateMaps.put(dependComplementDetail.getId(), ExecutionStatus.STOP);
                     }
-
                     break;
                 default:
             }
@@ -112,7 +111,6 @@ public class DependComplementStateWheelThead extends Thread {
         for (DependComplement dependComplement : dependComplementList) {
             final String dependComplementProcessJson = dependComplement.getDependComplementProcessJson();
             final ArrayNode jsonNodes = JSONUtils.parseArray(dependComplementProcessJson);
-
 
             // 获取执行dependComplement下的所有detail(状态为: 提交成功,正在运行,准备停止)
             final List<DependComplementDetail> dependComplementDetails

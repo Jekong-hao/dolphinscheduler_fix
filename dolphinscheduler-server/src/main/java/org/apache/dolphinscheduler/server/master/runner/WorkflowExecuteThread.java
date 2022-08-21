@@ -322,6 +322,7 @@ public class WorkflowExecuteThread implements Runnable {
         TaskTimeoutStrategy taskTimeoutStrategy = taskInstance.getTaskDefine().getTimeoutNotifyStrategy();
         if (TaskTimeoutStrategy.FAILED == taskTimeoutStrategy) {
             ITaskProcessor taskProcessor = activeTaskProcessorMaps.get(stateEvent.getTaskInstanceId());
+            // TODO bugfix, 什么场景下taskProcessor会为null
             taskProcessor.action(TaskAction.TIMEOUT);
         } else {
             processAlertManager.sendTaskTimeoutAlert(processInstance, taskInstance);

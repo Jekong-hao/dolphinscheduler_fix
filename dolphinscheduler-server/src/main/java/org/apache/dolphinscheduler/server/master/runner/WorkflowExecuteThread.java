@@ -230,6 +230,9 @@ public class WorkflowExecuteThread implements Runnable {
 
             try {
                 StateEvent stateEvent = this.stateEvents.peek();
+                // TODO 当stateEventHandler throw Exception
+                // 或者为false时
+                // event 会保留在queue里面
                 if (stateEventHandler(stateEvent)) {
                     this.stateEvents.remove(stateEvent);
                 }

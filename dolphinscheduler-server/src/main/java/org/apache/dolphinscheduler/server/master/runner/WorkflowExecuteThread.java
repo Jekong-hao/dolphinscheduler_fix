@@ -192,17 +192,13 @@ public class WorkflowExecuteThread implements Runnable {
             , ProcessService processService
             , NettyExecutorManager nettyExecutorManager
             , ProcessAlertManager processAlertManager
-            , MasterConfig masterConfig
-            , ConcurrentHashMap<Integer, TaskInstance> taskTimeoutCheckList
-            , ConcurrentHashMap<Integer, TaskInstance> taskRetryCheckList) {
+            , MasterConfig masterConfig) {
         this.processService = processService;
         this.taskResponseService = taskResponseService;
         this.processInstance = processInstance;
         this.masterConfig = masterConfig;
         this.nettyExecutorManager = nettyExecutorManager;
         this.processAlertManager = processAlertManager;
-//        this.taskTimeoutCheckList = taskTimeoutCheckList;
-//        this.taskRetryCheckList = taskRetryCheckList;
     }
 
     @Override
@@ -582,9 +578,7 @@ public class WorkflowExecuteThread implements Runnable {
     private void startProcess() throws Exception {
         isStart = false;
         logger.info("[process instance {}] master workflow execute thread start.", this.getProcessInstance().getId());
-//        if (this.taskInstanceHashMap.size() == 0) {
-//
-//        }
+
         // 初始化DAG
         buildFlowDag();
 

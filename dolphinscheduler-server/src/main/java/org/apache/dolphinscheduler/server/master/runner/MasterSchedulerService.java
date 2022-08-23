@@ -127,11 +127,13 @@ public class MasterSchedulerService extends Thread {
 
     /**
      * task time out checkout list
+     * @deprecated
      */
     ConcurrentHashMap<Integer, TaskInstance> taskTimeoutCheckList = new ConcurrentHashMap<>();
 
     /**
      * task retry check list
+     * @deprecated
      */
     ConcurrentHashMap<Integer, TaskInstance> taskRetryCheckList = new ConcurrentHashMap<>();
 
@@ -216,6 +218,7 @@ public class MasterSchedulerService extends Thread {
 
     /**
      * 检查正在执行的工作的完整性
+     * @deprecated
      */
     private void checkWorkflowCompleteness() {
         for (WorkflowExecuteThread workflowExecuteThread : this.processInstanceExecMaps.values()) {
@@ -298,9 +301,7 @@ public class MasterSchedulerService extends Thread {
                             , processService
                             , nettyExecutorManager
                             , processAlertManager
-                            , masterConfig
-                            , taskTimeoutCheckList
-                            , taskRetryCheckList);
+                            , masterConfig);
 
                     this.processInstanceExecMaps.put(processInstance.getId(), workflowExecuteThread);
                     if (processInstance.getTimeout() > 0) {

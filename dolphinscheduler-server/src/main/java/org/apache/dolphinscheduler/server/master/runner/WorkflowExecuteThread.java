@@ -63,7 +63,7 @@ import com.google.common.collect.Table;
 import static org.apache.dolphinscheduler.common.Constants.*;
 
 /**
- * master exec thread,split dag
+ * 每一个工作流实例都会创建一个 {@link WorkflowExecuteThread} 实例，负责DAG调度执行
  */
 public class WorkflowExecuteThread implements Runnable {
 
@@ -229,6 +229,8 @@ public class WorkflowExecuteThread implements Runnable {
                 // TODO 当stateEventHandler throw Exception
                 // 或者为false时
                 // event 会保留在queue里面
+                // TODO 一个事件应该只被处理一次，否则出现异常，会导致当前工作流无法向下执行
+                // TODO 当事件只被处理一次，是否存在事件丢失的风险
                 if (stateEventHandler(stateEvent)) {
                     this.stateEvents.remove(stateEvent);
                 }
@@ -295,9 +297,14 @@ public class WorkflowExecuteThread implements Runnable {
                 result = taskTimeout(stateEvent);
                 break;
             default:
+                logger.warn("[process instance {}] unsupport state event type : {}, Event : {}",
+                        this.getProcessInstance().getId(),
+                        stateEvent.getType().getDescp(),
+                        stateEvent);
                 break;
         }
 
+        // TODO 应该在handleEvents 统一处理
         if (result) {
             this.stateEvents.remove(stateEvent);
         }
